@@ -1,0 +1,3 @@
+set -eu
+
+node scripts/check-commit-message.mjs "$1"
