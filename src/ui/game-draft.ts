@@ -83,10 +83,10 @@ export function renderGameDraft(container: HTMLElement, state: DraftViewState): 
   container.dataset.paused = String(state.paused);
   container.innerHTML = `
     <header class="app-header">
-      <a class="brand" href="#" data-action="home" aria-label="Alchemist's Cauldron start screen">
-        <span class="brand-symbol">${icon('spark')}</span>
+      <div class="brand">
+        <a class="brand-symbol" href="#" data-action="home" aria-label="Return to start screen">${icon('spark')}</a>
         <h1>Alchemist’s Cauldron</h1>
-      </a>
+      </div>
       <nav class="header-actions" aria-label="Game navigation">
         <button class="button button-quiet" type="button" data-action="help">${icon('help')}<span>Help</span></button>
         <button class="button button-quiet" type="button" data-action="menu">${icon('menu')}<span>Menu</span></button>

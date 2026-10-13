@@ -1,5 +1,5 @@
 import './styles/style.css';
-import { renderGameDraft } from './ui/game-draft';
+import { mountGameDraft } from './ui/draft-controller';
 
 const app = document.querySelector<HTMLDivElement>('#app');
 
@@ -7,4 +7,5 @@ if (app === null) {
   throw new Error('The application root was not found.');
 }
 
-renderGameDraft(app, { started: false, paused: false });
+const dispose = mountGameDraft(app);
+import.meta.hot?.dispose(dispose);
