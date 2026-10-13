@@ -159,14 +159,32 @@ export function mountGameDraft(container: HTMLElement): () => void {
     if (document.hidden) pausePreview();
   }
 
+  function handleDialogKeydown(event: KeyboardEvent): void {
+    if (event.key !== 'Tab') return;
+    const controls = [...dialog.querySelectorAll<HTMLButtonElement>('button:not(:disabled)')];
+    const first = controls.at(0);
+    const last = controls.at(-1);
+    if (first === undefined || last === undefined) return;
+
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  }
+
   render();
   container.addEventListener('click', handleClick);
   dialog.addEventListener('cancel', handleCancel);
+  dialog.addEventListener('keydown', handleDialogKeydown);
   document.addEventListener('visibilitychange', handleVisibility);
 
   return () => {
     container.removeEventListener('click', handleClick);
     dialog.removeEventListener('cancel', handleCancel);
+    dialog.removeEventListener('keydown', handleDialogKeydown);
     document.removeEventListener('visibilitychange', handleVisibility);
     dismissDialogs();
   };
