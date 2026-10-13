@@ -1,0 +1,17 @@
+:root {
+  --background: #faf8f5;
+  --surface: #ffffff;
+  --surface-muted: #f2f2ec;
+  --ink: #1c1917;
+  --muted: #64675e;
+  --border: #dbddd4;
+  --primary: #315442;
+  --primary-hover: #244432;
+  --accent-soft: #e3ece3;
+  --temperature: #92572f;
+  --density: #3c6670;
+  --magic: #745489;
+  --focus: #315442;
+  --dialog-backdrop: #15231ac4;
+  --radius: 6px;
+}
