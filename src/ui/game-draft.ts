@@ -1,5 +1,6 @@
 import { PREVIEW_INGREDIENTS, PREVIEW_PARAMETERS } from './draft-fixtures';
-import { cauldronIllustration, icon } from './icons';
+import { icon } from './icons';
+import { cauldronIllustration, ingredientIllustration, workshopScenery } from './illustrations';
 
 export interface DraftViewState {
   readonly started: boolean;
@@ -22,13 +23,13 @@ function ingredientShelf(started: boolean): string {
     (ingredient) => `
       <li>
         <button class="ingredient" type="button" disabled aria-describedby="draft-notice">
-          ${icon(ingredient.icon, 'ingredient-icon')}
+          ${ingredientIllustration(ingredient.icon)}
           <span class="ingredient-content">
             <span class="ingredient-name">${ingredient.name}</span>
             <span class="ingredient-values">
-              <span aria-label="Temperature ${signed(ingredient.temperature)}">T ${signed(ingredient.temperature)}</span>
-              <span aria-label="Density ${signed(ingredient.density)}">D ${signed(ingredient.density)}</span>
-              <span aria-label="Magic Power ${signed(ingredient.magic)}">M ${signed(ingredient.magic)}</span>
+              <span class="ingredient-temperature" aria-label="Temperature ${signed(ingredient.temperature)}">T ${signed(ingredient.temperature)}</span>
+              <span class="ingredient-density" aria-label="Density ${signed(ingredient.density)}">D ${signed(ingredient.density)}</span>
+              <span class="ingredient-magic" aria-label="Magic Power ${signed(ingredient.magic)}">M ${signed(ingredient.magic)}</span>
             </span>
           </span>
           <span class="stock-count" aria-label="${ingredient.stock} portions">${ingredient.stock}</span>
@@ -81,6 +82,7 @@ function parameterBars(started: boolean): string {
 
 export function renderGameDraft(container: HTMLElement, state: DraftViewState): void {
   container.dataset.paused = String(state.paused);
+  container.dataset.started = String(state.started);
   container.innerHTML = `
     <header class="app-header">
       <div class="brand">
@@ -88,8 +90,7 @@ export function renderGameDraft(container: HTMLElement, state: DraftViewState): 
         <h1>Alchemist’s Cauldron</h1>
       </div>
       <nav class="header-actions" aria-label="Game navigation">
-        <button class="button button-quiet" type="button" data-action="help">${icon('help')}<span>Help</span></button>
-        <button class="button button-quiet" type="button" data-action="menu">${icon('menu')}<span>Menu</span></button>
+        <button class="button button-quiet" type="button" data-action="leaderboard">${icon('trophy')}<span>Leaderboard</span></button>
       </nav>
     </header>
     <main class="game-main">
@@ -103,6 +104,7 @@ export function renderGameDraft(container: HTMLElement, state: DraftViewState): 
         <button class="button button-quiet pause-button" type="button" data-action="pause" ${state.started ? '' : 'disabled'}>${icon('pause')}<span>Pause</span></button>
       </div>
       <div class="playfield">
+        <div class="workshop-backdrop" aria-hidden="true">${workshopScenery()}</div>
         <div class="workbench-grid">
           <section class="shelf-panel" aria-labelledby="shelf-heading">
             <div class="section-heading"><h2 id="shelf-heading">Ingredients</h2><span class="shelf-count">${state.started ? '6 types' : 'Empty shelf'}</span></div>
@@ -116,19 +118,24 @@ export function renderGameDraft(container: HTMLElement, state: DraftViewState): 
               ${Array.from({ length: 4 }, (_, index) => `<span class="mixture-slot" aria-hidden="true">${index + 1}</span>`).join('')}
             </div>
             <p class="cauldron-caption">The cauldron is empty.</p>
-            <button class="button button-primary main-action" type="button" ${state.started ? 'disabled aria-describedby="draft-notice"' : 'data-action="start"'}>
-              ${icon(state.started ? 'spark' : 'play')} ${state.started ? 'Brew potion' : 'Start Game'}
-            </button>
-            <p class="station-instruction">${state.started ? 'Mixing and brewing are not active in this draft.' : 'Match Temperature, Density, and Magic Power.'}</p>
           </section>
           ${recipePanel(state.started)}
         </div>
         <div class="parameter-grid" role="group" aria-label="Cauldron parameters">${parameterBars(state.started)}</div>
       </div>
       <div class="game-bottom-row">
-        <div class="bar-legend" role="group" aria-label="Parameter bar legend"><span><i class="legend-target"></i>Recipe range</span><span><i class="legend-marker"></i>Current value</span></div>
-        <button class="button button-quiet" type="button" data-action="leaderboard">${icon('trophy')}Leaderboard</button>
+        <button class="button button-quiet footer-button" type="button" data-action="help">${icon('help')}<span>Help</span></button>
+        <div class="main-action-group">
+          <button class="button button-primary main-action" type="button" ${state.started ? 'disabled aria-describedby="draft-notice"' : 'data-action="start"'}>
+            ${icon('spark')} ${state.started ? 'Brew potion' : 'Start Game'} ${icon('spark')}
+          </button>
+          <p class="station-instruction">${state.started ? 'Mixing and brewing are not active in this draft.' : 'Match Temperature, Density, and Magic Power.'}</p>
+        </div>
+        <button class="button button-quiet footer-button" type="button" data-action="menu">${icon('menu')}<span>Menu</span></button>
       </div>
-      <p class="draft-notice" id="draft-notice">Visual draft${state.started ? ' · Mixing, brewing, and the timer are not active yet.' : ' · Open the workbench to preview a round.'}</p>
+      <div class="game-footnote">
+        <div class="bar-legend" role="group" aria-label="Parameter bar legend"><span><i class="legend-target"></i>Recipe range</span><span><i class="legend-marker"></i>Current value</span></div>
+        <p class="draft-notice" id="draft-notice">Visual draft${state.started ? ' · Mixing, brewing, and the timer are not active yet.' : ' · Open the workbench to preview a round.'}</p>
+      </div>
     </main>`;
 }

@@ -36,7 +36,9 @@ The welcome screen has no ingredient stock, no recipe targets, no life icons, an
 
 Ingredient values match the assignment. Stocks are **fixed demonstration values**, not random game inventory, and the recipe is fixed to **Acid Spark**. Ingredient adding, brewing, scoring, countdown timing, actual leaderboard storage, difficulty selection, reactions, and save/continue are pending. Ingredient and Brew buttons are intentionally disabled, with visible preview explanations.
 
-The responsive layout uses three columns on desktop, a station-first layout on tablets, and a two-column ingredient shelf on phones. Styles support reduced motion and visible keyboard focus.
+The draft follows the assignment's dark fantasy workshop: brass frames, a cabinet-style shelf, six colored glass ingredient illustrations, a shaded iron cauldron on a stone hearth, green rune light, and an upright parchment recipe. All artwork is authored SVG/CSS, with separate components for the scene, cauldron, icons, and controls. The cauldron remains empty in both draft screens; liquid, bubbles, and steam artwork is prepared for future mixtures.
+
+The responsive layout uses three columns on desktop, a station-first layout on tablets, and a two-column ingredient shelf on phones. The main Start/Brew action sits below the parameter gauges, with Help and Menu at the outer edges. Styles support reduced motion and visible keyboard focus.
 
 | Command                | Purpose                                       |
 | ---------------------- | --------------------------------------------- |
@@ -85,7 +87,7 @@ Game rules belong in `logic/`, separate from DOM rendering in `ui/`. Shared game
 
 Build Level 1 in story order, starting with **US 1.1: Ingredient Shelf & Cauldron**. Level 1 uses the Medium rules: 6 shelf ingredients, capacity 4, 150 seconds, 3 lives, tolerance ±8, +200 score and +10 seconds per successful brew. Reactions are added in Level 3.
 
-The finished game must work in the latest Google Chrome across widths from **375 px to 1920 px**. Draw game elements with CSS, SVG, or text symbols; do not use image assets or icon fonts. Use the assignment's ingredient and recipe tables as the authoritative data.
+The finished game must work in the latest Google Chrome across widths from **375 px to 1920 px**. Keep game elements as separate components; this implementation uses CSS and SVG, including the CSS/SVG ingredient icons required by US 1.1. Use the assignment's ingredient and recipe tables as the authoritative data.
 
 ## Branches and pull requests
 
