@@ -10,7 +10,11 @@ Players of the RS School browser mini-game and reviewers checking the assignment
 
 ## Product Purpose
 
-Mix limited-stock ingredients to match three recipe ranges before time or lives run out. This branch builds the visual draft and screen navigation; ingredient mixing, brewing, timing, and persistence belong to later feature branches.
+Mix limited-stock ingredients to match three recipe ranges before time or lives run out. This branch makes ingredient mixing functional: the six Level 1 ingredients receive independent random stocks of 2–15, additions spend one portion, and the cauldron preserves up to four ordered portions, including duplicates. All eight official ingredients are catalogued for later difficulty levels.
+
+The live gauges show raw totals on symmetric scales centered at zero, expanding to include values outside ±100. CSS transitions move the markers; green feedback and an **In range** label indicate a match with the displayed recipe range. Empty-stock cards retain their zero badge, remove the ingredient illustration, and become disabled and unavailable to keyboard focus.
+
+Acid Spark, the `02:30` clock, lives, and score remain previews. Brewing, recipe selection, timing, storage, difficulty selection, reactions, drag and drop, game shortcuts, and Pour Out belong to later features. Menu → Start new game clears the mixture and rerolls stock after confirmation so players can retry.
 
 ## Brand Personality
 
@@ -25,8 +29,9 @@ Avoid marketing landing-page layouts, dashboard metric-card grids, bright applic
 - Make the recipe, ingredient stock, and three parameters readable together.
 - Keep the welcome state empty and the primary action clear.
 - Use CSS and authored inline SVG for game elements.
-- Distinguish the visual preview from working gameplay.
-- Keep navigation predictable and preserve the current preview through dialogs.
+- Distinguish working ingredient mixing from the recipe, clock, lives, and score previews.
+- Show spent stock and full-cauldron feedback without changing the underlying rules.
+- Keep navigation predictable and preserve the mixture and inventory through pause, dialogs, and canceled confirmations. Confirmed new games reset them; confirmed exits discard them.
 
 ## Accessibility & Inclusion
 
