@@ -1,36 +1,39 @@
+import { getIngredient } from '../data/ingredients';
+import { addIngredient, createMixingState } from '../logic/ingredients';
 import { dialogMarkup } from './dialogs';
-import type { DraftDialog } from './dialogs';
-import { renderGameDraft } from './game-draft';
+import type { GameDialog } from './dialogs';
+import { renderGameView, updateMixingView } from './game-view';
+import type { GameViewState } from './game-view';
 
-export function mountGameDraft(container: HTMLElement): () => void {
+export function mountGame(container: HTMLElement): () => void {
   const view = document.createElement('div');
   const dialog = document.createElement('dialog');
   const announcement = document.createElement('p');
-  const state = { started: false, paused: false };
-  let dialogs: DraftDialog[] = [];
+  let state: GameViewState = { mixing: null, paused: false };
+  let dialogs: GameDialog[] = [];
   let returnAction = 'start';
 
   dialog.className = 'game-dialog';
-  dialog.setAttribute('aria-labelledby', 'draft-dialog-title');
-  dialog.setAttribute('aria-describedby', 'draft-dialog-description');
+  dialog.setAttribute('aria-labelledby', 'game-dialog-title');
+  dialog.setAttribute('aria-describedby', 'game-dialog-description');
   announcement.className = 'sr-only';
   announcement.setAttribute('role', 'status');
   container.replaceChildren(view, dialog, announcement);
 
   function render(): void {
-    renderGameDraft(view, state);
+    renderGameView(view, state);
   }
 
   function focusAction(action: string): void {
     view.querySelector<HTMLElement>(`[data-action="${action}"]`)?.focus();
   }
 
-  function renderDialog(kind: DraftDialog): void {
+  function renderDialog(kind: GameDialog): void {
     dialog.innerHTML = dialogMarkup(kind);
     dialog.querySelector<HTMLElement>('[data-dialog-focus]')?.focus();
   }
 
-  function openDialog(kind: DraftDialog): void {
+  function openDialog(kind: GameDialog): void {
     if (!dialog.open) {
       const focused = document.activeElement;
       if (focused instanceof HTMLElement && focused.dataset.action !== undefined) {
@@ -50,27 +53,26 @@ export function mountGameDraft(container: HTMLElement): () => void {
     if (dialog.open) dialog.close();
   }
 
-  function startPreview(): void {
+  function startGame(): void {
     dismissDialogs();
-    state.started = true;
-    state.paused = false;
+    state = { mixing: createMixingState(), paused: false };
     render();
     focusAction('pause');
     announcement.textContent =
-      'Medium workbench preview opened. Mixing, brewing, and timing are not active yet.';
+      'Medium workbench opened. Select ingredients to add up to four portions. Brewing and the timer are not active yet.';
   }
 
-  function resumePreview(): void {
+  function resumeGame(): void {
     dismissDialogs();
-    state.paused = false;
+    state = { ...state, paused: false };
     render();
     focusAction('pause');
-    announcement.textContent = 'Preview resumed.';
+    announcement.textContent = 'Workbench resumed.';
   }
 
-  function pausePreview(): void {
-    if (!state.started || state.paused) return;
-    state.paused = true;
+  function pauseGame(): void {
+    if (state.mixing === null || state.paused) return;
+    state = { ...state, paused: true };
     render();
     returnAction = 'pause';
     if (dialog.open) {
@@ -78,13 +80,13 @@ export function mountGameDraft(container: HTMLElement): () => void {
     } else {
       openDialog('pause');
     }
-    announcement.textContent = 'Preview paused.';
+    announcement.textContent = 'Workbench paused.';
   }
 
   function closeDialog(): void {
     const current = dialogs.at(-1);
     if (current === 'pause') {
-      resumePreview();
+      resumeGame();
       return;
     }
     dialogs.pop();
@@ -99,11 +101,40 @@ export function mountGameDraft(container: HTMLElement): () => void {
 
   function showStart(): void {
     dismissDialogs();
-    state.started = false;
-    state.paused = false;
+    state = { mixing: null, paused: false };
     render();
     focusAction('start');
     announcement.textContent = 'Returned to the empty start screen.';
+  }
+
+  function addPortion(id: string | undefined): void {
+    if (state.mixing === null || state.paused || dialog.open || id === undefined) return;
+    const result = addIngredient(state.mixing, id);
+    const ingredient = getIngredient(id);
+    if (ingredient === undefined) return;
+    const feedback = view.querySelector('#ingredient-feedback');
+    if (!result.accepted) {
+      if (result.reason !== 'cauldron-full' && result.reason !== 'out-of-stock') return;
+      if (feedback !== null) {
+        feedback.textContent =
+          result.reason === 'cauldron-full'
+            ? 'Cauldron full: only four portions fit. Start a new game from Menu to mix again.'
+            : `${ingredient.name} is out of stock.`;
+      }
+      return;
+    }
+
+    state = { ...state, mixing: result.state };
+    // Update existing controls and gauges so keyboard focus and CSS transitions survive.
+    updateMixingView(view, state);
+    if (feedback !== null) {
+      const totals = result.state.totals;
+      feedback.textContent = `${ingredient.name} added. Temperature ${totals.temperature}, Density ${totals.density}, Magic Power ${totals.magicPower}.`;
+    }
+    if (result.state.inventory[ingredient.id] === 0) {
+      const next = view.querySelector<HTMLButtonElement>('.ingredient:not(:disabled)');
+      next?.focus({ preventScroll: true });
+    }
   }
 
   function handleClick(event: MouseEvent): void {
@@ -116,7 +147,10 @@ export function mountGameDraft(container: HTMLElement): () => void {
     switch (control.dataset.action) {
       case 'start':
       case 'confirm-new':
-        startPreview();
+        startGame();
+        break;
+      case 'add-ingredient':
+        addPortion(control.dataset.ingredient);
         break;
       case 'help':
       case 'menu':
@@ -124,17 +158,17 @@ export function mountGameDraft(container: HTMLElement): () => void {
         openDialog(control.dataset.action);
         break;
       case 'new':
-        if (state.started) openDialog('restart');
-        else startPreview();
+        if (state.mixing !== null) openDialog('restart');
+        else startGame();
         break;
       case 'pause':
-        pausePreview();
+        pauseGame();
         break;
       case 'resume':
-        resumePreview();
+        resumeGame();
         break;
       case 'home':
-        if (state.started) openDialog('exit');
+        if (state.mixing !== null) openDialog('exit');
         else showStart();
         break;
       case 'exit':
@@ -156,7 +190,7 @@ export function mountGameDraft(container: HTMLElement): () => void {
   }
 
   function handleVisibility(): void {
-    if (document.hidden) pausePreview();
+    if (document.hidden) pauseGame();
   }
 
   function handleDialogKeydown(event: KeyboardEvent): void {
