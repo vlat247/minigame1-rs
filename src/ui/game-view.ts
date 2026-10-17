@@ -1,15 +1,21 @@
 import { LEVEL_ONE_INGREDIENTS, getIngredient } from '../data/ingredients';
 import type { IngredientId } from '../data/ingredients';
+import type { Recipe } from '../data/recipes';
+import { BREW_TOLERANCE } from '../logic/brewing';
+import type { BrewFeedback } from '../logic/brewing';
 import { MIXTURE_CAPACITY } from '../logic/ingredients';
 import type { MixingState } from '../logic/ingredients';
-import { PREVIEW_PARAMETERS } from './draft-fixtures';
+import { STARTING_LIVES } from '../state/game';
+import type { GameState } from '../state/game';
+import { PARAMETERS } from './parameters';
 import { icon } from './icons';
 import type { IconName } from './icons';
 import { cauldronIllustration, ingredientIllustration, workshopScenery } from './illustrations';
 
 export interface GameViewState {
-  readonly mixing: MixingState | null;
+  readonly game: GameState | null;
   readonly paused: boolean;
+  readonly lastBrew: BrewFeedback | null;
 }
 
 const INGREDIENT_ICONS: Record<IngredientId, IconName> = {
@@ -54,31 +60,37 @@ function ingredientShelf(mixing: MixingState | null): string {
   ).join('');
 }
 
-function recipePanel(started: boolean): string {
+function formatTime(seconds: number): string {
+  return `${Math.floor(seconds / 60)
+    .toString()
+    .padStart(2, '0')}:${(seconds % 60).toString().padStart(2, '0')}`;
+}
+
+function recipePanel(recipe: Recipe | undefined): string {
   return `
     <aside class="recipe-panel" aria-labelledby="recipe-heading">
       <div class="section-heading">${icon('magic')}<h2 id="recipe-heading">Current recipe</h2></div>
       <div class="recipe-heading-block">
         ${icon('acid', 'recipe-illustration')}
-        <h3>${started ? 'Acid Spark' : 'No recipe yet'}</h3>
-        <p>${started ? 'Bring all three values into balance.' : 'Start a game to reveal your first recipe.'}</p>
+        <h3 data-recipe-name>${recipe?.name ?? 'No recipe yet'}</h3>
+        <p>${recipe !== undefined ? 'Bring all three values into balance.' : 'Start a game to reveal your first recipe.'}</p>
       </div>
       <dl class="recipe-ranges">
-        ${PREVIEW_PARAMETERS.map(
+        ${PARAMETERS.map(
           (parameter) => `
             <div>
               <dt>${icon(parameter.icon)}${parameter.name}</dt>
-              <dd>${started ? `${parameter.min}–${parameter.max}` : '—'}</dd>
+              <dd data-recipe-range="${parameter.key}">${recipe !== undefined ? `${recipe[parameter.key].min}–${recipe[parameter.key].max}` : '—'}</dd>
             </div>`,
         ).join('')}
       </dl>
       <div class="recipe-capacity"><span>Ingredients</span><strong id="mixture-count">0 <span>/ ${MIXTURE_CAPACITY}</span></strong></div>
-      <p class="recipe-tolerance">${started ? 'Brew tolerance: ±8 on each range' : 'Medium mode · Up to 4 ingredients'}</p>
+      <p class="recipe-tolerance">${recipe !== undefined ? `Brew tolerance: ±${BREW_TOLERANCE} on each range` : 'Medium mode · Up to 4 ingredients'}</p>
     </aside>`;
 }
 
-function parameterBars(started: boolean): string {
-  return PREVIEW_PARAMETERS.map(
+function parameterBars(recipe: Recipe | undefined): string {
+  return PARAMETERS.map(
     (parameter) => `
       <section class="parameter ${parameter.className}" aria-labelledby="${parameter.className}-heading">
         <div class="parameter-heading">
@@ -87,17 +99,18 @@ function parameterBars(started: boolean): string {
         </div>
         <div class="parameter-track" role="meter" aria-label="${parameter.name}" aria-valuemin="-100" aria-valuemax="100" aria-valuenow="0">
           <span class="track-zero" aria-hidden="true"></span>
-          ${started ? '<span class="target-zone" aria-hidden="true"></span>' : ''}
+          ${recipe !== undefined ? '<span class="target-zone" aria-hidden="true"></span>' : ''}
           <span class="current-marker" aria-hidden="true"></span>
         </div>
         <div class="parameter-scale" aria-hidden="true"><span data-scale-min>−100</span><span>0</span><span data-scale-max>+100</span></div>
-        <p class="parameter-target">Target <strong>${started ? `${parameter.min}–${parameter.max}` : '—'}</strong><span class="parameter-match" hidden> · In range</span></p>
+        <p class="parameter-target">Target <strong data-target-range>${recipe !== undefined ? `${recipe[parameter.key].min}–${recipe[parameter.key].max}` : '—'}</strong><span class="parameter-match" hidden> · In range</span></p>
       </section>`,
   ).join('');
 }
 
 export function renderGameView(container: HTMLElement, state: GameViewState): void {
-  const started = state.mixing !== null;
+  const started = state.game !== null;
+  const recipe = state.game?.recipe;
   container.dataset.paused = String(state.paused);
   container.dataset.started = String(started);
   container.innerHTML = `
@@ -112,11 +125,11 @@ export function renderGameView(container: HTMLElement, state: GameViewState): vo
     </header>
     <main class="game-main">
       <div class="game-toolbar" role="group" aria-label="Game status">
-        <div class="stat">${icon('spark')}<span>Score</span><strong>0</strong></div>
-        <div class="stat stat-time">${icon('clock')}<span>Time</span><strong>${started ? '02:30' : '00:00'}</strong></div>
+        <div class="stat">${icon('spark')}<span>Score</span><strong data-score>0</strong></div>
+        <div class="stat stat-time">${icon('clock')}<span>Time</span><strong data-time>00:00</strong></div>
         <div class="lives" role="group" aria-label="${started ? '3 lives' : 'No lives before starting'}">
           <span>Lives</span>
-          ${started ? `<span class="life-icons">${icon('heart')}${icon('heart')}${icon('heart')}</span>` : '<span class="lives-empty">—</span>'}
+          ${started ? '<span class="life-icons" aria-hidden="true"></span>' : '<span class="lives-empty">—</span>'}
         </div>
         <button class="button button-quiet pause-button" type="button" data-action="pause" ${started ? '' : 'disabled'}>${icon('pause')}<span>Pause</span></button>
       </div>
@@ -126,7 +139,7 @@ export function renderGameView(container: HTMLElement, state: GameViewState): vo
           <section class="shelf-panel" aria-labelledby="shelf-heading">
             <div class="section-heading"><h2 id="shelf-heading">Ingredients</h2><span class="shelf-count">${started ? '6 types' : 'Empty shelf'}</span></div>
             <p class="shelf-description">${started ? 'Select an ingredient to add one portion.' : 'Stock appears when a game starts.'}</p>
-            <ul class="ingredient-list" aria-label="${started ? 'Ingredient shelf' : 'Empty ingredient shelf'}">${ingredientShelf(state.mixing)}</ul>
+            <ul class="ingredient-list" aria-label="${started ? 'Ingredient shelf' : 'Empty ingredient shelf'}">${ingredientShelf(state.game?.mixing ?? null)}</ul>
           </section>
           <section class="brew-station" aria-labelledby="cauldron-heading">
             <div class="station-heading"><h2 id="cauldron-heading">The cauldron</h2><span>Medium mode</span></div>
@@ -135,30 +148,34 @@ export function renderGameView(container: HTMLElement, state: GameViewState): vo
             <p class="cauldron-caption">The cauldron is empty.</p>
             <p class="ingredient-feedback" id="ingredient-feedback" role="status" aria-atomic="true"></p>
           </section>
-          ${recipePanel(started)}
+          ${recipePanel(recipe)}
         </div>
-        <div class="parameter-grid" role="group" aria-label="Cauldron parameters">${parameterBars(started)}</div>
+        <div class="parameter-grid" role="group" aria-label="Cauldron parameters">${parameterBars(recipe)}</div>
       </div>
+      <section class="brew-feedback" aria-labelledby="last-brew-title" hidden></section>
       <div class="game-bottom-row">
         <button class="button button-quiet footer-button" type="button" data-action="help">${icon('help')}<span>Help</span></button>
         <div class="main-action-group">
-          <button class="button button-primary main-action" type="button" ${started ? 'disabled aria-describedby="feature-notice"' : 'data-action="start"'}>
+          <button class="button button-primary main-action" type="button" data-action="${started ? 'brew' : 'start'}" aria-describedby="station-instruction">
             ${icon('spark')} ${started ? 'Brew potion' : 'Start Game'} ${icon('spark')}
           </button>
-          <p class="station-instruction">${started ? 'Brewing is coming soon. Use Menu → Start new game to mix again.' : 'Match Temperature, Density, and Magic Power.'}</p>
+          <p class="station-instruction" id="station-instruction">${started ? 'Add at least one ingredient to brew.' : 'Match Temperature, Density, and Magic Power.'}</p>
         </div>
         <button class="button button-quiet footer-button" type="button" data-action="menu">${icon('menu')}<span>Menu</span></button>
       </div>
       <div class="game-footnote">
         <div class="bar-legend" role="group" aria-label="Parameter bar legend"><span><i class="legend-target"></i>Recipe range</span><span><i class="legend-marker"></i>Current value</span></div>
-        <p class="feature-notice" id="feature-notice">${started ? 'Recipe and timer are previews; brewing is not active yet.' : 'Start a Medium game to mix ingredients.'}</p>
+        <p class="feature-notice" id="feature-notice">${started ? 'Countdown and saved results are coming next.' : 'Start a Medium game to brew potions.'}</p>
       </div>
     </main>`;
-  updateMixingView(container, state);
+  updateGameView(container, state);
 }
 
-export function updateMixingView(container: HTMLElement, state: GameViewState): void {
-  const mixing = state.mixing;
+export function updateGameView(container: HTMLElement, state: GameViewState): void {
+  const game = state.game;
+  const mixing = game?.mixing ?? null;
+  const recipe = game?.recipe;
+  const ended = game?.status === 'game-over';
   const count = mixing?.mixture.length ?? 0;
   const full = count === MIXTURE_CAPACITY;
 
@@ -169,8 +186,8 @@ export function updateMixingView(container: HTMLElement, state: GameViewState): 
     if (button === null || mixing === null) continue;
     const stock = mixing.inventory[ingredient.id];
     const exhausted = stock === 0;
-    button.disabled = exhausted || state.paused;
-    button.setAttribute('aria-disabled', String(exhausted || full || state.paused));
+    button.disabled = exhausted || state.paused || ended;
+    button.setAttribute('aria-disabled', String(exhausted || full || state.paused || ended));
     button.classList.toggle('is-exhausted', exhausted);
     const illustration = button.querySelector('svg.ingredient-illustration');
     if (exhausted && illustration !== null) {
@@ -217,20 +234,23 @@ export function updateMixingView(container: HTMLElement, state: GameViewState): 
         : `${count} of ${MIXTURE_CAPACITY} portions added${full ? ' · Cauldron full' : ''}.`;
   }
 
-  for (const parameter of PREVIEW_PARAMETERS) {
+  for (const parameter of PARAMETERS) {
     const panel = container.querySelector<HTMLElement>(`.parameter.${parameter.className}`);
     if (panel === null) continue;
     const value = mixing?.totals[parameter.key] ?? 0;
-    const limit = Math.max(100, Math.ceil(Math.abs(value) / 100) * 100);
-    const inRange = mixing !== null && value >= parameter.min && value <= parameter.max;
+    const range = recipe?.[parameter.key];
+    const min = range?.min ?? 0;
+    const max = range?.max ?? 0;
+    const limit = Math.max(
+      100,
+      Math.ceil(Math.max(Math.abs(value), Math.abs(min), Math.abs(max)) / 100) * 100,
+    );
+    const inRange = range !== undefined && value >= min && value <= max;
     const position = (number: number): string => `${50 + (number / (limit * 2)) * 100}%`;
     panel.classList.toggle('is-in-range', inRange);
     panel.style.setProperty('--current-position', position(value));
-    panel.style.setProperty('--target-start', position(parameter.min));
-    panel.style.setProperty(
-      '--target-width',
-      `${((parameter.max - parameter.min) / (limit * 2)) * 100}%`,
-    );
+    panel.style.setProperty('--target-start', position(min));
+    panel.style.setProperty('--target-width', `${((max - min) / (limit * 2)) * 100}%`);
     const current = panel.querySelector('[data-parameter-value]');
     if (current !== null) current.textContent = signed(value);
     const track = panel.querySelector('.parameter-track');
@@ -241,7 +261,7 @@ export function updateMixingView(container: HTMLElement, state: GameViewState): 
       'aria-valuetext',
       mixing === null
         ? String(value)
-        : `${signed(value)}; target ${parameter.min} to ${parameter.max}${inRange ? '; in range' : ''}`,
+        : `${signed(value)}; target ${min} to ${max}${inRange ? '; in range' : ''}`,
     );
     const low = panel.querySelector('[data-scale-min]');
     const high = panel.querySelector('[data-scale-max]');
@@ -249,5 +269,62 @@ export function updateMixingView(container: HTMLElement, state: GameViewState): 
     if (high !== null) high.textContent = `+${limit}`;
     const match = panel.querySelector<HTMLElement>('.parameter-match');
     if (match !== null) match.hidden = !inRange;
+    const target = panel.querySelector('[data-target-range]');
+    if (target !== null) target.textContent = range === undefined ? '—' : `${min}–${max}`;
+    const recipeRange = container.querySelector(`[data-recipe-range="${parameter.key}"]`);
+    if (recipeRange !== null) recipeRange.textContent = range === undefined ? '—' : `${min}–${max}`;
   }
+
+  const recipeName = container.querySelector('[data-recipe-name]');
+  if (recipeName !== null) recipeName.textContent = recipe?.name ?? 'No recipe yet';
+  const score = container.querySelector('[data-score]');
+  if (score !== null) score.textContent = String(game?.score ?? 0);
+  const time = container.querySelector('[data-time]');
+  if (time !== null) time.textContent = formatTime(game?.timeRemaining ?? 0);
+  const lives = container.querySelector('.lives');
+  lives?.setAttribute(
+    'aria-label',
+    game === null ? 'No lives before starting' : `${game.lives} lives`,
+  );
+  const hearts = container.querySelector('.life-icons');
+  if (hearts !== null && game !== null) {
+    hearts.innerHTML = Array.from(
+      { length: STARTING_LIVES },
+      (_, index) =>
+        `<span${index >= game.lives ? ' class="life-lost"' : ''}>${icon('heart')}</span>`,
+    ).join('');
+  }
+  const pause = container.querySelector<HTMLButtonElement>('[data-action="pause"]');
+  if (pause !== null) pause.disabled = game === null || ended;
+  const brew = container.querySelector<HTMLButtonElement>('[data-action="brew"]');
+  if (brew !== null) brew.disabled = count === 0 || state.paused || ended;
+  const instruction = container.querySelector('#station-instruction');
+  if (instruction !== null && game !== null) {
+    instruction.textContent = ended
+      ? 'Run finished. Start a new game to try again.'
+      : count === 0
+        ? 'Add at least one ingredient to brew.'
+        : full
+          ? 'Cauldron full. Brew this mixture before adding more.'
+          : `Match all three ranges with ±${BREW_TOLERANCE} tolerance, then brew.`;
+  }
+
+  const feedback = container.querySelector<HTMLElement>('.brew-feedback');
+  if (feedback !== null) {
+    feedback.hidden = state.lastBrew === null;
+    feedback.innerHTML = state.lastBrew === null ? '' : brewFeedbackMarkup(state.lastBrew);
+  }
+}
+
+function brewFeedbackMarkup(result: BrewFeedback): string {
+  return `
+    <h2 id="last-brew-title">${result.recipe.name} · ${result.success ? 'Potion brewed!' : 'Brew failed'}</h2>
+    <p>${result.success ? `+${result.scoreDelta} points · ${result.timeDelta > 0 ? `+${result.timeDelta} seconds` : 'Clock already at maximum'}` : 'One life lost. The recipe stays the same.'}</p>
+    <dl class="brew-checks">${PARAMETERS.map(
+      (parameter) => `
+      <div class="${result.checks[parameter.key] ? 'brew-check-passed' : 'brew-check-failed'}">
+        <dt>${parameter.name} · ${result.checks[parameter.key] ? 'Matched' : 'Outside range'}</dt>
+        <dd>${signed(result.totals[parameter.key])}<span>Accepted ${result.recipe[parameter.key].min - BREW_TOLERANCE}–${result.recipe[parameter.key].max + BREW_TOLERANCE}</span></dd>
+      </div>`,
+    ).join('')}</dl>`;
 }

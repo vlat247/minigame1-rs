@@ -1,6 +1,9 @@
+import { SCORE_PER_BREW } from '../logic/brewing';
+import type { GameState } from '../state/game';
 import { icon } from './icons';
 
-export type GameDialog = 'help' | 'menu' | 'leaderboard' | 'pause' | 'exit' | 'restart';
+export type GameDialog =
+  'help' | 'menu' | 'leaderboard' | 'pause' | 'exit' | 'restart' | 'game-over';
 
 interface DialogContent {
   readonly title: string;
@@ -8,7 +11,7 @@ interface DialogContent {
   readonly body: string;
 }
 
-const DIALOGS: Record<GameDialog, DialogContent> = {
+const DIALOGS: Record<Exclude<GameDialog, 'game-over'>, DialogContent> = {
   help: {
     title: 'How to play',
     description: 'A good potion is a matter of balance.',
@@ -16,10 +19,11 @@ const DIALOGS: Record<GameDialog, DialogContent> = {
       <ol class="help-steps">
         <li><strong>Read the recipe.</strong><p>Find its Temperature, Density, and Magic Power target ranges.</p></li>
         <li><strong>Choose your ingredients.</strong><p>Each ingredient changes the three values. Use up to 4 portions per mixture; every added portion is spent.</p></li>
-        <li><strong>Brew a potion.</strong><p>All three values must fit the targets, with a tolerance of ±8 in Medium mode. A successful brew earns 200 points and up to 10 extra seconds. A failed brew costs one life.</p></li>
+        <li><strong>Brew a potion.</strong><p>All three values must fit the targets, with a tolerance of ±8 in Medium mode. Success earns 200 points, adds up to 10 seconds without exceeding 2:30, and selects another recipe. Failure costs one life and keeps the recipe.</p></li>
       </ol>
       <p class="dialog-note">A Medium game begins with 2:30 and 3 lives. Time, lives, and ingredient stock limit the run.</p>
-      <p class="dialog-note">Ingredient mixing is active. The recipe and timer are previews, and brewing is coming soon. Use Menu → Start new game to reset the mixture and receive fresh stock.</p>
+      <p class="dialog-note">Every brew clears the cauldron. Spent ingredients never return to the shelf. Green gauges mark the original recipe ranges; brewing also allows the ±8 tolerance.</p>
+      <p class="dialog-note">The countdown and saved results are coming later. Use Menu → Start new game to reset the run with fresh stock and a random Medium recipe.</p>
       <div class="dialog-actions"><button class="button button-primary" type="button" data-action="dialog-close" data-dialog-focus>Got it</button></div>`,
   },
   menu: {
@@ -32,7 +36,7 @@ const DIALOGS: Record<GameDialog, DialogContent> = {
         <button class="menu-action" type="button" data-action="leaderboard"><span>${icon('trophy')}Leaderboard</span>${icon('arrow')}</button>
         <button class="menu-action" type="button" data-action="help"><span>${icon('help')}How to play</span>${icon('arrow')}</button>
       </div>
-      <p class="dialog-note">New Game clears the mixture and gives each ingredient 2–15 portions of fresh stock.</p>`,
+      <p class="dialog-note">New Game resets your score and lives, gives each ingredient 2–15 portions, and selects a random Medium recipe.</p>`,
   },
   leaderboard: {
     title: 'Leaderboard',
@@ -53,22 +57,36 @@ const DIALOGS: Record<GameDialog, DialogContent> = {
   },
   exit: {
     title: 'Leave the workbench?',
-    description: 'Returning to the start screen discards the current mixture and stock.',
+    description: 'Returning to the start screen discards the current run and score.',
     body: `<div class="dialog-actions"><button class="button button-secondary" type="button" data-action="dialog-close" data-dialog-focus>Keep it open</button><button class="button button-primary" type="button" data-action="confirm-exit">Exit to start</button></div>`,
   },
   restart: {
     title: 'Start a new game?',
-    description: 'This will clear the mixture and give you fresh ingredient stock.',
+    description: 'This resets your score, lives, mixture, and stock, then selects a random recipe.',
     body: `<div class="dialog-actions"><button class="button button-secondary" type="button" data-action="dialog-close" data-dialog-focus>Keep current game</button><button class="button button-primary" type="button" data-action="confirm-new">Start new game</button></div>`,
   },
 };
 
-export function dialogMarkup(kind: GameDialog): string {
-  const content = DIALOGS[kind];
+function gameOverContent(game: GameState | null): DialogContent {
+  return {
+    title: 'Game over',
+    description:
+      game?.endReason === 'out-of-ingredients'
+        ? 'Your ingredient stock is exhausted.'
+        : 'You have no lives left.',
+    body: `
+      <dl class="menu-rules"><div><dt>Final score</dt><dd>${game?.score ?? 0}</dd></div><div><dt>Potions brewed</dt><dd>${(game?.score ?? 0) / SCORE_PER_BREW}</dd></div></dl>
+      <p class="dialog-note">Results are not saved yet.</p>
+      <div class="dialog-actions"><button class="button button-secondary" type="button" data-action="confirm-exit">Exit to start</button><button class="button button-primary" type="button" data-action="confirm-new" data-dialog-focus>Play again</button></div>`,
+  };
+}
+
+export function dialogMarkup(kind: GameDialog, game: GameState | null): string {
+  const content = kind === 'game-over' ? gameOverContent(game) : DIALOGS[kind];
   return `
     <div class="dialog-header">
       <h2 id="game-dialog-title">${content.title}</h2>
-      <button class="button dialog-close" type="button" data-action="dialog-close" aria-label="${kind === 'pause' ? 'Resume game' : 'Close dialog'}">${icon('close')}</button>
+      <button class="button dialog-close" type="button" data-action="dialog-close" aria-label="${kind === 'pause' ? 'Resume game' : kind === 'game-over' ? 'Return to start screen' : 'Close dialog'}">${icon('close')}</button>
     </div>
     <p class="dialog-description" id="game-dialog-description">${content.description}</p>
     ${content.body}`;

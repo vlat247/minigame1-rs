@@ -260,6 +260,9 @@ ul {
   stroke: #e6a06c;
   filter: drop-shadow(0 2px 2px #000);
 }
+.life-lost {
+  opacity: 0.22;
+}
 .lives-empty {
   min-width: 106px;
   color: var(--muted);
@@ -273,7 +276,8 @@ ul {
   isolation: isolate;
   transition: filter 160ms ease;
 }
-[data-paused='true'] .playfield {
+[data-paused='true'] .playfield,
+[data-paused='true'] .brew-feedback {
   filter: blur(5px);
 }
 .workshop-backdrop {
@@ -752,6 +756,49 @@ ul {
   font-weight: 500;
   color: var(--ink);
 }
+.brew-feedback {
+  margin: 0 14px 20px;
+  padding: 16px 18px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  transition: filter 160ms ease;
+}
+.brew-feedback h2 {
+  font-family: var(--display-font);
+  font-size: 20px;
+  font-weight: 400;
+  color: var(--brass);
+}
+.brew-feedback > p {
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.brew-checks {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin: 16px 0 0;
+}
+.brew-checks dt {
+  font-size: 12px;
+}
+.brew-checks dd {
+  margin: 4px 0 0;
+  font-variant-numeric: tabular-nums;
+  font-size: 18px;
+}
+.brew-checks dd span {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+}
+.brew-check-passed dd {
+  color: var(--primary);
+}
+.brew-check-failed dd {
+  color: var(--temperature);
+}
 .game-bottom-row {
   display: grid;
   grid-template-columns: 1fr minmax(280px, 480px) 1fr;
@@ -1171,6 +1218,10 @@ ul {
   }
 }
 @media (max-width: 600px) {
+  .brew-checks {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
   #app {
     padding: 0 12px 16px;
   }
