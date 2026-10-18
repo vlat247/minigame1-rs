@@ -7,7 +7,7 @@ export { MAX_TIME as STARTING_TIME } from '../logic/brewing.ts';
 export const STARTING_LIVES = 3;
 
 export type GameStatus = 'playing' | 'game-over';
-export type GameEndReason = 'out-of-lives' | 'out-of-ingredients' | null;
+export type GameEndReason = 'out-of-lives' | 'out-of-ingredients' | 'time-expired' | null;
 
 export interface GameState {
   readonly mixing: MixingState;
@@ -15,6 +15,7 @@ export interface GameState {
   readonly score: number;
   readonly lives: number;
   readonly timeRemaining: number;
+  readonly elapsedTime: number;
   readonly status: GameStatus;
   readonly endReason: GameEndReason;
 }
@@ -28,6 +29,7 @@ export function createGame(random: () => number = Math.random): GameState {
     score: 0,
     lives: STARTING_LIVES,
     timeRemaining: MAX_TIME,
+    elapsedTime: 0,
     status: 'playing',
     endReason: null,
   };

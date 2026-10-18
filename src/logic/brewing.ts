@@ -106,6 +106,7 @@ export function brewGame(state: GameState, random: () => number = Math.random): 
   return {
     accepted: true,
     state: {
+      ...state,
       mixing,
       recipe: check.success ? selectMediumRecipe(random) : state.recipe,
       score,
