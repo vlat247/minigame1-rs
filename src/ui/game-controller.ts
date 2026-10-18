@@ -1,15 +1,17 @@
 import { getIngredient } from '../data/ingredients';
-import { addIngredient, createMixingState } from '../logic/ingredients';
+import { brewGame } from '../logic/brewing';
+import { addIngredient } from '../logic/ingredients';
+import { createGame } from '../state/game';
 import { dialogMarkup } from './dialogs';
 import type { GameDialog } from './dialogs';
-import { renderGameView, updateMixingView } from './game-view';
+import { renderGameView, updateGameView } from './game-view';
 import type { GameViewState } from './game-view';
 
 export function mountGame(container: HTMLElement): () => void {
   const view = document.createElement('div');
   const dialog = document.createElement('dialog');
   const announcement = document.createElement('p');
-  let state: GameViewState = { mixing: null, paused: false };
+  let state: GameViewState = { game: null, paused: false, lastBrew: null };
   let dialogs: GameDialog[] = [];
   let returnAction = 'start';
 
@@ -29,7 +31,7 @@ export function mountGame(container: HTMLElement): () => void {
   }
 
   function renderDialog(kind: GameDialog): void {
-    dialog.innerHTML = dialogMarkup(kind);
+    dialog.innerHTML = dialogMarkup(kind, state.game);
     dialog.querySelector<HTMLElement>('[data-dialog-focus]')?.focus();
   }
 
@@ -55,11 +57,10 @@ export function mountGame(container: HTMLElement): () => void {
 
   function startGame(): void {
     dismissDialogs();
-    state = { mixing: createMixingState(), paused: false };
+    state = { game: createGame(), paused: false, lastBrew: null };
     render();
     focusAction('pause');
-    announcement.textContent =
-      'Medium workbench opened. Select ingredients to add up to four portions. Brewing and the timer are not active yet.';
+    announcement.textContent = `Medium game started. Current recipe: ${state.game?.recipe.name}. Add up to four portions, then brew. The countdown is not active yet.`;
   }
 
   function resumeGame(): void {
@@ -71,7 +72,7 @@ export function mountGame(container: HTMLElement): () => void {
   }
 
   function pauseGame(): void {
-    if (state.mixing === null || state.paused) return;
+    if (state.game === null || state.game.status !== 'playing' || state.paused) return;
     state = { ...state, paused: true };
     render();
     returnAction = 'pause';
@@ -85,6 +86,10 @@ export function mountGame(container: HTMLElement): () => void {
 
   function closeDialog(): void {
     const current = dialogs.at(-1);
+    if (current === 'game-over') {
+      showStart();
+      return;
+    }
     if (current === 'pause') {
       resumeGame();
       return;
@@ -101,15 +106,22 @@ export function mountGame(container: HTMLElement): () => void {
 
   function showStart(): void {
     dismissDialogs();
-    state = { mixing: null, paused: false };
+    state = { game: null, paused: false, lastBrew: null };
     render();
     focusAction('start');
     announcement.textContent = 'Returned to the empty start screen.';
   }
 
   function addPortion(id: string | undefined): void {
-    if (state.mixing === null || state.paused || dialog.open || id === undefined) return;
-    const result = addIngredient(state.mixing, id);
+    if (
+      state.game === null ||
+      state.game.status !== 'playing' ||
+      state.paused ||
+      dialog.open ||
+      id === undefined
+    )
+      return;
+    const result = addIngredient(state.game.mixing, id);
     const ingredient = getIngredient(id);
     if (ingredient === undefined) return;
     const feedback = view.querySelector('#ingredient-feedback');
@@ -118,15 +130,15 @@ export function mountGame(container: HTMLElement): () => void {
       if (feedback !== null) {
         feedback.textContent =
           result.reason === 'cauldron-full'
-            ? 'Cauldron full: only four portions fit. Start a new game from Menu to mix again.'
+            ? 'Cauldron full: only four portions fit. Brew this mixture before adding more.'
             : `${ingredient.name} is out of stock.`;
       }
       return;
     }
 
-    state = { ...state, mixing: result.state };
+    state = { ...state, game: { ...state.game, mixing: result.state }, lastBrew: null };
     // Update existing controls and gauges so keyboard focus and CSS transitions survive.
-    updateMixingView(view, state);
+    updateGameView(view, state);
     if (feedback !== null) {
       const totals = result.state.totals;
       feedback.textContent = `${ingredient.name} added. Temperature ${totals.temperature}, Density ${totals.density}, Magic Power ${totals.magicPower}.`;
@@ -134,6 +146,26 @@ export function mountGame(container: HTMLElement): () => void {
     if (result.state.inventory[ingredient.id] === 0) {
       const next = view.querySelector<HTMLButtonElement>('.ingredient:not(:disabled)');
       next?.focus({ preventScroll: true });
+    }
+  }
+
+  function brewPotion(): void {
+    if (state.game === null || state.paused || dialog.open) return;
+    const result = brewGame(state.game);
+    if (!result.accepted) return;
+
+    state = { ...state, game: result.state, lastBrew: result.feedback };
+    updateGameView(view, state);
+    const outcome = result.feedback;
+    announcement.textContent = outcome.success
+      ? `${outcome.recipe.name} brewed. ${outcome.scoreDelta} points earned; total score ${result.state.score}. Next recipe: ${result.state.recipe.name}.`
+      : `${outcome.recipe.name} failed. One life lost; ${result.state.lives} lives remain. The recipe stays the same.`;
+    const feedback = view.querySelector('#ingredient-feedback');
+    if (feedback !== null) feedback.textContent = '';
+    if (result.state.status === 'game-over') {
+      openDialog('game-over');
+    } else {
+      view.querySelector<HTMLButtonElement>('.ingredient:not(:disabled)')?.focus();
     }
   }
 
@@ -152,13 +184,16 @@ export function mountGame(container: HTMLElement): () => void {
       case 'add-ingredient':
         addPortion(control.dataset.ingredient);
         break;
+      case 'brew':
+        brewPotion();
+        break;
       case 'help':
       case 'menu':
       case 'leaderboard':
         openDialog(control.dataset.action);
         break;
       case 'new':
-        if (state.mixing !== null) openDialog('restart');
+        if (state.game !== null && state.game.status === 'playing') openDialog('restart');
         else startGame();
         break;
       case 'pause':
@@ -168,7 +203,7 @@ export function mountGame(container: HTMLElement): () => void {
         resumeGame();
         break;
       case 'home':
-        if (state.mixing !== null) openDialog('exit');
+        if (state.game !== null && state.game.status === 'playing') openDialog('exit');
         else showStart();
         break;
       case 'exit':
