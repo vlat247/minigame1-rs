@@ -5,7 +5,7 @@ import { BREW_TOLERANCE } from '../logic/brewing';
 import type { BrewFeedback } from '../logic/brewing';
 import { MIXTURE_CAPACITY } from '../logic/ingredients';
 import type { MixingState } from '../logic/ingredients';
-import { STARTING_LIVES } from '../state/game';
+import { STARTING_LIVES, STARTING_TIME } from '../state/game';
 import type { GameState } from '../state/game';
 import { PARAMETERS } from './parameters';
 import { icon } from './icons';
@@ -61,9 +61,10 @@ function ingredientShelf(mixing: MixingState | null): string {
 }
 
 function formatTime(seconds: number): string {
-  return `${Math.floor(seconds / 60)
+  const wholeSeconds = Math.ceil(Math.max(0, seconds));
+  return `${Math.floor(wholeSeconds / 60)
     .toString()
-    .padStart(2, '0')}:${(seconds % 60).toString().padStart(2, '0')}`;
+    .padStart(2, '0')}:${(wholeSeconds % 60).toString().padStart(2, '0')}`;
 }
 
 function recipePanel(recipe: Recipe | undefined): string {
@@ -133,6 +134,7 @@ export function renderGameView(container: HTMLElement, state: GameViewState): vo
         </div>
         <button class="button button-quiet pause-button" type="button" data-action="pause" ${started ? '' : 'disabled'}>${icon('pause')}<span>Pause</span></button>
       </div>
+      <progress class="time-bar" max="${STARTING_TIME}" value="0" aria-label="Time remaining"></progress>
       <div class="playfield">
         <div class="workshop-backdrop" aria-hidden="true">${workshopScenery()}</div>
         <div class="workbench-grid">
@@ -165,7 +167,7 @@ export function renderGameView(container: HTMLElement, state: GameViewState): vo
       </div>
       <div class="game-footnote">
         <div class="bar-legend" role="group" aria-label="Parameter bar legend"><span><i class="legend-target"></i>Recipe range</span><span><i class="legend-marker"></i>Current value</span></div>
-        <p class="feature-notice" id="feature-notice">${started ? 'Countdown and saved results are coming next.' : 'Start a Medium game to brew potions.'}</p>
+        <p class="feature-notice" id="feature-notice">${started ? 'Pause to stop the clock. Completed scores can enter the local Top 10.' : 'Start a Medium game to brew potions.'}</p>
       </div>
     </main>`;
   updateGameView(container, state);
@@ -279,8 +281,6 @@ export function updateGameView(container: HTMLElement, state: GameViewState): vo
   if (recipeName !== null) recipeName.textContent = recipe?.name ?? 'No recipe yet';
   const score = container.querySelector('[data-score]');
   if (score !== null) score.textContent = String(game?.score ?? 0);
-  const time = container.querySelector('[data-time]');
-  if (time !== null) time.textContent = formatTime(game?.timeRemaining ?? 0);
   const lives = container.querySelector('.lives');
   lives?.setAttribute(
     'aria-label',
@@ -314,12 +314,29 @@ export function updateGameView(container: HTMLElement, state: GameViewState): vo
     feedback.hidden = state.lastBrew === null;
     feedback.innerHTML = state.lastBrew === null ? '' : brewFeedbackMarkup(state.lastBrew);
   }
+  updateSessionView(container, state);
+}
+
+export function updateSessionView(container: HTMLElement, state: GameViewState): void {
+  const remaining = state.game?.timeRemaining ?? 0;
+  const formatted = formatTime(remaining);
+  const time = container.querySelector('[data-time]');
+  if (time !== null && time.textContent !== formatted) time.textContent = formatted;
+  const lowTime = state.game !== null && remaining < 15;
+  container.querySelector('.stat-time')?.classList.toggle('is-low-time', lowTime);
+  const bar = container.querySelector<HTMLProgressElement>('.time-bar');
+  if (bar !== null) {
+    bar.value = remaining;
+    bar.classList.toggle('is-low-time', lowTime);
+    bar.setAttribute('aria-valuetext', `${formatted} remaining`);
+  }
+  container.dataset.ended = String(state.game?.status === 'game-over');
 }
 
 function brewFeedbackMarkup(result: BrewFeedback): string {
   return `
     <h2 id="last-brew-title">${result.recipe.name} · ${result.success ? 'Potion brewed!' : 'Brew failed'}</h2>
-    <p>${result.success ? `+${result.scoreDelta} points · ${result.timeDelta > 0 ? `+${result.timeDelta} seconds` : 'Clock already at maximum'}` : 'One life lost. The recipe stays the same.'}</p>
+    <p>${result.success ? `+${result.scoreDelta} points · ${result.timeDelta > 0 ? `+${Number(result.timeDelta.toFixed(1))} seconds` : 'Clock already at maximum'}` : 'One life lost. The recipe stays the same.'}</p>
     <dl class="brew-checks">${PARAMETERS.map(
       (parameter) => `
       <div class="${result.checks[parameter.key] ? 'brew-check-passed' : 'brew-check-failed'}">
