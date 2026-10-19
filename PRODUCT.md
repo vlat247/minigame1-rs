@@ -44,7 +44,7 @@ Level 3 reactions, drag and drop, tooltips, Pour Out, keyboard shortcuts, and ad
 
 ## Brand Personality
 
-A dark fantasy alchemy workshop, following the assignment's illustrated reference: brass frames, a wooden ingredient cabinet, shaded iron cauldron, green magical light, and a parchment recipe. Use display serif headings with clear numerical labels. Controls and numerical values take priority over ornament.
+A dark fantasy alchemy workshop moving toward a pixel-art visual style on `feat/app-redesign`. The first pass replaces the eight ingredients with original 32 × 32 SVG sprites inspired by pixel-art inventory illustrations: stepped warm dark outlines, limited palettes, top-left highlights, and distinct silhouettes. Show the sprites on small parchment tiles and reuse them in mixture slots. Keep the brass frames, wooden cabinet, shaded iron cauldron, green magical light, and parchment recipe during this ingredient-focused pass. Controls and numerical values take priority over ornament.
 
 ## Anti-references
 
@@ -54,7 +54,7 @@ Avoid marketing landing-page layouts, dashboard metric-card grids, bright applic
 
 - Make the recipe, ingredient stock, and three parameters readable together.
 - Keep the welcome state empty and the primary action clear.
-- Use CSS and authored inline SVG for game elements.
+- Use CSS and individually authored SVG assets for game elements.
 - Make remaining time and lives easy to read without relying on color alone.
 - Preserve each brew's result after clearing the cauldron, with explicit pass/fail text for every parameter.
 - Show spent stock and full-cauldron feedback without changing the underlying rules.

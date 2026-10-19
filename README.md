@@ -4,7 +4,7 @@ A browser game for the [RS School qualifying-stage assignment](https://github.co
 
 ## Current status
 
-The current branch, **`feat/difficulty-persistence`**, includes Level 1 gameplay and Level 2 difficulty selection, automatic unfinished-game saves, paused continuation, and separate local Top-10 leaderboards for Easy, Medium, and Hard. Level 3 features and further design polish remain for later branches. A public deployment is still pending.
+The current branch, **`feat/app-redesign`**, builds on the completed Level 1 and Level 2 gameplay and starts the visual redesign with eight original pixel-art ingredients. Difficulty selection, automatic unfinished-game saves, paused continuation, and separate local Top-10 leaderboards remain available. Level 3 features and the rest of the visual redesign are pending. A public deployment is still pending.
 
 The application uses TypeScript and browser APIs, with Vite for development and production builds. Gameplay must use no frameworks, game engines or runtime libraries. ESLint, Prettier and Husky support development checks.
 
@@ -15,14 +15,14 @@ Use **Node.js 22.13+ on the 22.x line**, or **Node.js 24+**. **Node.js 24** is r
 ```sh
 git clone https://github.com/vlat247/minigame1-rs.git
 cd minigame1-rs
-git switch feat/difficulty-persistence
+git switch feat/app-redesign
 npm ci
 npm run dev
 ```
 
 Open the local URL printed by Vite. `npm ci` installs the versions recorded in `package-lock.json` and its `prepare` step installs the Git hooks. If using nvm, run `nvm use` first.
 
-The commands above check out the difficulty-and-persistence branch after it has been pushed. Check out the relevant story or task branch when reviewing other work.
+The commands above check out the redesign branch after it has been pushed. Check out the relevant story or task branch when reviewing other work.
 
 ## Choose a difficulty
 
@@ -55,7 +55,7 @@ Time bonuses never exceed the chosen difficulty's starting time. Reaction counts
 - **Menu → Start new game** resets the run after confirmation and replaces its unfinished save. Dialog navigation and canceled confirmations preserve the current run. A confirmed **Exit to start** discards the run, clears its unfinished save, and returns to the welcome screen. Finishing a run also clears its unfinished save.
 - **Tab / Shift+Tab** navigate buttons and stay inside an open dialog. **Escape** closes ordinary dialogs or returns to their previous dialog; Pause remains open until Resume or Exit is chosen.
 
-The welcome screen has no ingredient stock, no recipe targets, no life icons, and zero score and time. Game elements are authored with inline SVG and CSS; no bitmap assets or runtime libraries are used.
+The welcome screen has no ingredient stock, no recipe targets, no life icons, and zero score and time. Game elements are authored with SVG and CSS; no bitmap assets or runtime libraries are used.
 
 The catalogue contains all **20 official recipes**. Each difficulty selects from its own recipe pool at the start and after successful brews; Medium uses the **seven Medium recipes** required by Level 1. Immediate repeats are allowed. Selection does not filter for recipes that can be made with the remaining stock. Gauge feedback uses the original displayed ranges; the brew result checks the wider ranges with the selected tolerance.
 
@@ -67,7 +67,7 @@ Level 3 reactions, drag and drop, tooltips, Pour Out, keyboard shortcuts, and ad
 
 Medium's **150-second cap** follows the [README difficulty table](https://github.com/rolling-scopes-school/qualifying-stage/tree/main/tasks/game-alchemists-cauldron#difficulty-table) and [US 1.4](https://github.com/rolling-scopes-school/qualifying-stage/blob/main/tasks/game-alchemists-cauldron/user_story_1.4.md), which caps bonuses at the starting time. [US 1.3](https://github.com/rolling-scopes-school/qualifying-stage/blob/main/tasks/game-alchemists-cauldron/user_story_1.3.md) still contains an inconsistent 120-second cap; this implementation uses the shared Medium rules.
 
-The interface follows the assignment's dark fantasy workshop: brass frames, a cabinet-style shelf, colored glass ingredient illustrations, a shaded iron cauldron on a stone hearth, green rune light, and an upright parchment recipe. All artwork is authored SVG/CSS, with separate components for the scene, cauldron, icons, and controls. Adding the first portion reveals the cauldron's green liquid, bubbles, and steam.
+The interface follows the assignment's dark fantasy workshop: brass frames, a cabinet-style shelf, a shaded iron cauldron on a stone hearth, green rune light, and an upright parchment recipe. The ingredient redesign uses eight separate hand-authored **32 × 32 pixel-art SVGs** with stepped outlines, limited palettes, and individual silhouettes. The shelf presents them on small parchment tiles; the cauldron slots reuse the same sprites. Integer geometry and pixelated image rendering keep their edges crisp without applying a filter to the original artwork. Adding the first portion reveals the cauldron's green liquid, bubbles, and steam.
 
 The responsive layout uses three columns on desktop, a station-first layout on tablets, and a two-column ingredient shelf on phones. The main Start/Brew action sits below the parameter gauges, with Help and Menu at the outer edges. Styles support reduced motion and visible keyboard focus.
 
@@ -133,9 +133,10 @@ src/
     parameters.ts          Shared parameter names, icons and display metadata
     dialogs.ts             Help, menu, pause, confirmations and Game Over
     icons.ts               Shared interface icons
-    illustrations.ts       Cauldron, ingredient and workshop SVG artwork
+    illustrations.ts       Cauldron and workshop SVG artwork
+    ingredient-sprites.ts  Ingredient IDs mapped to individual pixel-art SVGs
   styles/                  Stylesheets and responsive layout
-  assets/                  Authored assets, if needed
+  assets/ingredients/      Eight original 32 × 32 pixel-art SVG sprites
 tests/
   ingredient-system.test.mjs
   recipe-brewing.test.mjs
@@ -164,7 +165,7 @@ The finished game must work in the latest Google Chrome across widths from **375
 Follow the [assignment repository workflow](https://github.com/rolling-scopes-school/qualifying-stage/tree/main/tasks/game-alchemists-cauldron#repository-workflow):
 
 1. Create `story-1` from `main` (or `master` in a repository using that default).
-2. Create a separate task branch from the current story branch. The current feature branch is `feat/difficulty-persistence`, based on `story-1`. The assignment's subsequent story workflow uses `story-2` from `story-1` and `story-3` from `story-2`; prepare the corresponding story branch when submitting that level.
+2. Create a separate task branch from the current story branch. The current feature branch is `feat/app-redesign`, continuing the completed `feat/difficulty-persistence` work. The assignment's subsequent story workflow uses `story-2` from `story-1` and `story-3` from `story-2`; prepare the corresponding story branch when submitting that level.
 3. Keep commits small and focused. Review task changes through a PR targeting the current story branch before integrating them.
 4. When a story is finished, open its final PR to the preceding branch. For Story 1, this is `story-1` → `main`.
 5. **Keep the final story PR unmerged** and submit its link in RS App through **Cross-Check: Submit**.

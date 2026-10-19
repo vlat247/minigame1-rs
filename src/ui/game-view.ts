@@ -1,15 +1,14 @@
 import { DIFFICULTY_SETTINGS } from '../data/difficulty';
 import type { Difficulty } from '../data/difficulty';
 import { getShelfIngredients, getIngredient } from '../data/ingredients';
-import type { IngredientId } from '../data/ingredients';
 import type { Recipe } from '../data/recipes';
 import type { BrewFeedback } from '../logic/brewing';
 import type { MixingState } from '../logic/ingredients';
 import type { GameState } from '../state/game';
 import { PARAMETERS } from './parameters';
 import { icon } from './icons';
-import type { IconName } from './icons';
-import { cauldronIllustration, ingredientIllustration, workshopScenery } from './illustrations';
+import { cauldronIllustration, workshopScenery } from './illustrations';
+import { ingredientIllustration } from './ingredient-sprites';
 
 export interface GameViewState {
   readonly game: GameState | null;
@@ -19,17 +18,6 @@ export interface GameViewState {
   readonly canContinue: boolean;
   readonly saveNotice: string;
 }
-
-const INGREDIENT_ICONS: Record<IngredientId, IconName> = {
-  'dragon-tears': 'dragon',
-  'fairy-dust': 'fairy',
-  'frost-lotus': 'lotus',
-  'mandrake-root': 'mandrake',
-  'caustic-acid': 'acid',
-  'essence-of-the-void': 'void',
-  'phoenix-feather': 'spark',
-  'toad-slime': 'acid',
-};
 
 function signed(value: number): string {
   return value > 0 ? `+${value}` : `${value}`;
@@ -48,7 +36,7 @@ function ingredientShelf(mixing: MixingState | null, difficulty: Difficulty): st
       (ingredient) => `
       <li>
         <button class="ingredient" type="button" data-action="add-ingredient" data-ingredient="${ingredient.id}" aria-describedby="ingredient-feedback">
-          ${ingredientIllustration(INGREDIENT_ICONS[ingredient.id])}
+          ${ingredientIllustration(ingredient.id)}
           <span class="ingredient-content">
             <span class="ingredient-name">${ingredient.name}</span>
             <span class="ingredient-values">
@@ -201,7 +189,7 @@ export function updateGameView(container: HTMLElement, state: GameViewState): vo
     button.disabled = exhausted || state.paused || ended;
     button.setAttribute('aria-disabled', String(exhausted || full || state.paused || ended));
     button.classList.toggle('is-exhausted', exhausted);
-    const illustration = button.querySelector('svg.ingredient-illustration');
+    const illustration = button.querySelector('img.ingredient-illustration');
     if (exhausted && illustration !== null) {
       const placeholder = document.createElement('span');
       placeholder.className = 'ingredient-illustration';
@@ -228,7 +216,7 @@ export function updateGameView(container: HTMLElement, state: GameViewState): vo
       const ingredient = id === undefined ? undefined : getIngredient(id);
       return ingredient === undefined
         ? `<li class="mixture-slot"><span class="sr-only">Empty position </span>${index + 1}</li>`
-        : `<li class="mixture-slot is-filled" title="${index + 1}. ${ingredient.name}"><span class="sr-only">${ingredient.name}</span>${ingredientIllustration(INGREDIENT_ICONS[ingredient.id])}</li>`;
+        : `<li class="mixture-slot is-filled" title="${index + 1}. ${ingredient.name}"><span class="sr-only">${ingredient.name}</span>${ingredientIllustration(ingredient.id)}</li>`;
     }).join('');
   }
 
