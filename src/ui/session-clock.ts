@@ -23,7 +23,7 @@ export function createSessionClock(
   onElapsed: (seconds: number) => void,
   dependencies: Partial<SessionClockDependencies> = {},
 ): SessionClock {
-  const now = dependencies.now ?? (() => performance.now());
+  const now = dependencies.now ?? (() => Date.now());
   const schedule =
     dependencies.setInterval ??
     ((callback: () => void, milliseconds: number) => window.setInterval(callback, milliseconds));

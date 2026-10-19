@@ -1,11 +1,10 @@
-import { LEVEL_ONE_INGREDIENTS, getIngredient } from '../data/ingredients';
+import { DIFFICULTY_SETTINGS } from '../data/difficulty';
+import type { Difficulty } from '../data/difficulty';
+import { getShelfIngredients, getIngredient } from '../data/ingredients';
 import type { IngredientId } from '../data/ingredients';
 import type { Recipe } from '../data/recipes';
-import { BREW_TOLERANCE } from '../logic/brewing';
 import type { BrewFeedback } from '../logic/brewing';
-import { MIXTURE_CAPACITY } from '../logic/ingredients';
 import type { MixingState } from '../logic/ingredients';
-import { STARTING_LIVES, STARTING_TIME } from '../state/game';
 import type { GameState } from '../state/game';
 import { PARAMETERS } from './parameters';
 import { icon } from './icons';
@@ -16,6 +15,9 @@ export interface GameViewState {
   readonly game: GameState | null;
   readonly paused: boolean;
   readonly lastBrew: BrewFeedback | null;
+  readonly selectedDifficulty: Difficulty;
+  readonly canContinue: boolean;
+  readonly saveNotice: string;
 }
 
 const INGREDIENT_ICONS: Record<IngredientId, IconName> = {
@@ -33,16 +35,17 @@ function signed(value: number): string {
   return value > 0 ? `+${value}` : `${value}`;
 }
 
-function ingredientShelf(mixing: MixingState | null): string {
+function ingredientShelf(mixing: MixingState | null, difficulty: Difficulty): string {
   if (mixing === null) {
     return Array.from(
-      { length: 6 },
+      { length: DIFFICULTY_SETTINGS[difficulty].ingredientCount },
       () => '<li class="shelf-slot" aria-hidden="true"><span></span><span></span></li>',
     ).join('');
   }
 
-  return LEVEL_ONE_INGREDIENTS.map(
-    (ingredient) => `
+  return getShelfIngredients(difficulty)
+    .map(
+      (ingredient) => `
       <li>
         <button class="ingredient" type="button" data-action="add-ingredient" data-ingredient="${ingredient.id}" aria-describedby="ingredient-feedback">
           ${ingredientIllustration(INGREDIENT_ICONS[ingredient.id])}
@@ -57,7 +60,8 @@ function ingredientShelf(mixing: MixingState | null): string {
           <span class="stock-count"></span>
         </button>
       </li>`,
-  ).join('');
+    )
+    .join('');
 }
 
 function formatTime(seconds: number): string {
@@ -67,7 +71,8 @@ function formatTime(seconds: number): string {
     .padStart(2, '0')}:${(wholeSeconds % 60).toString().padStart(2, '0')}`;
 }
 
-function recipePanel(recipe: Recipe | undefined): string {
+function recipePanel(recipe: Recipe | undefined, difficulty: Difficulty): string {
+  const settings = DIFFICULTY_SETTINGS[difficulty];
   return `
     <aside class="recipe-panel" aria-labelledby="recipe-heading">
       <div class="section-heading">${icon('magic')}<h2 id="recipe-heading">Current recipe</h2></div>
@@ -85,8 +90,8 @@ function recipePanel(recipe: Recipe | undefined): string {
             </div>`,
         ).join('')}
       </dl>
-      <div class="recipe-capacity"><span>Ingredients</span><strong id="mixture-count">0 <span>/ ${MIXTURE_CAPACITY}</span></strong></div>
-      <p class="recipe-tolerance">${recipe !== undefined ? `Brew tolerance: ±${BREW_TOLERANCE} on each range` : 'Medium mode · Up to 4 ingredients'}</p>
+      <div class="recipe-capacity"><span>Ingredients</span><strong id="mixture-count">0 <span>/ ${settings.maxIngredients}</span></strong></div>
+      <p class="recipe-tolerance">${recipe !== undefined ? `Brew tolerance: ±${settings.tolerance} on each range` : `${settings.label} mode · Up to ${settings.maxIngredients} ingredients`}</p>
     </aside>`;
 }
 
@@ -112,6 +117,8 @@ function parameterBars(recipe: Recipe | undefined): string {
 export function renderGameView(container: HTMLElement, state: GameViewState): void {
   const started = state.game !== null;
   const recipe = state.game?.recipe;
+  const difficulty = state.game?.difficulty ?? state.selectedDifficulty;
+  const settings = DIFFICULTY_SETTINGS[difficulty];
   container.dataset.paused = String(state.paused);
   container.dataset.started = String(started);
   container.innerHTML = `
@@ -128,29 +135,29 @@ export function renderGameView(container: HTMLElement, state: GameViewState): vo
       <div class="game-toolbar" role="group" aria-label="Game status">
         <div class="stat">${icon('spark')}<span>Score</span><strong data-score>0</strong></div>
         <div class="stat stat-time">${icon('clock')}<span>Time</span><strong data-time>00:00</strong></div>
-        <div class="lives" role="group" aria-label="${started ? '3 lives' : 'No lives before starting'}">
+        <div class="lives" role="group" aria-label="${started ? `${settings.lives} lives` : 'No lives before starting'}">
           <span>Lives</span>
           ${started ? '<span class="life-icons" aria-hidden="true"></span>' : '<span class="lives-empty">—</span>'}
         </div>
         <button class="button button-quiet pause-button" type="button" data-action="pause" ${started ? '' : 'disabled'}>${icon('pause')}<span>Pause</span></button>
       </div>
-      <progress class="time-bar" max="${STARTING_TIME}" value="0" aria-label="Time remaining"></progress>
+      <progress class="time-bar" max="${settings.startingTime}" value="0" aria-label="Time remaining"></progress>
       <div class="playfield">
         <div class="workshop-backdrop" aria-hidden="true">${workshopScenery()}</div>
         <div class="workbench-grid">
           <section class="shelf-panel" aria-labelledby="shelf-heading">
-            <div class="section-heading"><h2 id="shelf-heading">Ingredients</h2><span class="shelf-count">${started ? '6 types' : 'Empty shelf'}</span></div>
+            <div class="section-heading"><h2 id="shelf-heading">Ingredients</h2><span class="shelf-count">${started ? `${settings.ingredientCount} types` : 'Empty shelf'}</span></div>
             <p class="shelf-description">${started ? 'Select an ingredient to add one portion.' : 'Stock appears when a game starts.'}</p>
-            <ul class="ingredient-list" aria-label="${started ? 'Ingredient shelf' : 'Empty ingredient shelf'}">${ingredientShelf(state.game?.mixing ?? null)}</ul>
+            <ul class="ingredient-list" aria-label="${started ? 'Ingredient shelf' : 'Empty ingredient shelf'}">${ingredientShelf(state.game?.mixing ?? null, difficulty)}</ul>
           </section>
           <section class="brew-station" aria-labelledby="cauldron-heading">
-            <div class="station-heading"><h2 id="cauldron-heading">The cauldron</h2><span>Medium mode</span></div>
+            <div class="station-heading"><h2 id="cauldron-heading">The cauldron</h2><span>${settings.label} mode</span></div>
             <div class="cauldron-scene">${cauldronIllustration()}</div>
             <ol class="mixture-slots" aria-label="Cauldron contents"></ol>
             <p class="cauldron-caption">The cauldron is empty.</p>
             <p class="ingredient-feedback" id="ingredient-feedback" role="status" aria-atomic="true"></p>
           </section>
-          ${recipePanel(recipe)}
+          ${recipePanel(recipe, difficulty)}
         </div>
         <div class="parameter-grid" role="group" aria-label="Cauldron parameters">${parameterBars(recipe)}</div>
       </div>
@@ -161,14 +168,16 @@ export function renderGameView(container: HTMLElement, state: GameViewState): vo
           <button class="button button-primary main-action" type="button" data-action="${started ? 'brew' : 'start'}" aria-describedby="station-instruction">
             ${icon('spark')} ${started ? 'Brew potion' : 'Start Game'} ${icon('spark')}
           </button>
+          ${!started && state.canContinue ? '<button class="button button-secondary continue-action" type="button" data-action="continue">Continue Game</button>' : ''}
           <p class="station-instruction" id="station-instruction">${started ? 'Add at least one ingredient to brew.' : 'Match Temperature, Density, and Magic Power.'}</p>
         </div>
         <button class="button button-quiet footer-button" type="button" data-action="menu">${icon('menu')}<span>Menu</span></button>
       </div>
       <div class="game-footnote">
         <div class="bar-legend" role="group" aria-label="Parameter bar legend"><span><i class="legend-target"></i>Recipe range</span><span><i class="legend-marker"></i>Current value</span></div>
-        <p class="feature-notice" id="feature-notice">${started ? 'Pause to stop the clock. Completed scores can enter the local Top 10.' : 'Start a Medium game to brew potions.'}</p>
+        <p class="feature-notice" id="feature-notice">${started ? 'Progress saves automatically. Pause to stop the clock.' : `${settings.label} selected · Change difficulty in Menu.${state.canContinue ? ' Continue restores your saved game paused.' : ''}`}</p>
       </div>
+      <p class="save-notice" data-save-notice role="status" ${state.saveNotice === '' ? 'hidden' : ''}></p>
     </main>`;
   updateGameView(container, state);
 }
@@ -177,11 +186,12 @@ export function updateGameView(container: HTMLElement, state: GameViewState): vo
   const game = state.game;
   const mixing = game?.mixing ?? null;
   const recipe = game?.recipe;
+  const settings = DIFFICULTY_SETTINGS[game?.difficulty ?? state.selectedDifficulty];
   const ended = game?.status === 'game-over';
   const count = mixing?.mixture.length ?? 0;
-  const full = count === MIXTURE_CAPACITY;
+  const full = count >= settings.maxIngredients;
 
-  for (const ingredient of LEVEL_ONE_INGREDIENTS) {
+  for (const ingredient of getShelfIngredients(game?.difficulty ?? state.selectedDifficulty)) {
     const button = container.querySelector<HTMLButtonElement>(
       `[data-ingredient="${ingredient.id}"]`,
     );
@@ -207,13 +217,13 @@ export function updateGameView(container: HTMLElement, state: GameViewState): vo
 
   const counter = container.querySelector('#mixture-count');
   if (counter !== null) {
-    counter.innerHTML = `${count} <span>/ ${MIXTURE_CAPACITY}</span>`;
+    counter.innerHTML = `${count} <span>/ ${settings.maxIngredients}</span>`;
     counter.classList.toggle('is-full', full);
   }
 
   const slots = container.querySelector('.mixture-slots');
   if (slots !== null) {
-    slots.innerHTML = Array.from({ length: MIXTURE_CAPACITY }, (_, index) => {
+    slots.innerHTML = Array.from({ length: settings.maxIngredients }, (_, index) => {
       const id = mixing?.mixture[index];
       const ingredient = id === undefined ? undefined : getIngredient(id);
       return ingredient === undefined
@@ -233,7 +243,7 @@ export function updateGameView(container: HTMLElement, state: GameViewState): vo
     caption.textContent =
       count === 0
         ? 'The cauldron is empty.'
-        : `${count} of ${MIXTURE_CAPACITY} portions added${full ? ' · Cauldron full' : ''}.`;
+        : `${count} of ${settings.maxIngredients} portions added${full ? ' · Cauldron full' : ''}.`;
   }
 
   for (const parameter of PARAMETERS) {
@@ -289,7 +299,7 @@ export function updateGameView(container: HTMLElement, state: GameViewState): vo
   const hearts = container.querySelector('.life-icons');
   if (hearts !== null && game !== null) {
     hearts.innerHTML = Array.from(
-      { length: STARTING_LIVES },
+      { length: settings.lives },
       (_, index) =>
         `<span${index >= game.lives ? ' class="life-lost"' : ''}>${icon('heart')}</span>`,
     ).join('');
@@ -306,7 +316,7 @@ export function updateGameView(container: HTMLElement, state: GameViewState): vo
         ? 'Add at least one ingredient to brew.'
         : full
           ? 'Cauldron full. Brew this mixture before adding more.'
-          : `Match all three ranges with ±${BREW_TOLERANCE} tolerance, then brew.`;
+          : `Match all three ranges with ±${settings.tolerance} tolerance, then brew.`;
   }
 
   const feedback = container.querySelector<HTMLElement>('.brew-feedback');
@@ -331,9 +341,15 @@ export function updateSessionView(container: HTMLElement, state: GameViewState):
     bar.setAttribute('aria-valuetext', `${formatted} remaining`);
   }
   container.dataset.ended = String(state.game?.status === 'game-over');
+  const notice = container.querySelector<HTMLElement>('[data-save-notice]');
+  if (notice !== null) {
+    notice.textContent = state.saveNotice;
+    notice.hidden = state.saveNotice === '';
+  }
 }
 
 function brewFeedbackMarkup(result: BrewFeedback): string {
+  const tolerance = DIFFICULTY_SETTINGS[result.recipe.difficulty].tolerance;
   return `
     <h2 id="last-brew-title">${result.recipe.name} · ${result.success ? 'Potion brewed!' : 'Brew failed'}</h2>
     <p>${result.success ? `+${result.scoreDelta} points · ${result.timeDelta > 0 ? `+${Number(result.timeDelta.toFixed(1))} seconds` : 'Clock already at maximum'}` : 'One life lost. The recipe stays the same.'}</p>
@@ -341,7 +357,7 @@ function brewFeedbackMarkup(result: BrewFeedback): string {
       (parameter) => `
       <div class="${result.checks[parameter.key] ? 'brew-check-passed' : 'brew-check-failed'}">
         <dt>${parameter.name} · ${result.checks[parameter.key] ? 'Matched' : 'Outside range'}</dt>
-        <dd>${signed(result.totals[parameter.key])}<span>Accepted ${result.recipe[parameter.key].min - BREW_TOLERANCE}–${result.recipe[parameter.key].max + BREW_TOLERANCE}</span></dd>
+        <dd>${signed(result.totals[parameter.key])}<span>Accepted ${result.recipe[parameter.key].min - tolerance}–${result.recipe[parameter.key].max + tolerance}</span></dd>
       </div>`,
     ).join('')}</dl>`;
 }

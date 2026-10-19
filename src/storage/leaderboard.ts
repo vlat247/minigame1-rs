@@ -1,3 +1,4 @@
+import type { Difficulty } from '../data/difficulty.ts';
 import { addLeaderboardEntry, validatePlayerName } from '../logic/leaderboard.ts';
 import type { LeaderboardEntry } from '../logic/leaderboard.ts';
 
@@ -66,12 +67,18 @@ function normalizeEntries(value: unknown): LeaderboardLoadResult {
 
 export function createLeaderboardStore(
   getStorage: () => LeaderboardStorage = () => window.localStorage,
+  difficulty: Difficulty = 'medium',
 ): LeaderboardStore {
+  const storageKey =
+    difficulty === 'medium'
+      ? LEADERBOARD_STORAGE_KEY
+      : `alchemists-cauldron:leaderboard:${difficulty}:v1`;
+
   return {
     load(): LeaderboardLoadResult {
       let raw: string | null;
       try {
-        raw = getStorage().getItem(LEADERBOARD_STORAGE_KEY);
+        raw = getStorage().getItem(storageKey);
       } catch {
         return { entries: [], error: 'unavailable' };
       }
@@ -89,7 +96,7 @@ export function createLeaderboardStore(
       try {
         const normalized = normalizeEntries(entries);
         if (normalized.error !== null) return false;
-        getStorage().setItem(LEADERBOARD_STORAGE_KEY, JSON.stringify(normalized.entries));
+        getStorage().setItem(storageKey, JSON.stringify(normalized.entries));
         return true;
       } catch {
         return false;
@@ -98,7 +105,7 @@ export function createLeaderboardStore(
 
     clear(): boolean {
       try {
-        getStorage().removeItem(LEADERBOARD_STORAGE_KEY);
+        getStorage().removeItem(storageKey);
         return true;
       } catch {
         return false;

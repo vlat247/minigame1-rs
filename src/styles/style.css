@@ -945,6 +945,32 @@ ul {
   color: var(--muted);
   font-size: 10px;
 }
+.continue-action {
+  margin-top: 10px;
+  min-height: 44px;
+}
+.save-notice {
+  margin-top: 16px;
+  color: var(--danger);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.difficulty-options {
+  display: flex;
+  gap: 8px;
+  margin-top: 20px;
+}
+.difficulty-options .button {
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  padding-inline: 10px;
+}
+.difficulty-options [aria-pressed='true'] {
+  color: var(--primary);
+  border-color: var(--primary);
+  background: var(--accent-soft);
+}
 .game-dialog {
   width: min(480px, calc(100% - 32px));
   max-height: calc(100svh - 32px);
@@ -984,16 +1010,19 @@ ul {
   color: var(--brass);
 }
 .leaderboard-table th:first-child {
-  width: 12%;
+  width: 10%;
 }
 .leaderboard-table th:nth-child(2) {
-  width: 30%;
+  width: 24%;
 }
 .leaderboard-table th:nth-child(3) {
-  width: 18%;
+  width: 14%;
 }
 .leaderboard-table th:nth-child(4) {
-  width: 40%;
+  width: 20%;
+}
+.leaderboard-table th:nth-child(5) {
+  width: 32%;
 }
 .leaderboard-table time {
   font-size: 12px;
@@ -1334,6 +1363,21 @@ ul {
   .leaderboard-table th,
   .leaderboard-table td {
     padding: 8px 3px;
+  }
+  .leaderboard-table th:first-child {
+    width: 12%;
+  }
+  .leaderboard-table th:nth-child(2) {
+    width: 21%;
+  }
+  .leaderboard-table th:nth-child(3) {
+    width: 15%;
+  }
+  .leaderboard-table th:nth-child(4) {
+    width: 24%;
+  }
+  .leaderboard-table th:nth-child(5) {
+    width: 28%;
   }
   .brew-checks {
     grid-template-columns: 1fr;
