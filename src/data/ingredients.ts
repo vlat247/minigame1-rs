@@ -1,3 +1,6 @@
+import { DIFFICULTY_SETTINGS } from './difficulty.ts';
+import type { Difficulty } from './difficulty.ts';
+
 export const INGREDIENT_IDS = [
   'dragon-tears',
   'fairy-dust',
@@ -82,7 +85,11 @@ export const INGREDIENTS: readonly Ingredient[] = INGREDIENT_IDS.map(
   (id) => INGREDIENT_CATALOGUE[id],
 );
 
-export const LEVEL_ONE_INGREDIENTS: readonly Ingredient[] = INGREDIENTS.slice(0, 6);
+export function getShelfIngredients(difficulty: Difficulty): readonly Ingredient[] {
+  return INGREDIENTS.slice(0, DIFFICULTY_SETTINGS[difficulty].ingredientCount);
+}
+
+export const LEVEL_ONE_INGREDIENTS: readonly Ingredient[] = getShelfIngredients('medium');
 
 export function isIngredientId(value: string): value is IngredientId {
   return Object.hasOwn(INGREDIENT_CATALOGUE, value);

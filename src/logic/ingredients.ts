@@ -1,11 +1,9 @@
-import {
-  INGREDIENT_CATALOGUE,
-  LEVEL_ONE_INGREDIENTS,
-  isIngredientId,
-} from '../data/ingredients.ts';
+import { DIFFICULTY_SETTINGS } from '../data/difficulty.ts';
+import type { Difficulty } from '../data/difficulty.ts';
+import { INGREDIENT_CATALOGUE, getShelfIngredients, isIngredientId } from '../data/ingredients.ts';
 import type { IngredientId } from '../data/ingredients.ts';
 
-export const MIXTURE_CAPACITY = 4;
+export const MIXTURE_CAPACITY = DIFFICULTY_SETTINGS.medium.maxIngredients;
 export const MIN_STARTING_STOCK = 2;
 export const MAX_STARTING_STOCK = 15;
 
@@ -59,7 +57,10 @@ export function calculateTotals(mixture: readonly IngredientId[]): MixtureTotals
   );
 }
 
-export function createMixingState(random: () => number = Math.random): MixingState {
+export function createMixingState(
+  random: () => number = Math.random,
+  difficulty: Difficulty = 'medium',
+): MixingState {
   const inventory: Record<IngredientId, number> = {
     'dragon-tears': 0,
     'fairy-dust': 0,
@@ -71,7 +72,7 @@ export function createMixingState(random: () => number = Math.random): MixingSta
     'toad-slime': 0,
   };
 
-  for (const ingredient of LEVEL_ONE_INGREDIENTS) {
+  for (const ingredient of getShelfIngredients(difficulty)) {
     inventory[ingredient.id] = randomStock(random);
   }
 
@@ -82,16 +83,20 @@ export function createMixingState(random: () => number = Math.random): MixingSta
   };
 }
 
-export function addIngredient(state: MixingState, id: string): AddIngredientResult {
+export function addIngredient(
+  state: MixingState,
+  id: string,
+  difficulty: Difficulty = 'medium',
+): AddIngredientResult {
   if (!isIngredientId(id)) {
     return { accepted: false, reason: 'unknown-ingredient', state };
   }
 
-  if (!LEVEL_ONE_INGREDIENTS.some((ingredient) => ingredient.id === id)) {
+  if (!getShelfIngredients(difficulty).some((ingredient) => ingredient.id === id)) {
     return { accepted: false, reason: 'unavailable-ingredient', state };
   }
 
-  if (state.mixture.length >= MIXTURE_CAPACITY) {
+  if (state.mixture.length >= DIFFICULTY_SETTINGS[difficulty].maxIngredients) {
     return { accepted: false, reason: 'cauldron-full', state };
   }
 

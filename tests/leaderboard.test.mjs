@@ -7,6 +7,7 @@ import {
   validatePlayerName,
 } from '../src/logic/leaderboard.ts';
 import { LEADERBOARD_STORAGE_KEY, createLeaderboardStore } from '../src/storage/leaderboard.ts';
+import { leaderboardMarkup } from '../src/ui/leaderboard-view.ts';
 
 function entry(name = 'Alchemist', score = 200, createdAt = '2026-10-19T10:00:00.000Z') {
   return { name, score, createdAt };
@@ -248,4 +249,71 @@ test('clearing removes only the leaderboard key and succeeds when already empty'
     ['remove', LEADERBOARD_STORAGE_KEY],
     ['remove', LEADERBOARD_STORAGE_KEY],
   ]);
+});
+
+test('difficulty boards preserve existing Medium scores and isolate saved results', () => {
+  const previousMedium = entry('Previous', 400);
+  const fake = fakeStorage({ [LEADERBOARD_STORAGE_KEY]: JSON.stringify([previousMedium]) });
+  const medium = createLeaderboardStore(() => fake.storage, 'medium');
+  const easy = createLeaderboardStore(() => fake.storage, 'easy');
+  const hard = createLeaderboardStore(() => fake.storage, 'hard');
+
+  assert.deepEqual(medium.load(), { entries: [previousMedium], error: null });
+  assert.deepEqual(easy.load(), { entries: [], error: null });
+  assert.deepEqual(hard.load(), { entries: [], error: null });
+  assert.equal(easy.save([entry('Easy player', 100)]), true);
+  assert.equal(hard.save([entry('Hard player', 300)]), true);
+  assert.deepEqual(easy.load(), { entries: [entry('Easy player', 100)], error: null });
+  assert.deepEqual(hard.load(), { entries: [entry('Hard player', 300)], error: null });
+  assert.deepEqual(medium.load(), { entries: [previousMedium], error: null });
+  assert.deepEqual(createLeaderboardStore(() => fake.storage).load(), medium.load());
+  assert.equal(fake.values.size, 3);
+});
+
+test('clearing one difficulty preserves the other boards and unrelated game data', () => {
+  const fake = fakeStorage({ 'unfinished-game': 'keep this' });
+  const boards = ['easy', 'medium', 'hard'].map((difficulty) =>
+    createLeaderboardStore(() => fake.storage, difficulty),
+  );
+  boards.forEach((board, index) => assert.equal(board.save([entry(`Player${index}`)]), true));
+
+  assert.equal(boards[0].clear(), true);
+  assert.deepEqual(boards[0].load(), { entries: [], error: null });
+  assert.deepEqual(boards[1].load(), { entries: [entry('Player1')], error: null });
+  assert.deepEqual(boards[2].load(), { entries: [entry('Player2')], error: null });
+  assert.equal(fake.values.get('unfinished-game'), 'keep this');
+  assert.equal(fake.values.has(LEADERBOARD_STORAGE_KEY), true);
+});
+
+test('corrupt stored results affect only their selected difficulty board', () => {
+  const fake = fakeStorage({ [LEADERBOARD_STORAGE_KEY]: '{broken' });
+  const easy = createLeaderboardStore(() => fake.storage, 'easy');
+  assert.equal(easy.save([entry('Easy player')]), true);
+  assert.deepEqual(createLeaderboardStore(() => fake.storage).load(), {
+    entries: [],
+    error: 'corrupt',
+  });
+  assert.deepEqual(easy.load(), { entries: [entry('Easy player')], error: null });
+});
+
+test('leaderboard renders its difficulty, switch buttons and escaped result values', () => {
+  const markup = leaderboardMarkup([entry('A&B', 300)], '', 'hard');
+  assert.match(markup, /<th scope="col">Difficulty<\/th>/u);
+  assert.match(markup, /<td>Hard<\/td>/u);
+  assert.match(markup, /Top 10 completed Hard games/u);
+  assert.match(markup, /A&amp;B/u);
+  assert.match(
+    markup,
+    /data-action="leaderboard-difficulty" data-difficulty="hard" aria-pressed="true"/u,
+  );
+  for (const difficulty of ['easy', 'medium']) {
+    assert.ok(
+      markup.includes(
+        `data-action="leaderboard-difficulty" data-difficulty="${difficulty}" aria-pressed="false"`,
+      ),
+    );
+  }
+  const emptyMarkup = leaderboardMarkup([], 'Storage <unavailable>');
+  assert.match(emptyMarkup, /data-difficulty="medium" aria-pressed="true"/u);
+  assert.match(emptyMarkup, /Storage &lt;unavailable&gt;/u);
 });

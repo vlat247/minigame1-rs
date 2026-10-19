@@ -23,7 +23,7 @@ function recipeById(id) {
 function addPortions(game, ids) {
   let mixing = game.mixing;
   for (const id of ids) {
-    const result = addIngredient(mixing, id);
+    const result = addIngredient(mixing, id, game.difficulty);
     assert.equal(result.accepted, true);
     mixing = result.state;
   }
@@ -111,6 +111,7 @@ test('new games initialize inventory, a random Medium recipe, score, lives and t
   });
 
   assert.equal(calls, 7);
+  assert.equal(game.difficulty, 'medium');
   assert.equal(game.recipe, MEDIUM_RECIPES[6]);
   assert.equal(game.score, 0);
   assert.equal(game.lives, STARTING_LIVES);

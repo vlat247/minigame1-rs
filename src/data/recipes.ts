@@ -1,4 +1,6 @@
-export type RecipeDifficulty = 'easy' | 'medium' | 'hard';
+import type { Difficulty } from './difficulty.ts';
+
+export type RecipeDifficulty = Difficulty;
 
 export interface RecipeRange {
   readonly min: number;
@@ -57,6 +59,8 @@ export const RECIPES: readonly Recipe[] = recipeRows.map(
   }),
 );
 
-export const MEDIUM_RECIPES: readonly Recipe[] = RECIPES.filter(
-  (recipe) => recipe.difficulty === 'medium',
-);
+export function getRecipesByDifficulty(difficulty: Difficulty): readonly Recipe[] {
+  return RECIPES.filter((recipe) => recipe.difficulty === difficulty);
+}
+
+export const MEDIUM_RECIPES: readonly Recipe[] = getRecipesByDifficulty('medium');

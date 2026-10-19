@@ -1,4 +1,6 @@
 import { getIngredient } from '../data/ingredients';
+import { DIFFICULTY_SETTINGS, isDifficulty } from '../data/difficulty';
+import type { Difficulty } from '../data/difficulty';
 import { brewGame } from '../logic/brewing';
 import { addIngredient } from '../logic/ingredients';
 import { addLeaderboardEntry, isQualifyingScore, validatePlayerName } from '../logic/leaderboard';
@@ -6,6 +8,8 @@ import type { LeaderboardEntry } from '../logic/leaderboard';
 import { advanceGameTime } from '../logic/session';
 import { createGame } from '../state/game';
 import { createLeaderboardStore } from '../storage/leaderboard';
+import { createGameSaveStore } from '../storage/save';
+import type { SavedGame } from '../storage/save';
 import { dialogMarkup } from './dialogs';
 import type { GameDialog } from './dialogs';
 import { renderGameView, updateGameView, updateSessionView } from './game-view';
@@ -16,10 +20,35 @@ export function mountGame(container: HTMLElement): () => void {
   const view = document.createElement('div');
   const dialog = document.createElement('dialog');
   const announcement = document.createElement('p');
-  let state: GameViewState = { game: null, paused: false, lastBrew: null };
+  const gameSaveStore = createGameSaveStore();
+  const initialSave = gameSaveStore.load();
+  let savedGame: SavedGame | null = initialSave.save;
+  let state: GameViewState = {
+    game: null,
+    paused: false,
+    lastBrew: null,
+    selectedDifficulty: savedGame?.game.difficulty ?? 'medium',
+    canContinue: savedGame !== null,
+    saveNotice:
+      initialSave.error === 'unavailable'
+        ? 'Game saving is unavailable. Progress may be lost when you leave this page.'
+        : initialSave.error === 'corrupt'
+          ? 'The saved game could not be read. You can start a new game.'
+          : '',
+  };
   let dialogs: GameDialog[] = [];
   let returnAction = 'start';
-  const leaderboardStore = createLeaderboardStore();
+  const leaderboardStores = {
+    easy: createLeaderboardStore(undefined, 'easy'),
+    medium: createLeaderboardStore(undefined, 'medium'),
+    hard: createLeaderboardStore(undefined, 'hard'),
+  };
+  const cachedBoards: Record<Difficulty, readonly LeaderboardEntry[]> = {
+    easy: [],
+    medium: [],
+    hard: [],
+  };
+  let leaderboardDifficulty: Difficulty = state.selectedDifficulty;
   let leaderboard: readonly LeaderboardEntry[] = [];
   let storageNotice = '';
   let scoreMessage = '';
@@ -29,7 +58,8 @@ export function mountGame(container: HTMLElement): () => void {
   let finishedAt: string | null = null;
   let finishHandled = false;
   let warnedAboutTime = false;
-  let memoryOnly = false;
+  const memoryOnlyBoards = new Set<Difficulty>();
+  let lastSavedSecond: number | null = null;
 
   dialog.className = 'game-dialog';
   dialog.setAttribute('aria-labelledby', 'game-dialog-title');
@@ -47,27 +77,67 @@ export function mountGame(container: HTMLElement): () => void {
       announcement.textContent = 'Less than 15 seconds remaining.';
     }
     if (game.status === 'game-over') finishGame();
+    else persistGame(false);
   });
 
-  function refreshLeaderboard(): void {
-    if (memoryOnly) return;
-    const result = leaderboardStore.load();
-    if (result.error !== 'unavailable') leaderboard = result.entries;
+  function persistGame(force = true): void {
+    if (state.game === null || state.game.status !== 'playing') return;
+    const second = Math.ceil(state.game.timeRemaining);
+    if (!force && second === lastSavedSecond) return;
+    lastSavedSecond = second;
+    const saved = gameSaveStore.save(state.game, state.paused);
+    savedGame = { game: state.game, paused: state.paused };
+    state = {
+      ...state,
+      canContinue: true,
+      saveNotice: saved
+        ? ''
+        : 'Game saving is unavailable. Progress may be lost when you leave this page.',
+    };
+    updateSessionView(view, state);
+  }
+
+  function clearSavedGame(): void {
+    const cleared = gameSaveStore.clear();
+    savedGame = null;
+    lastSavedSecond = null;
+    state = {
+      ...state,
+      canContinue: false,
+      saveNotice: cleared
+        ? ''
+        : 'The saved game could not be cleared. Browser storage is unavailable.',
+    };
+  }
+
+  function refreshLeaderboard(difficulty: Difficulty = leaderboardDifficulty): void {
+    leaderboardDifficulty = difficulty;
+    leaderboard = cachedBoards[difficulty];
+    if (memoryOnlyBoards.has(difficulty)) {
+      storageNotice = 'Browser storage is unavailable. Scores are kept for this visit only.';
+      return;
+    }
+    const result = leaderboardStores[difficulty].load();
+    if (result.error !== 'unavailable') {
+      leaderboard = result.entries;
+      cachedBoards[difficulty] = leaderboard;
+    }
     storageNotice =
       result.error === 'unavailable'
         ? 'Browser storage is unavailable. Scores are kept for this visit only.'
         : result.error === 'corrupt'
           ? 'Some stored scores could not be read.'
           : '';
-    if (result.error === 'unavailable') memoryOnly = true;
+    if (result.error === 'unavailable') memoryOnlyBoards.add(difficulty);
   }
 
   function finishGame(): void {
     if (state.game?.status !== 'game-over' || finishHandled) return;
     finishHandled = true;
     clock.stop();
+    clearSavedGame();
     finishedAt = new Date().toISOString();
-    refreshLeaderboard();
+    refreshLeaderboard(state.game.difficulty);
     needsName = isQualifyingScore(state.game.score, leaderboard);
     dismissDialogs();
     updateGameView(view, state);
@@ -93,6 +163,10 @@ export function mountGame(container: HTMLElement): () => void {
       needsName,
       nameDraft,
       nameError,
+      selectedDifficulty: state.selectedDifficulty,
+      leaderboardDifficulty,
+      canContinue: state.canContinue,
+      saveNotice: state.saveNotice,
     });
     dialog.querySelector<HTMLElement>('[data-dialog-focus]')?.focus();
   }
@@ -129,18 +203,68 @@ export function mountGame(container: HTMLElement): () => void {
     nameDraft = '';
     nameError = '';
     scoreMessage = '';
-    state = { game: createGame(), paused: false, lastBrew: null };
+    state = {
+      ...state,
+      game: createGame(Math.random, state.selectedDifficulty),
+      paused: false,
+      lastBrew: null,
+    };
+    persistGame();
     render();
     focusAction('pause');
-    announcement.textContent = `Medium game started. Current recipe: ${state.game?.recipe.name}. You have two minutes and thirty seconds.`;
+    const settings = DIFFICULTY_SETTINGS[state.selectedDifficulty];
+    announcement.textContent = `${settings.label} game started. Current recipe: ${state.game?.recipe.name}. You have ${settings.startingTime} seconds and ${settings.lives} lives.`;
     clock.start();
     if (document.hidden) pauseGame();
+  }
+
+  function continueGame(): void {
+    if (state.game?.status === 'playing') return;
+    const loaded = gameSaveStore.load();
+    savedGame = loaded.save;
+    if (savedGame === null) {
+      state = {
+        ...state,
+        canContinue: false,
+        saveNotice:
+          loaded.error === 'unavailable'
+            ? 'The saved game is unavailable. You can start a new game.'
+            : 'There is no valid unfinished game to continue.',
+      };
+      dismissDialogs();
+      render();
+      focusAction('start');
+      return;
+    }
+    clock.stop();
+    dismissDialogs();
+    finishHandled = false;
+    warnedAboutTime = savedGame.game.timeRemaining < 15;
+    needsName = false;
+    finishedAt = null;
+    nameDraft = '';
+    nameError = '';
+    scoreMessage = '';
+    state = {
+      ...state,
+      game: savedGame.game,
+      paused: true,
+      lastBrew: null,
+      selectedDifficulty: savedGame.game.difficulty,
+      canContinue: true,
+      saveNotice: '',
+    };
+    persistGame();
+    render();
+    openDialog('pause');
+    announcement.textContent = 'Saved game restored paused. Choose Resume when you are ready.';
   }
 
   function resumeGame(): void {
     if (state.game?.status !== 'playing') return;
     dismissDialogs();
     state = { ...state, paused: false };
+    persistGame();
     render();
     focusAction('pause');
     announcement.textContent = 'Workbench resumed.';
@@ -152,6 +276,7 @@ export function mountGame(container: HTMLElement): () => void {
     clock.pause();
     if (state.game.status !== 'playing') return;
     state = { ...state, paused: true };
+    persistGame();
     render();
     returnAction = 'pause';
     if (dialog.open) {
@@ -185,7 +310,8 @@ export function mountGame(container: HTMLElement): () => void {
   function showStart(): void {
     clock.stop();
     dismissDialogs();
-    state = { game: null, paused: false, lastBrew: null };
+    if (state.game !== null) clearSavedGame();
+    state = { ...state, game: null, paused: false, lastBrew: null };
     render();
     focusAction('start');
     announcement.textContent = 'Returned to the empty start screen.';
@@ -201,7 +327,7 @@ export function mountGame(container: HTMLElement): () => void {
       id === undefined
     )
       return;
-    const result = addIngredient(state.game.mixing, id);
+    const result = addIngredient(state.game.mixing, id, state.game.difficulty);
     const ingredient = getIngredient(id);
     if (ingredient === undefined) return;
     const feedback = view.querySelector('#ingredient-feedback');
@@ -210,13 +336,14 @@ export function mountGame(container: HTMLElement): () => void {
       if (feedback !== null) {
         feedback.textContent =
           result.reason === 'cauldron-full'
-            ? 'Cauldron full: only four portions fit. Brew this mixture before adding more.'
+            ? `Cauldron full: only ${DIFFICULTY_SETTINGS[state.game.difficulty].maxIngredients} portions fit. Brew this mixture before adding more.`
             : `${ingredient.name} is out of stock.`;
       }
       return;
     }
 
     state = { ...state, game: { ...state.game, mixing: result.state }, lastBrew: null };
+    persistGame();
     // Update existing controls and gauges so keyboard focus and CSS transitions survive.
     updateGameView(view, state);
     if (feedback !== null) {
@@ -246,6 +373,7 @@ export function mountGame(container: HTMLElement): () => void {
     if (result.state.status === 'game-over') {
       finishGame();
     } else {
+      persistGame();
       view.querySelector<HTMLButtonElement>('.ingredient:not(:disabled)')?.focus();
     }
   }
@@ -266,7 +394,7 @@ export function mountGame(container: HTMLElement): () => void {
       input.focus();
       return;
     }
-    refreshLeaderboard();
+    refreshLeaderboard(state.game.difficulty);
     needsName = false;
     if (!isQualifyingScore(state.game.score, leaderboard)) {
       scoreMessage = 'This score no longer enters the Top 10.';
@@ -276,8 +404,10 @@ export function mountGame(container: HTMLElement): () => void {
         score: state.game.score,
         createdAt: finishedAt,
       });
-      const saved = leaderboardStore.save(leaderboard);
-      memoryOnly = !saved;
+      cachedBoards[leaderboardDifficulty] = leaderboard;
+      const saved = leaderboardStores[leaderboardDifficulty].save(leaderboard);
+      if (saved) memoryOnlyBoards.delete(leaderboardDifficulty);
+      else memoryOnlyBoards.add(leaderboardDifficulty);
       scoreMessage = saved
         ? 'Your score was saved.'
         : 'Your score is kept for this visit only. Browser storage is unavailable.';
@@ -301,6 +431,30 @@ export function mountGame(container: HTMLElement): () => void {
       case 'confirm-new':
         startGame();
         break;
+      case 'continue':
+        continueGame();
+        break;
+      case 'select-difficulty': {
+        const difficulty = control.dataset.difficulty;
+        if (
+          difficulty === undefined ||
+          !isDifficulty(difficulty) ||
+          state.game?.status === 'playing'
+        )
+          return;
+        state = { ...state, selectedDifficulty: difficulty };
+        render();
+        renderDialog('menu');
+        break;
+      }
+      case 'leaderboard-difficulty': {
+        const difficulty = control.dataset.difficulty;
+        if (difficulty === undefined || !isDifficulty(difficulty)) return;
+        refreshLeaderboard(difficulty);
+        renderDialog('leaderboard');
+        dialog.querySelector<HTMLElement>(`[data-difficulty="${difficulty}"]`)?.focus();
+        break;
+      }
       case 'add-ingredient':
         addPortion(control.dataset.ingredient);
         break;
@@ -309,8 +463,11 @@ export function mountGame(container: HTMLElement): () => void {
         break;
       case 'help':
       case 'menu':
-      case 'leaderboard':
         openDialog(control.dataset.action);
+        break;
+      case 'leaderboard':
+        refreshLeaderboard(state.game?.difficulty ?? state.selectedDifficulty);
+        openDialog('leaderboard');
         break;
       case 'new':
         if (state.game !== null && state.game.status === 'playing') openDialog('restart');
@@ -341,10 +498,11 @@ export function mountGame(container: HTMLElement): () => void {
         openDialog('clear-leaderboard');
         break;
       case 'confirm-clear-leaderboard':
-        if (leaderboardStore.clear()) {
+        if (leaderboardStores[leaderboardDifficulty].clear()) {
           leaderboard = [];
+          cachedBoards[leaderboardDifficulty] = [];
           storageNotice = '';
-          memoryOnly = false;
+          memoryOnlyBoards.delete(leaderboardDifficulty);
         } else {
           storageNotice = 'Saved scores could not be cleared. Browser storage is unavailable.';
         }
@@ -364,6 +522,11 @@ export function mountGame(container: HTMLElement): () => void {
 
   function handleVisibility(): void {
     if (document.hidden) pauseGame();
+  }
+
+  function handlePageHide(): void {
+    if (state.game?.status === 'playing' && !state.paused) pauseGame();
+    else persistGame();
   }
 
   function handleDialogKeydown(event: KeyboardEvent): void {
@@ -390,14 +553,18 @@ export function mountGame(container: HTMLElement): () => void {
   dialog.addEventListener('keydown', handleDialogKeydown);
   dialog.addEventListener('submit', handleScoreSubmit);
   document.addEventListener('visibilitychange', handleVisibility);
+  window.addEventListener('pagehide', handlePageHide);
 
   return () => {
+    clock.synchronize();
+    persistGame();
     clock.dispose();
     container.removeEventListener('click', handleClick);
     dialog.removeEventListener('cancel', handleCancel);
     dialog.removeEventListener('keydown', handleDialogKeydown);
     dialog.removeEventListener('submit', handleScoreSubmit);
     document.removeEventListener('visibilitychange', handleVisibility);
+    window.removeEventListener('pagehide', handlePageHide);
     dismissDialogs();
   };
 }
