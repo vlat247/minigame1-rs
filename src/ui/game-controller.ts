@@ -1,11 +1,16 @@
 import { getIngredient } from '../data/ingredients';
 import { brewGame } from '../logic/brewing';
 import { addIngredient } from '../logic/ingredients';
+import { addLeaderboardEntry, isQualifyingScore, validatePlayerName } from '../logic/leaderboard';
+import type { LeaderboardEntry } from '../logic/leaderboard';
+import { advanceGameTime } from '../logic/session';
 import { createGame } from '../state/game';
+import { createLeaderboardStore } from '../storage/leaderboard';
 import { dialogMarkup } from './dialogs';
 import type { GameDialog } from './dialogs';
-import { renderGameView, updateGameView } from './game-view';
+import { renderGameView, updateGameView, updateSessionView } from './game-view';
 import type { GameViewState } from './game-view';
+import { createSessionClock } from './session-clock';
 
 export function mountGame(container: HTMLElement): () => void {
   const view = document.createElement('div');
@@ -14,6 +19,17 @@ export function mountGame(container: HTMLElement): () => void {
   let state: GameViewState = { game: null, paused: false, lastBrew: null };
   let dialogs: GameDialog[] = [];
   let returnAction = 'start';
+  const leaderboardStore = createLeaderboardStore();
+  let leaderboard: readonly LeaderboardEntry[] = [];
+  let storageNotice = '';
+  let scoreMessage = '';
+  let nameDraft = '';
+  let nameError = '';
+  let needsName = false;
+  let finishedAt: string | null = null;
+  let finishHandled = false;
+  let warnedAboutTime = false;
+  let memoryOnly = false;
 
   dialog.className = 'game-dialog';
   dialog.setAttribute('aria-labelledby', 'game-dialog-title');
@@ -21,6 +37,42 @@ export function mountGame(container: HTMLElement): () => void {
   announcement.className = 'sr-only';
   announcement.setAttribute('role', 'status');
   container.replaceChildren(view, dialog, announcement);
+  const clock = createSessionClock((elapsed) => {
+    if (state.game === null || state.paused || state.game.status !== 'playing') return;
+    const game = advanceGameTime(state.game, elapsed);
+    state = { ...state, game };
+    updateSessionView(view, state);
+    if (game.timeRemaining < 15 && !warnedAboutTime && game.status === 'playing') {
+      warnedAboutTime = true;
+      announcement.textContent = 'Less than 15 seconds remaining.';
+    }
+    if (game.status === 'game-over') finishGame();
+  });
+
+  function refreshLeaderboard(): void {
+    if (memoryOnly) return;
+    const result = leaderboardStore.load();
+    if (result.error !== 'unavailable') leaderboard = result.entries;
+    storageNotice =
+      result.error === 'unavailable'
+        ? 'Browser storage is unavailable. Scores are kept for this visit only.'
+        : result.error === 'corrupt'
+          ? 'Some stored scores could not be read.'
+          : '';
+    if (result.error === 'unavailable') memoryOnly = true;
+  }
+
+  function finishGame(): void {
+    if (state.game?.status !== 'game-over' || finishHandled) return;
+    finishHandled = true;
+    clock.stop();
+    finishedAt = new Date().toISOString();
+    refreshLeaderboard();
+    needsName = isQualifyingScore(state.game.score, leaderboard);
+    dismissDialogs();
+    updateGameView(view, state);
+    openDialog('game-over');
+  }
 
   function render(): void {
     renderGameView(view, state);
@@ -31,11 +83,22 @@ export function mountGame(container: HTMLElement): () => void {
   }
 
   function renderDialog(kind: GameDialog): void {
-    dialog.innerHTML = dialogMarkup(kind, state.game);
+    const nameInput = dialog.querySelector<HTMLInputElement>('[name="player-name"]');
+    if (nameInput !== null) nameDraft = nameInput.value;
+    dialog.dataset.kind = kind;
+    dialog.innerHTML = dialogMarkup(kind, state.game, {
+      leaderboard,
+      storageNotice,
+      scoreMessage,
+      needsName,
+      nameDraft,
+      nameError,
+    });
     dialog.querySelector<HTMLElement>('[data-dialog-focus]')?.focus();
   }
 
   function openDialog(kind: GameDialog): void {
+    if (kind === 'leaderboard') refreshLeaderboard();
     if (!dialog.open) {
       const focused = document.activeElement;
       if (focused instanceof HTMLElement && focused.dataset.action !== undefined) {
@@ -53,26 +116,41 @@ export function mountGame(container: HTMLElement): () => void {
   function dismissDialogs(): void {
     dialogs = [];
     if (dialog.open) dialog.close();
+    dialog.replaceChildren();
   }
 
   function startGame(): void {
+    clock.stop();
     dismissDialogs();
+    finishHandled = false;
+    warnedAboutTime = false;
+    needsName = false;
+    finishedAt = null;
+    nameDraft = '';
+    nameError = '';
+    scoreMessage = '';
     state = { game: createGame(), paused: false, lastBrew: null };
     render();
     focusAction('pause');
-    announcement.textContent = `Medium game started. Current recipe: ${state.game?.recipe.name}. Add up to four portions, then brew. The countdown is not active yet.`;
+    announcement.textContent = `Medium game started. Current recipe: ${state.game?.recipe.name}. You have two minutes and thirty seconds.`;
+    clock.start();
+    if (document.hidden) pauseGame();
   }
 
   function resumeGame(): void {
+    if (state.game?.status !== 'playing') return;
     dismissDialogs();
     state = { ...state, paused: false };
     render();
     focusAction('pause');
     announcement.textContent = 'Workbench resumed.';
+    clock.start();
   }
 
   function pauseGame(): void {
     if (state.game === null || state.game.status !== 'playing' || state.paused) return;
+    clock.pause();
+    if (state.game.status !== 'playing') return;
     state = { ...state, paused: true };
     render();
     returnAction = 'pause';
@@ -105,6 +183,7 @@ export function mountGame(container: HTMLElement): () => void {
   }
 
   function showStart(): void {
+    clock.stop();
     dismissDialogs();
     state = { game: null, paused: false, lastBrew: null };
     render();
@@ -113,6 +192,7 @@ export function mountGame(container: HTMLElement): () => void {
   }
 
   function addPortion(id: string | undefined): void {
+    clock.synchronize();
     if (
       state.game === null ||
       state.game.status !== 'playing' ||
@@ -150,6 +230,7 @@ export function mountGame(container: HTMLElement): () => void {
   }
 
   function brewPotion(): void {
+    clock.synchronize();
     if (state.game === null || state.paused || dialog.open) return;
     const result = brewGame(state.game);
     if (!result.accepted) return;
@@ -163,10 +244,49 @@ export function mountGame(container: HTMLElement): () => void {
     const feedback = view.querySelector('#ingredient-feedback');
     if (feedback !== null) feedback.textContent = '';
     if (result.state.status === 'game-over') {
-      openDialog('game-over');
+      finishGame();
     } else {
       view.querySelector<HTMLButtonElement>('.ingredient:not(:disabled)')?.focus();
     }
+  }
+
+  function handleScoreSubmit(event: SubmitEvent): void {
+    if (!(event.target instanceof HTMLFormElement) || event.target.id !== 'score-form') return;
+    event.preventDefault();
+    if (!needsName || state.game?.status !== 'game-over' || finishedAt === null) return;
+    const input = event.target.querySelector<HTMLInputElement>('[name="player-name"]');
+    if (input === null) return;
+    nameDraft = input.value;
+    const validation = validatePlayerName(nameDraft);
+    if (!validation.valid) {
+      nameError = validation.error;
+      const error = dialog.querySelector('#player-name-error');
+      if (error !== null) error.textContent = nameError;
+      input.setAttribute('aria-invalid', 'true');
+      input.focus();
+      return;
+    }
+    refreshLeaderboard();
+    needsName = false;
+    if (!isQualifyingScore(state.game.score, leaderboard)) {
+      scoreMessage = 'This score no longer enters the Top 10.';
+    } else {
+      leaderboard = addLeaderboardEntry(leaderboard, {
+        name: validation.name,
+        score: state.game.score,
+        createdAt: finishedAt,
+      });
+      const saved = leaderboardStore.save(leaderboard);
+      memoryOnly = !saved;
+      scoreMessage = saved
+        ? 'Your score was saved.'
+        : 'Your score is kept for this visit only. Browser storage is unavailable.';
+      storageNotice = saved
+        ? ''
+        : 'Browser storage is unavailable. Scores are kept for this visit only.';
+    }
+    nameError = '';
+    renderDialog('game-over');
   }
 
   function handleClick(event: MouseEvent): void {
@@ -212,6 +332,24 @@ export function mountGame(container: HTMLElement): () => void {
       case 'confirm-exit':
         showStart();
         break;
+      case 'skip-score':
+        needsName = false;
+        scoreMessage = 'Your score was not saved.';
+        renderDialog('game-over');
+        break;
+      case 'clear-leaderboard':
+        openDialog('clear-leaderboard');
+        break;
+      case 'confirm-clear-leaderboard':
+        if (leaderboardStore.clear()) {
+          leaderboard = [];
+          storageNotice = '';
+          memoryOnly = false;
+        } else {
+          storageNotice = 'Saved scores could not be cleared. Browser storage is unavailable.';
+        }
+        closeDialog();
+        break;
       case 'dialog-close':
         closeDialog();
         break;
@@ -230,7 +368,9 @@ export function mountGame(container: HTMLElement): () => void {
 
   function handleDialogKeydown(event: KeyboardEvent): void {
     if (event.key !== 'Tab') return;
-    const controls = [...dialog.querySelectorAll<HTMLButtonElement>('button:not(:disabled)')];
+    const controls = [
+      ...dialog.querySelectorAll<HTMLElement>('button:not(:disabled), input:not(:disabled)'),
+    ];
     const first = controls.at(0);
     const last = controls.at(-1);
     if (first === undefined || last === undefined) return;
@@ -248,12 +388,15 @@ export function mountGame(container: HTMLElement): () => void {
   container.addEventListener('click', handleClick);
   dialog.addEventListener('cancel', handleCancel);
   dialog.addEventListener('keydown', handleDialogKeydown);
+  dialog.addEventListener('submit', handleScoreSubmit);
   document.addEventListener('visibilitychange', handleVisibility);
 
   return () => {
+    clock.dispose();
     container.removeEventListener('click', handleClick);
     dialog.removeEventListener('cancel', handleCancel);
     dialog.removeEventListener('keydown', handleDialogKeydown);
+    dialog.removeEventListener('submit', handleScoreSubmit);
     document.removeEventListener('visibilitychange', handleVisibility);
     dismissDialogs();
   };

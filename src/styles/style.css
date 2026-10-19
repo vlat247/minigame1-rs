@@ -234,6 +234,44 @@ ul {
 .stat-time > .icon {
   color: var(--primary);
 }
+.time-bar {
+  display: block;
+  appearance: none;
+  width: calc(100% - 10px);
+  height: 6px;
+  margin: 0 5px;
+  border: 0;
+  background: #232b1d;
+  accent-color: var(--primary);
+}
+.time-bar::-webkit-progress-bar {
+  background: #232b1d;
+}
+.time-bar::-webkit-progress-value {
+  background: var(--primary);
+  transition: width 100ms linear;
+}
+.time-bar.is-low-time::-webkit-progress-value {
+  background: var(--danger);
+}
+.stat-time.is-low-time strong,
+.stat-time.is-low-time > .icon {
+  color: var(--danger);
+}
+.stat-time.is-low-time {
+  animation: time-warning 900ms ease-in-out infinite alternate;
+}
+[data-paused='true'] .stat-time.is-low-time {
+  animation-play-state: paused;
+}
+[data-ended='true'] .stat-time.is-low-time {
+  animation: none;
+}
+@keyframes time-warning {
+  to {
+    opacity: 0.5;
+  }
+}
 .stat strong {
   color: var(--primary);
   font-size: 32px;
@@ -924,6 +962,77 @@ ul {
 .game-dialog::backdrop {
   background: var(--dialog-backdrop);
 }
+.game-dialog[data-kind='leaderboard'] {
+  width: min(640px, calc(100% - 32px));
+}
+.leaderboard-table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  margin-top: 24px;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+.leaderboard-table th,
+.leaderboard-table td {
+  padding: 10px 6px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+.leaderboard-table thead th {
+  color: var(--brass);
+}
+.leaderboard-table th:first-child {
+  width: 12%;
+}
+.leaderboard-table th:nth-child(2) {
+  width: 30%;
+}
+.leaderboard-table th:nth-child(3) {
+  width: 18%;
+}
+.leaderboard-table th:nth-child(4) {
+  width: 40%;
+}
+.leaderboard-table time {
+  font-size: 12px;
+}
+.score-name-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+  font-size: 14px;
+}
+.score-name-form label {
+  color: var(--brass);
+}
+.score-name-form input {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--background);
+  color: var(--ink);
+  font-size: 16px;
+}
+.score-name-form input:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+.score-name-form .dialog-note,
+.score-name-form .dialog-actions {
+  margin-top: 0;
+}
+.form-error {
+  min-height: 20px;
+  color: var(--danger);
+  font-size: 12px;
+}
 .dialog-header {
   display: flex;
   align-items: center;
@@ -1218,6 +1327,14 @@ ul {
   }
 }
 @media (max-width: 600px) {
+  .leaderboard-table,
+  .leaderboard-table time {
+    font-size: 11px;
+  }
+  .leaderboard-table th,
+  .leaderboard-table td {
+    padding: 8px 3px;
+  }
   .brew-checks {
     grid-template-columns: 1fr;
     gap: 12px;

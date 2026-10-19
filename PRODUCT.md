@@ -16,9 +16,17 @@ The live gauges show raw totals on symmetric scales centered at zero, expanding 
 
 Level 1 randomly selects from the seven Medium recipes at the start and after each successful brew. Repeats are allowed, and selection does not filter by remaining stock. With at least one portion, Brew checks all three raw totals against inclusive ±8 ranges. Success earns 200 points, adds up to 10 seconds capped at 150, and selects another recipe. Failure loses one life and keeps the recipe. Both outcomes clear the cauldron, totals, and counter without refunding ingredients.
 
-The result panel preserves the recipe just checked, raw totals, accepted ranges, individual pass/fail results, and actual score/time/life changes until another portion is added. A minimal Game Over dialog ends a run at zero lives or when the final mixture is brewed and no stock remains. Play again starts a fresh run; Menu → Start new game also resets the run after confirmation.
+The result panel preserves the recipe just checked, raw totals, accepted ranges, individual pass/fail results, and actual score/time/life changes until another portion is added.
 
-Countdown timing, the time bar, timestamp-based updates, saves, leaderboard persistence, difficulty selection, and Level 3 features remain pending. The clock currently stays at `02:30` because no countdown runs and each game starts at the bonus cap. The pure brewing logic supports and tests bonuses below that cap.
+Timed sessions start at 150 seconds with three lives. The timestamp-based countdown drives the MM:SS display and shrinking time bar. Below 15 seconds, the timer turns red and pulses unless reduced motion is requested. Reconcile elapsed time before ingredient additions and brews so an expired run cannot receive an extra action or time bonus.
+
+Pause freezes the clock without losing fractional seconds, blocks gameplay, and blurs the workbench and brew results. Resume continues the same score, lives, mixture, stock, recipe, and remaining time. Switching tabs pauses automatically; returning requires Resume. Help, Menu, and Leaderboard keep the clock running unless the player pauses first.
+
+Game Over occurs when time expires, lives reach zero, or both the shelf and cauldron are empty. The final stocked mixture remains brewable. Show the reason, final score, potions brewed, and active time played. Play again resets the complete run, including time and stock; Menu → Start new game also resets it after confirmation. Timers are cleaned up when runs end, restart, exit, or unmount.
+
+The Top-10 leaderboard stores completed results in localStorage. Prompt for a name only when a result qualifies, including zero scores while vacancies exist. Accept 2–15 Unicode letters, decimal digits, spaces, `_`, or `-` after trimming and NFC normalization. Escape player names in generated markup. Save each finished run at most once, using its completion timestamp. Rank by descending score, then earlier completion time; a new score tying the tenth result does not qualify. Display rank, name, score, and DD.MM.YYYY HH:MM in the browser's local time. Clearing results requires an in-app confirmation. Corrupt data and blocked storage remain nonfatal; when persistence is unavailable, retain results for the current visit and explain that limitation.
+
+Difficulty selection and unfinished-game save/continue remain Level 2 work. Level 3 features and further design polish follow in later branches.
 
 ## Brand Personality
 
@@ -33,11 +41,12 @@ Avoid marketing landing-page layouts, dashboard metric-card grids, bright applic
 - Make the recipe, ingredient stock, and three parameters readable together.
 - Keep the welcome state empty and the primary action clear.
 - Use CSS and authored inline SVG for game elements.
-- Distinguish functional mixing, recipes, brewing, score, and lives from the inactive countdown.
+- Make remaining time and lives easy to read without relying on color alone.
 - Preserve each brew's result after clearing the cauldron, with explicit pass/fail text for every parameter.
 - Show spent stock and full-cauldron feedback without changing the underlying rules.
 - Keep navigation predictable and preserve the mixture and inventory through pause, dialogs, and canceled confirmations. Confirmed new games reset them; confirmed exits discard them.
+- Keep completed-result storage separate from future unfinished-game saves, and make storage failures understandable without interrupting play.
 
 ## Accessibility & Inclusion
 
-Use semantic headings and native buttons and dialogs, visible keyboard focus, sufficient text contrast, descriptive numerical labels, and reduced-motion support. Do not communicate parameter or game states through color alone.
+Use semantic headings and native buttons and dialogs, visible keyboard focus, sufficient text contrast, descriptive numerical labels, and reduced-motion support. Do not communicate parameter or game states through color alone. Give name validation errors clear text, preserve form input through dialog navigation, and keep leaderboard names and dates readable on narrow screens.
