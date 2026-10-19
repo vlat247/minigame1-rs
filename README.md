@@ -69,6 +69,8 @@ Medium's **150-second cap** follows the [README difficulty table](https://github
 
 The interface follows the assignment's dark fantasy workshop: brass frames, a cabinet-style shelf, a shaded iron cauldron on a stone hearth, green rune light, and an upright parchment recipe. The ingredient redesign uses eight separate hand-authored **32 × 32 pixel-art SVGs** with stepped outlines, limited palettes, and individual silhouettes. The shelf presents them on small parchment tiles; the cauldron slots reuse the same sprites. Integer geometry and pixelated image rendering keep their edges crisp without applying a filter to the original artwork. Adding the first portion reveals the cauldron's green liquid, bubbles, and steam.
 
+Typography throughout the app uses the locally bundled **Pixelify Sans** variable font, including headings, controls, numeric labels, forms, and dialogs. The font is preloaded and works without an external font service; its SIL Open Font License is included in `src/assets/fonts/OFL.txt`. Temperature, Density, and Magic Power share hand-authored **16 × 16 pixel SVG icons** in both the parameter bars and recipe panel.
+
 The responsive layout uses three columns on desktop, a station-first layout on tablets, and a two-column ingredient shelf on phones. The main Start/Brew action sits below the parameter gauges, with Help and Menu at the outer edges. Styles support reduced motion and visible keyboard focus.
 
 | Command                | Purpose                                       |
@@ -137,6 +139,7 @@ src/
     ingredient-sprites.ts  Ingredient IDs mapped to individual pixel-art SVGs
   styles/                  Stylesheets and responsive layout
   assets/ingredients/      Eight original 32 × 32 pixel-art SVG sprites
+  assets/fonts/            Local Pixelify Sans variable font and its OFL license
 tests/
   ingredient-system.test.mjs
   recipe-brewing.test.mjs

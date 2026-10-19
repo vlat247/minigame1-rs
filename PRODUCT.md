@@ -46,6 +46,8 @@ Level 3 reactions, drag and drop, tooltips, Pour Out, keyboard shortcuts, and ad
 
 A dark fantasy alchemy workshop moving toward a pixel-art visual style on `feat/app-redesign`. The first pass replaces the eight ingredients with original 32 × 32 SVG sprites inspired by pixel-art inventory illustrations: stepped warm dark outlines, limited palettes, top-left highlights, and distinct silhouettes. Show the sprites on small parchment tiles and reuse them in mixture slots. Keep the brass frames, wooden cabinet, shaded iron cauldron, green magical light, and parchment recipe during this ingredient-focused pass. Controls and numerical values take priority over ornament.
 
+Use locally bundled Pixelify Sans across all text, including labels, scores, buttons, forms, and dialogs. Keep a shared type scale and readable captions. Temperature, Density, and Magic Power use filled 16 × 16 pixel icons with crisp stepped geometry and their existing semantic colors.
+
 ## Anti-references
 
 Avoid marketing landing-page layouts, dashboard metric-card grids, bright application-style surfaces, flat clip-art cauldrons, and decorative copy that obscures the rules. Restrict green glow to the cauldron, recipe targets, and primary game action. Use authored SVG/CSS instead of bitmap game assets while the assignment's image wording remains inconsistent.

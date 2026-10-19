@@ -1,14 +1,16 @@
 @import './tokens.css';
+@import './fonts.css';
 
 :root {
-  font-family: system-ui, sans-serif;
-  font-size: 16px;
+  font-family: var(--font-ui);
+  font-size: 100%;
   line-height: 1.5;
   color: var(--ink);
   background: var(--background);
   font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeSpeed;
+  -webkit-font-smoothing: auto;
+  font-variant-ligatures: none;
   color-scheme: dark;
 }
 * {
@@ -62,6 +64,13 @@ ul {
   height: 20px;
   flex-shrink: 0;
 }
+.icon-pixel {
+  image-rendering: pixelated;
+}
+.parameter .parameter-heading .icon-pixel {
+  width: 24px;
+  height: 24px;
+}
 .sr-only {
   position: absolute;
   width: 1px;
@@ -96,9 +105,9 @@ ul {
 .brand h1 {
   padding: 10px 32px 13px;
   font-family: var(--display-font);
-  font-size: 38px;
+  font-size: var(--text-title);
   font-weight: 400;
-  letter-spacing: -0.035em;
+  letter-spacing: 0;
   line-height: 1.15;
   color: #e0edbd;
   text-shadow:
@@ -115,7 +124,7 @@ ul {
   border: 1px solid var(--brass);
   transform: rotate(45deg);
   margin: 0 16px;
-  font-size: 24px;
+  font-size: var(--text-heading);
   color: var(--brass);
 }
 .brand-symbol {
@@ -153,7 +162,7 @@ ul {
   padding: 10px 16px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  font-size: 14px;
+  font-size: var(--text-secondary);
   font-weight: 600;
   text-decoration: none;
   transition:
@@ -224,7 +233,7 @@ ul {
   gap: 12px;
   color: var(--brass);
   font-family: var(--display-font);
-  font-size: 21px;
+  font-size: var(--text-heading);
 }
 .stat > .icon {
   width: 30px;
@@ -274,7 +283,7 @@ ul {
 }
 .stat strong {
   color: var(--primary);
-  font-size: 32px;
+  font-size: var(--text-display);
   font-weight: 400;
   font-variant-numeric: lining-nums tabular-nums;
 }
@@ -284,7 +293,7 @@ ul {
   gap: 14px;
   justify-content: flex-end;
   font-family: var(--display-font);
-  font-size: 19px;
+  font-size: var(--text-subheading);
   color: var(--brass);
 }
 .life-icons {
@@ -355,7 +364,7 @@ ul {
 .section-heading h2,
 .station-heading h2 {
   font-family: var(--display-font);
-  font-size: 19px;
+  font-size: var(--text-subheading);
   font-weight: 400;
 }
 .shelf-panel .section-heading {
@@ -364,13 +373,13 @@ ul {
   color: var(--brass);
 }
 .shelf-count {
-  font-size: 10px;
+  font-size: var(--text-caption);
   color: var(--muted);
   white-space: nowrap;
 }
 .shelf-description {
   margin: 8px 0 10px;
-  font-size: 10px;
+  font-size: var(--text-caption);
   color: var(--muted);
 }
 .ingredient-list {
@@ -457,16 +466,16 @@ ul {
   gap: 6px;
 }
 .ingredient-name {
-  font-family: ui-monospace, monospace;
-  font-size: 14px;
+  font-family: var(--font-ui);
+  font-size: var(--text-secondary);
   font-weight: 600;
   line-height: 1.3;
 }
 .ingredient-values {
   display: flex;
   gap: 4px;
-  font-family: ui-monospace, monospace;
-  font-size: 11px;
+  font-family: var(--font-ui);
+  font-size: var(--text-caption);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
@@ -493,7 +502,7 @@ ul {
   border: 1px solid #8b8650;
   border-radius: 50%;
   font-family: var(--display-font);
-  font-size: 16px;
+  font-size: var(--text-body);
   color: var(--primary);
   background: #11170f;
 }
@@ -515,7 +524,7 @@ ul {
 }
 .station-heading > span {
   color: var(--muted);
-  font-size: 11px;
+  font-size: var(--text-caption);
 }
 .cauldron-scene {
   display: flex;
@@ -550,7 +559,7 @@ ul {
   color: #c4c39b;
   background: #142011;
   font-family: var(--display-font);
-  font-size: 13px;
+  font-size: var(--text-secondary);
 }
 .mixture-slot.is-filled {
   border-color: var(--primary);
@@ -566,7 +575,7 @@ ul {
   min-height: 36px;
   max-width: 360px;
   margin-top: 8px;
-  font-size: 11px;
+  font-size: var(--text-caption);
   text-align: center;
   color: var(--primary);
 }
@@ -579,7 +588,7 @@ ul {
   margin-top: 10px;
   color: #c5c5ac;
   font-family: var(--display-font);
-  font-size: 14px;
+  font-size: var(--text-secondary);
 }
 .recipe-panel {
   position: relative;
@@ -612,7 +621,7 @@ ul {
   border-bottom: 1px solid #9e7f4e;
 }
 .recipe-panel .section-heading h2 {
-  font-size: 17px;
+  font-size: var(--text-subheading);
   font-weight: 600;
 }
 .recipe-panel .section-heading .icon {
@@ -631,14 +640,14 @@ ul {
 }
 .recipe-heading-block h3 {
   font-family: var(--display-font);
-  font-size: 32px;
+  font-size: var(--text-display);
   font-weight: 600;
-  letter-spacing: -0.025em;
+  letter-spacing: 0;
   line-height: 1.1;
 }
 .recipe-heading-block p {
   margin-top: 10px;
-  font-size: 12px;
+  font-size: var(--text-caption);
   color: #574a32;
 }
 .recipe-ranges {
@@ -657,18 +666,18 @@ ul {
   align-items: center;
   gap: 7px;
   font-family: var(--display-font);
-  font-size: 13px;
+  font-size: var(--text-secondary);
   font-weight: 600;
 }
 .recipe-ranges dt .icon {
-  width: 17px;
-  height: 17px;
+  width: 16px;
+  height: 16px;
 }
 .recipe-ranges dd {
   margin: 0;
   font-family: var(--display-font);
   font-weight: 600;
-  font-size: 19px;
+  font-size: var(--text-subheading);
   font-variant-numeric: lining-nums tabular-nums;
   white-space: nowrap;
 }
@@ -677,20 +686,20 @@ ul {
   align-items: center;
   justify-content: space-between;
   font-family: var(--display-font);
-  font-size: 15px;
+  font-size: var(--text-body);
 }
 .recipe-capacity strong {
   font-family: var(--display-font);
-  font-size: 23px;
+  font-size: var(--text-heading);
   font-weight: 600;
 }
 .recipe-capacity strong span {
-  font-size: 17px;
+  font-size: var(--text-subheading);
 }
 .recipe-tolerance {
   margin-top: 9px;
   color: #574a32;
-  font-size: 10px;
+  font-size: var(--text-caption);
   text-align: center;
 }
 .parameter-grid {
@@ -721,12 +730,12 @@ ul {
   align-items: center;
   gap: 9px;
   font-family: var(--display-font);
-  font-size: 18px;
+  font-size: var(--text-subheading);
   font-weight: 400;
 }
 .parameter-value {
   font-family: var(--display-font);
-  font-size: 23px;
+  font-size: var(--text-heading);
   color: var(--brass);
   font-variant-numeric: lining-nums tabular-nums;
 }
@@ -802,13 +811,13 @@ ul {
   display: flex;
   justify-content: space-between;
   margin-top: 7px;
-  font-family: ui-monospace, monospace;
+  font-family: var(--font-ui);
   color: var(--muted);
-  font-size: 10px;
+  font-size: var(--text-caption);
 }
 .parameter-target {
   margin-top: 6px;
-  font-size: 11px;
+  font-size: var(--text-caption);
   color: var(--muted);
 }
 .parameter-target strong {
@@ -824,13 +833,13 @@ ul {
 }
 .brew-feedback h2 {
   font-family: var(--display-font);
-  font-size: 20px;
+  font-size: var(--text-subheading);
   font-weight: 400;
   color: var(--brass);
 }
 .brew-feedback > p {
   margin-top: 4px;
-  font-size: 13px;
+  font-size: var(--text-secondary);
   color: var(--muted);
 }
 .brew-checks {
@@ -840,17 +849,17 @@ ul {
   margin: 16px 0 0;
 }
 .brew-checks dt {
-  font-size: 12px;
+  font-size: var(--text-caption);
 }
 .brew-checks dd {
   margin: 4px 0 0;
   font-variant-numeric: tabular-nums;
-  font-size: 18px;
+  font-size: var(--text-subheading);
 }
 .brew-checks dd span {
   display: block;
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--text-caption);
 }
 .brew-check-passed dd {
   color: var(--primary);
@@ -875,7 +884,7 @@ ul {
   padding: 10px;
   border-color: transparent;
   font-family: var(--display-font);
-  font-size: 16px;
+  font-size: var(--text-body);
   color: var(--brass);
   background: transparent;
 }
@@ -904,7 +913,7 @@ ul {
     inset 0 0 0 5px #7b8143;
   color: #e3f3ad;
   font-family: var(--display-font);
-  font-size: 30px;
+  font-size: var(--text-display);
   font-weight: 400;
   text-shadow: 0 0 14px #abd75360;
 }
@@ -926,7 +935,7 @@ ul {
 .station-instruction {
   margin-top: 9px;
   color: var(--muted);
-  font-size: 10px;
+  font-size: var(--text-caption);
   text-align: center;
 }
 .game-footnote {
@@ -942,7 +951,7 @@ ul {
   display: flex;
   gap: 16px;
   color: var(--muted);
-  font-size: 10px;
+  font-size: var(--text-caption);
 }
 .bar-legend > span {
   display: flex;
@@ -964,7 +973,7 @@ ul {
 }
 .feature-notice {
   color: var(--muted);
-  font-size: 10px;
+  font-size: var(--text-caption);
 }
 .continue-action {
   margin-top: 10px;
@@ -973,7 +982,7 @@ ul {
 .save-notice {
   margin-top: 16px;
   color: var(--danger);
-  font-size: 12px;
+  font-size: var(--text-caption);
   line-height: 1.5;
 }
 .difficulty-options {
@@ -1017,7 +1026,7 @@ ul {
   table-layout: fixed;
   border-collapse: collapse;
   margin-top: 24px;
-  font-size: 13px;
+  font-size: var(--text-secondary);
   font-variant-numeric: tabular-nums;
 }
 .leaderboard-table th,
@@ -1046,7 +1055,7 @@ ul {
   width: 32%;
 }
 .leaderboard-table time {
-  font-size: 12px;
+  font-size: var(--text-caption);
 }
 .score-name-form {
   display: flex;
@@ -1054,7 +1063,7 @@ ul {
   gap: 8px;
   padding-top: 20px;
   border-top: 1px solid var(--border);
-  font-size: 14px;
+  font-size: var(--text-secondary);
 }
 .score-name-form label {
   color: var(--brass);
@@ -1068,7 +1077,7 @@ ul {
   border-radius: var(--radius);
   background: var(--background);
   color: var(--ink);
-  font-size: 16px;
+  font-size: var(--text-body);
 }
 .score-name-form input:focus-visible {
   outline: 2px solid var(--focus);
@@ -1081,7 +1090,7 @@ ul {
 .form-error {
   min-height: 20px;
   color: var(--danger);
-  font-size: 12px;
+  font-size: var(--text-caption);
 }
 .dialog-header {
   display: flex;
@@ -1091,7 +1100,7 @@ ul {
 }
 .dialog-header h2 {
   font-family: var(--display-font);
-  font-size: 27px;
+  font-size: var(--text-display);
   line-height: 1.25;
   font-weight: 400;
   color: var(--brass);
@@ -1110,7 +1119,7 @@ ul {
 }
 .dialog-description {
   margin-top: 12px;
-  font-size: 14px;
+  font-size: var(--text-body);
   color: var(--muted);
 }
 .dialog-actions {
@@ -1125,13 +1134,13 @@ ul {
 }
 .dialog-note {
   margin-top: 20px;
-  font-size: 12px;
+  font-size: var(--text-secondary);
   color: var(--muted);
 }
 .help-steps {
   margin: 24px 0 0;
   padding-left: 20px;
-  font-size: 14px;
+  font-size: var(--text-body);
 }
 .help-steps li {
   padding-left: 6px;
@@ -1146,7 +1155,7 @@ ul {
 .help-steps p {
   margin-top: 4px;
   color: var(--muted);
-  font-size: 13px;
+  font-size: var(--text-body);
 }
 .menu-rules {
   display: flex;
@@ -1157,11 +1166,11 @@ ul {
 }
 .menu-rules dt {
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--text-caption);
 }
 .menu-rules dd {
   margin: 4px 0 0;
-  font-size: 14px;
+  font-size: var(--text-secondary);
   font-weight: 600;
   color: var(--brass);
 }
@@ -1180,7 +1189,7 @@ ul {
   border-bottom: 1px solid var(--border);
   background: transparent;
   color: var(--ink);
-  font-size: 14px;
+  font-size: var(--text-secondary);
   font-weight: 600;
   text-align: left;
 }
@@ -1206,12 +1215,12 @@ ul {
 }
 .leaderboard-empty h3 {
   margin-top: 16px;
-  font-size: 16px;
+  font-size: var(--text-body);
   font-weight: 600;
 }
 .leaderboard-empty p {
   margin-top: 8px;
-  font-size: 13px;
+  font-size: var(--text-secondary);
   color: var(--muted);
 }
 
@@ -1246,13 +1255,13 @@ ul {
     padding-inline: 20px;
   }
   .brand h1 {
-    font-size: 32px;
+    font-size: var(--text-display);
     padding-inline: 12px;
   }
   .brand h1::before,
   .brand h1::after {
     margin-inline: 10px;
-    font-size: 20px;
+    font-size: var(--text-subheading);
   }
   .header-actions .button {
     padding: 10px;
@@ -1284,10 +1293,10 @@ ul {
     height: 48px;
   }
   .ingredient-name {
-    font-size: 13px;
+    font-size: var(--text-secondary);
   }
   .ingredient-values {
-    font-size: 10px;
+    font-size: var(--text-caption);
     gap: 3px;
   }
   .ingredient-values > span {
@@ -1298,10 +1307,10 @@ ul {
     gap: 16px;
   }
   .stat {
-    font-size: 18px;
+    font-size: var(--text-subheading);
   }
   .stat strong {
-    font-size: 29px;
+    font-size: var(--text-display);
   }
 }
 @media (max-width: 900px) {
@@ -1309,7 +1318,7 @@ ul {
     min-height: 100px;
   }
   .brand h1 {
-    font-size: 28px;
+    font-size: var(--text-display);
     padding-inline: 12px;
   }
   .brand h1::before,
@@ -1345,20 +1354,20 @@ ul {
     gap: 8px;
   }
   .ingredient-name {
-    font-size: 14px;
+    font-size: var(--text-secondary);
   }
   .ingredient-illustration {
     width: 64px;
     height: 64px;
   }
   .ingredient-values {
-    font-size: 11px;
+    font-size: var(--text-caption);
   }
   .parameter {
     padding-inline: 14px;
   }
   .parameter-heading h2 {
-    font-size: 16px;
+    font-size: var(--text-body);
     gap: 6px;
   }
   .parameter-heading .icon {
@@ -1371,7 +1380,7 @@ ul {
     gap: 12px;
   }
   .main-action {
-    font-size: 25px;
+    font-size: var(--text-display);
     padding-inline: 18px;
   }
   .game-footnote {
@@ -1383,7 +1392,7 @@ ul {
 @media (max-width: 600px) {
   .leaderboard-table,
   .leaderboard-table time {
-    font-size: 11px;
+    font-size: var(--text-caption);
   }
   .leaderboard-table th,
   .leaderboard-table td {
@@ -1417,7 +1426,7 @@ ul {
     padding-top: 14px;
   }
   .brand h1 {
-    font-size: 26px;
+    font-size: 1.75rem;
     padding: 6px 12px 10px;
     white-space: nowrap;
   }
@@ -1449,15 +1458,15 @@ ul {
   }
   .stat {
     gap: 6px;
-    font-family: system-ui, sans-serif;
-    font-size: 11px;
+    font-family: var(--font-ui);
+    font-size: var(--text-caption);
   }
   .stat > .icon {
     display: none;
   }
   .stat strong {
     font-family: var(--display-font);
-    font-size: 22px;
+    font-size: var(--text-heading);
   }
   .lives > span:first-child {
     display: none;
@@ -1498,10 +1507,10 @@ ul {
     padding-inline: 4px;
   }
   .station-heading h2 {
-    font-size: 17px;
+    font-size: var(--text-subheading);
   }
   .station-heading > span {
-    font-size: 10px;
+    font-size: var(--text-caption);
   }
   .cauldron-scene {
     min-height: 260px;
@@ -1516,10 +1525,10 @@ ul {
   .mixture-slot {
     width: 36px;
     height: 36px;
-    font-size: 12px;
+    font-size: var(--text-caption);
   }
   .cauldron-caption {
-    font-size: 12px;
+    font-size: var(--text-caption);
   }
   .recipe-panel {
     grid-row: 2;
@@ -1545,11 +1554,11 @@ ul {
     margin: 0;
   }
   .recipe-heading-block h3 {
-    font-size: 27px;
+    font-size: var(--text-display);
   }
   .recipe-heading-block p {
     margin-top: 0;
-    font-size: 11px;
+    font-size: var(--text-caption);
   }
   .recipe-ranges {
     margin: 16px 0;
@@ -1558,10 +1567,10 @@ ul {
     padding: 8px 0;
   }
   .recipe-ranges dd {
-    font-size: 18px;
+    font-size: var(--text-subheading);
   }
   .recipe-tolerance {
-    font-size: 10px;
+    font-size: var(--text-caption);
     text-align: left;
   }
   .shelf-panel {
@@ -1594,10 +1603,10 @@ ul {
   }
   .ingredient-name {
     min-height: 34px;
-    font-size: 13px;
+    font-size: var(--text-secondary);
   }
   .ingredient-values {
-    font-size: 10px;
+    font-size: var(--text-caption);
     gap: 3px;
   }
   .stock-count {
@@ -1631,10 +1640,10 @@ ul {
     margin-bottom: 10px;
   }
   .parameter-heading h2 {
-    font-size: 17px;
+    font-size: var(--text-subheading);
   }
   .parameter-value {
-    font-size: 22px;
+    font-size: var(--text-heading);
   }
   .parameter-target {
     margin-top: 5px;
@@ -1647,7 +1656,7 @@ ul {
   .footer-button {
     min-width: 44px;
     padding: 8px 2px;
-    font-size: 13px;
+    font-size: var(--text-secondary);
   }
   .footer-button .icon {
     width: 22px;
@@ -1656,7 +1665,7 @@ ul {
   .main-action {
     min-height: 54px;
     padding: 8px 12px;
-    font-size: 23px;
+    font-size: var(--text-heading);
     gap: 8px;
   }
   .main-action .icon {
@@ -1664,23 +1673,23 @@ ul {
     height: 18px;
   }
   .station-instruction {
-    font-size: 9px;
+    font-size: var(--text-caption);
   }
   .game-footnote {
     padding: 10px 14px;
   }
   .bar-legend {
-    font-size: 9px;
+    font-size: var(--text-caption);
     gap: 16px;
   }
   .feature-notice {
-    font-size: 9px;
+    font-size: var(--text-caption);
   }
   .game-dialog {
     padding: 24px;
   }
   .dialog-header h2 {
-    font-size: 24px;
+    font-size: var(--text-heading);
   }
   .dialog-actions {
     flex-direction: column;
