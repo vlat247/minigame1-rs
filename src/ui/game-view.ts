@@ -40,9 +40,9 @@ function ingredientShelf(mixing: MixingState | null, difficulty: Difficulty): st
           <span class="ingredient-content">
             <span class="ingredient-name">${ingredient.name}</span>
             <span class="ingredient-values">
-              <span class="ingredient-temperature" aria-label="Temperature ${signed(ingredient.temperature)}">T ${signed(ingredient.temperature)}</span>
-              <span class="ingredient-density" aria-label="Density ${signed(ingredient.density)}">D ${signed(ingredient.density)}</span>
-              <span class="ingredient-magic" aria-label="Magic Power ${signed(ingredient.magicPower)}">M ${signed(ingredient.magicPower)}</span>
+              <span class="ingredient-temperature" aria-label="Temperature ${signed(ingredient.temperature)}">T${signed(ingredient.temperature)}</span>
+              <span class="ingredient-density" aria-label="Density ${signed(ingredient.density)}">D${signed(ingredient.density)}</span>
+              <span class="ingredient-magic" aria-label="Magic Power ${signed(ingredient.magicPower)}">M${signed(ingredient.magicPower)}</span>
             </span>
           </span>
           <span class="stock-count"></span>
@@ -65,21 +65,19 @@ function recipePanel(recipe: Recipe | undefined, difficulty: Difficulty): string
     <aside class="recipe-panel" aria-labelledby="recipe-heading">
       <div class="section-heading">${icon('magic')}<h2 id="recipe-heading">Current recipe</h2></div>
       <div class="recipe-heading-block">
-        ${icon('acid', 'recipe-illustration')}
         <h3 data-recipe-name>${recipe?.name ?? 'No recipe yet'}</h3>
-        <p>${recipe !== undefined ? 'Bring all three values into balance.' : 'Start a game to reveal your first recipe.'}</p>
       </div>
       <dl class="recipe-ranges">
         ${PARAMETERS.map(
           (parameter) => `
             <div>
-              <dt>${icon(parameter.icon)}${parameter.name}</dt>
+              <dt>${icon(parameter.icon)}<span class="recipe-parameter-name">${parameter.name}</span></dt>
               <dd data-recipe-range="${parameter.key}">${recipe !== undefined ? `${recipe[parameter.key].min}–${recipe[parameter.key].max}` : '—'}</dd>
             </div>`,
         ).join('')}
       </dl>
       <div class="recipe-capacity"><span>Ingredients</span><strong id="mixture-count">0 <span>/ ${settings.maxIngredients}</span></strong></div>
-      <p class="recipe-tolerance">${recipe !== undefined ? `Brew tolerance: ±${settings.tolerance} on each range` : `${settings.label} mode · Up to ${settings.maxIngredients} ingredients`}</p>
+      <p class="recipe-tolerance">Tolerance ±${settings.tolerance}</p>
     </aside>`;
 }
 
@@ -97,7 +95,7 @@ function parameterBars(recipe: Recipe | undefined): string {
           <span class="current-marker" aria-hidden="true"></span>
         </div>
         <div class="parameter-scale" aria-hidden="true"><span data-scale-min>−100</span><span>0</span><span data-scale-max>+100</span></div>
-        <p class="parameter-target">Target <strong data-target-range>${recipe !== undefined ? `${recipe[parameter.key].min}–${recipe[parameter.key].max}` : '—'}</strong><span class="parameter-match" hidden> · In range</span></p>
+        <p class="parameter-target"><span class="parameter-target-label">Target </span><strong data-target-range>${recipe !== undefined ? `${recipe[parameter.key].min}–${recipe[parameter.key].max}` : '—'}</strong><span class="parameter-match" hidden> · In range</span></p>
       </section>`,
   ).join('');
 }
@@ -109,6 +107,7 @@ export function renderGameView(container: HTMLElement, state: GameViewState): vo
   const settings = DIFFICULTY_SETTINGS[difficulty];
   container.dataset.paused = String(state.paused);
   container.dataset.started = String(started);
+  container.dataset.difficulty = difficulty;
   container.innerHTML = `
     <header class="app-header">
       <div class="brand">
@@ -135,35 +134,29 @@ export function renderGameView(container: HTMLElement, state: GameViewState): vo
         <div class="workbench-grid">
           <section class="shelf-panel" aria-labelledby="shelf-heading">
             <div class="section-heading"><h2 id="shelf-heading">Ingredients</h2><span class="shelf-count">${started ? `${settings.ingredientCount} types` : 'Empty shelf'}</span></div>
-            <p class="shelf-description">${started ? 'Select an ingredient to add one portion.' : 'Stock appears when a game starts.'}</p>
             <ul class="ingredient-list" aria-label="${started ? 'Ingredient shelf' : 'Empty ingredient shelf'}">${ingredientShelf(state.game?.mixing ?? null, difficulty)}</ul>
           </section>
           <section class="brew-station" aria-labelledby="cauldron-heading">
             <div class="station-heading"><h2 id="cauldron-heading">The cauldron</h2><span>${settings.label} mode</span></div>
             <div class="cauldron-scene">${cauldronIllustration()}</div>
+            <section class="brew-feedback" aria-labelledby="last-brew-title" hidden></section>
             <ol class="mixture-slots" aria-label="Cauldron contents"></ol>
-            <p class="cauldron-caption">The cauldron is empty.</p>
+            <p class="cauldron-caption sr-only">The cauldron is empty.</p>
             <p class="ingredient-feedback" id="ingredient-feedback" role="status" aria-atomic="true"></p>
           </section>
           ${recipePanel(recipe, difficulty)}
         </div>
         <div class="parameter-grid" role="group" aria-label="Cauldron parameters">${parameterBars(recipe)}</div>
       </div>
-      <section class="brew-feedback" aria-labelledby="last-brew-title" hidden></section>
       <div class="game-bottom-row">
         <button class="button button-quiet footer-button" type="button" data-action="help">${icon('help')}<span>Help</span></button>
         <div class="main-action-group">
-          <button class="button button-primary main-action" type="button" data-action="${started ? 'brew' : 'start'}" aria-describedby="station-instruction">
+          <button class="button button-primary main-action" type="button" data-action="${started ? 'brew' : 'start'}">
             ${icon('spark')} ${started ? 'Brew potion' : 'Start Game'} ${icon('spark')}
           </button>
           ${!started && state.canContinue ? '<button class="button button-secondary continue-action" type="button" data-action="continue">Continue Game</button>' : ''}
-          <p class="station-instruction" id="station-instruction">${started ? 'Add at least one ingredient to brew.' : 'Match Temperature, Density, and Magic Power.'}</p>
         </div>
         <button class="button button-quiet footer-button" type="button" data-action="menu">${icon('menu')}<span>Menu</span></button>
-      </div>
-      <div class="game-footnote">
-        <div class="bar-legend" role="group" aria-label="Parameter bar legend"><span><i class="legend-target"></i>Recipe range</span><span><i class="legend-marker"></i>Current value</span></div>
-        <p class="feature-notice" id="feature-notice">${started ? 'Progress saves automatically. Pause to stop the clock.' : `${settings.label} selected · Change difficulty in Menu.${state.canContinue ? ' Continue restores your saved game paused.' : ''}`}</p>
       </div>
       <p class="save-notice" data-save-notice role="status" ${state.saveNotice === '' ? 'hidden' : ''}></p>
     </main>`;
@@ -296,17 +289,7 @@ export function updateGameView(container: HTMLElement, state: GameViewState): vo
   if (pause !== null) pause.disabled = game === null || ended;
   const brew = container.querySelector<HTMLButtonElement>('[data-action="brew"]');
   if (brew !== null) brew.disabled = count === 0 || state.paused || ended;
-  const instruction = container.querySelector('#station-instruction');
-  if (instruction !== null && game !== null) {
-    instruction.textContent = ended
-      ? 'Run finished. Start a new game to try again.'
-      : count === 0
-        ? 'Add at least one ingredient to brew.'
-        : full
-          ? 'Cauldron full. Brew this mixture before adding more.'
-          : `Match all three ranges with ±${settings.tolerance} tolerance, then brew.`;
-  }
-
+  container.dataset.feedback = String(state.lastBrew !== null);
   const feedback = container.querySelector<HTMLElement>('.brew-feedback');
   if (feedback !== null) {
     feedback.hidden = state.lastBrew === null;
@@ -344,8 +327,8 @@ function brewFeedbackMarkup(result: BrewFeedback): string {
     <dl class="brew-checks">${PARAMETERS.map(
       (parameter) => `
       <div class="${result.checks[parameter.key] ? 'brew-check-passed' : 'brew-check-failed'}">
-        <dt>${parameter.name} · ${result.checks[parameter.key] ? 'Matched' : 'Outside range'}</dt>
-        <dd>${signed(result.totals[parameter.key])}<span>Accepted ${result.recipe[parameter.key].min - tolerance}–${result.recipe[parameter.key].max + tolerance}</span></dd>
+        <dt>${icon(parameter.icon)}<span class="sr-only">${parameter.name}: </span>${result.checks[parameter.key] ? 'Matched' : 'Outside'}</dt>
+        <dd>${signed(result.totals[parameter.key])}<span><span class="sr-only">Accepted range </span>(${result.recipe[parameter.key].min - tolerance}–${result.recipe[parameter.key].max + tolerance})</span></dd>
       </div>`,
     ).join('')}</dl>`;
 }

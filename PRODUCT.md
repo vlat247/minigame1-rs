@@ -10,7 +10,7 @@ Players of the RS School browser mini-game and reviewers checking the assignment
 
 ## Product Purpose
 
-Mix limited-stock ingredients to match three recipe ranges before time or lives run out. Level 1 gameplay and Level 2 difficulty selection and saved-game continuation are implemented on `feat/difficulty-persistence`. Shelf ingredients receive independent random stocks of 2–15, additions spend one portion, and the cauldron preserves ordered portions, including duplicates. All eight official ingredients and twenty official recipes are catalogued.
+Mix limited-stock ingredients to match three recipe ranges before time or lives run out. `feat/app-redesign` builds on completed Level 1 gameplay and Level 2 difficulty selection and saved-game continuation. Shelf ingredients receive independent random stocks of 2–15, additions spend one portion, and the cauldron preserves ordered portions, including duplicates. All eight official ingredients and twenty official recipes are catalogued.
 
 Choose difficulty in Menu before a run. Medium is the default. Difficulty cannot change during an unfinished run, including while paused; finishing or confirming exit makes it available again.
 
@@ -26,7 +26,7 @@ The live gauges show raw totals on symmetric scales centered at zero, expanding 
 
 Randomly select from the chosen difficulty's recipe pool at the start and after each successful brew. Medium uses the seven Medium recipes required by Level 1. Repeats are allowed, and selection does not filter by remaining stock. With at least one portion, Brew checks all three raw totals against inclusive ranges expanded by the selected tolerance. Success earns the selected score and capped time bonus, then chooses another recipe. Failure loses one life and keeps the recipe. Both outcomes clear the cauldron, totals, and counter without refunding ingredients.
 
-The result panel preserves the recipe just checked, raw totals, accepted ranges, individual pass/fail results, and actual score/time/life changes until another portion is added.
+The result panel replaces the cauldron scene after brewing and preserves the recipe just checked, raw totals, accepted ranges, individual pass/fail results, and actual score/time/life changes until another portion is added. The next ingredient restores the cauldron scene. Results reuse the same space so the board never grows after a brew.
 
 Timed sessions use the selected starting time and lives. The timestamp-based countdown drives the MM:SS display and shrinking time bar. Below 15 seconds, the timer turns red and pulses unless reduced motion is requested. Reconcile elapsed time before ingredient additions and brews so an expired run cannot receive an extra action or time bonus.
 
@@ -44,17 +44,20 @@ Level 3 reactions, drag and drop, tooltips, Pour Out, keyboard shortcuts, and ad
 
 ## Brand Personality
 
-A dark fantasy alchemy workshop moving toward a pixel-art visual style on `feat/app-redesign`. The first pass replaces the eight ingredients with original 32 × 32 SVG sprites inspired by pixel-art inventory illustrations: stepped warm dark outlines, limited palettes, top-left highlights, and distinct silhouettes. Show the sprites on small parchment tiles and reuse them in mixture slots. Keep the brass frames, wooden cabinet, shaded iron cauldron, green magical light, and parchment recipe during this ingredient-focused pass. Controls and numerical values take priority over ornament.
+A dark charcoal and violet pixel-art alchemy workshop on `feat/app-redesign`, with stepped borders, restrained brass details, an iron cauldron, and a compact dark recipe panel. The original SVG scenery from `workshopScenery()` depicts stone masonry, an arched niche, shelves, bottles, and a small candle using crisp pixel geometry. Eight original 32 × 32 SVG ingredient sprites use warm dark outlines, limited palettes, top-left highlights, and distinct silhouettes. Present ingredients in one compact vertical list on every screen, with each row spanning the panel width: sprite, name, inline Temperature/Density/Magic values, and stock at the right. Reuse the sprites in mixture slots. Controls and numerical values take priority over ornament.
 
 Use locally bundled Pixelify Sans across all text, including labels, scores, buttons, forms, and dialogs. Keep a shared type scale and readable captions. Temperature, Density, and Magic Power use filled 16 × 16 pixel icons with crisp stepped geometry and their existing semantic colors.
 
+Use the full browser width without a maximum-width cap. Fit the board to the visible viewport on desktop, portrait mobile, and short landscape screens, with no document or play-panel scrolling. Keep ingredient rows compact and adapt their height instead of stretching them into large cards. Place gauges beside or below the cauldron and recipe to preserve space for the single ingredient list. Tall portrait screens retain the cauldron scene; compact portrait and short landscape use a smaller scene and compact recipe, with targets visible on the gauges. Keep all shelf ingredients, recipe ranges, gauges, and brew controls visible together. Continue Game shares the primary action row when available. Remove the footer legend and static advice. Help and Menu modal bodies may scroll when their content exceeds the viewport.
+
 ## Anti-references
 
-Avoid marketing landing-page layouts, dashboard metric-card grids, bright application-style surfaces, flat clip-art cauldrons, and decorative copy that obscures the rules. Restrict green glow to the cauldron, recipe targets, and primary game action. Use authored SVG/CSS instead of bitmap game assets while the assignment's image wording remains inconsistent.
+Avoid marketing landing-page layouts, dashboard metric-card grids, bright application-style surfaces, flat clip-art cauldrons, and decorative copy that obscures the rules. Use violet for primary controls and green for successful matches and the cauldron liquid. Keep the workshop background subdued behind the controls. Use authored SVG/CSS instead of bitmap game assets while the assignment's image wording remains inconsistent.
 
 ## Design Principles
 
 - Make the recipe, ingredient stock, and three parameters readable together.
+- Keep the play board within the visible viewport; reuse the cauldron area for brew results instead of adding another panel below it.
 - Keep the welcome state empty and the primary action clear.
 - Use CSS and individually authored SVG assets for game elements.
 - Make remaining time and lives easy to read without relying on color alone.

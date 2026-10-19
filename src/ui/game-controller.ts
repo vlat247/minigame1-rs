@@ -334,9 +334,10 @@ export function mountGame(container: HTMLElement): () => void {
     if (!result.accepted) {
       if (result.reason !== 'cauldron-full' && result.reason !== 'out-of-stock') return;
       if (feedback !== null) {
+        feedback.classList.add('is-error');
         feedback.textContent =
           result.reason === 'cauldron-full'
-            ? `Cauldron full: only ${DIFFICULTY_SETTINGS[state.game.difficulty].maxIngredients} portions fit. Brew this mixture before adding more.`
+            ? `Cauldron full (${DIFFICULTY_SETTINGS[state.game.difficulty].maxIngredients}/${DIFFICULTY_SETTINGS[state.game.difficulty].maxIngredients}). Brew to continue.`
             : `${ingredient.name} is out of stock.`;
       }
       return;
@@ -347,6 +348,7 @@ export function mountGame(container: HTMLElement): () => void {
     // Update existing controls and gauges so keyboard focus and CSS transitions survive.
     updateGameView(view, state);
     if (feedback !== null) {
+      feedback.classList.remove('is-error');
       const totals = result.state.totals;
       feedback.textContent = `${ingredient.name} added. Temperature ${totals.temperature}, Density ${totals.density}, Magic Power ${totals.magicPower}.`;
     }
@@ -369,7 +371,10 @@ export function mountGame(container: HTMLElement): () => void {
       ? `${outcome.recipe.name} brewed. ${outcome.scoreDelta} points earned; total score ${result.state.score}. Next recipe: ${result.state.recipe.name}.`
       : `${outcome.recipe.name} failed. One life lost; ${result.state.lives} lives remain. The recipe stays the same.`;
     const feedback = view.querySelector('#ingredient-feedback');
-    if (feedback !== null) feedback.textContent = '';
+    if (feedback !== null) {
+      feedback.textContent = '';
+      feedback.classList.remove('is-error');
+    }
     if (result.state.status === 'game-over') {
       finishGame();
     } else {

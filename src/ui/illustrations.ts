@@ -165,32 +165,56 @@ export function cauldronIllustration(filled = false): string {
 }
 
 export function workshopScenery(): string {
-  const prefix = illustrationPrefix('workshop');
-
   return `
-    <svg xmlns="http://www.w3.org/2000/svg" class="workshop-scenery" width="900" height="620" viewBox="0 0 900 620" aria-hidden="true" focusable="false">
-      <defs>
-        <radialGradient id="${prefix}-candle">
-          <stop stop-color="#d8b96a" stop-opacity=".18" />
-          <stop offset="1" stop-color="#c19f50" stop-opacity="0" />
-        </radialGradient>
-      </defs>
-      <g fill="none" stroke="#85816a" stroke-width="2" opacity=".12">
-        <path d="M46 588V210C46 69 249 24 302 193v395M67 588V210C67 91 237 54 281 198v390" />
-        <path d="M598 588V193C651 24 854 69 854 210v378M619 588V198C663 54 833 91 833 210v378" />
-        <path d="m55 167 23 8m-3-55 22 14m24-51 12 24m36-40v25m47-17-7 24m47 5-16 18m-186 144h24m-24 106h24m-24 111h24m207-215h24m-24 106h24m-24 111h24" />
-        <path d="m845 167-23 8m3-55-22 14m-24-51-12 24m-36-40v25m-47-17 7 24m-47 5 16 18m186 144h-24m24 106h-24m24 111h-24m-207-215h-24m24 106h-24m24 111h-24" />
+    <svg xmlns="http://www.w3.org/2000/svg" class="workshop-scenery" width="900" height="620" viewBox="0 0 320 224" preserveAspectRatio="xMidYMid slice" shape-rendering="crispEdges" aria-hidden="true" focusable="false">
+      <rect width="320" height="224" fill="#161820" />
+      <g class="workshop-masonry">
+        <g fill="#1e2029">
+          <path d="M0 4h48v26H0z M51 4h61v26H51z M115 4h67v26h-67z M185 4h68v26h-68z M256 4h64v26h-64z" />
+          <path d="M0 33h23v29H0z M26 33h58v29H26z M87 33h69v29H87z M159 33h59v29h-59z M221 33h69v29h-69z M293 33h27v29h-27z" />
+          <path d="M0 65h49v28H0z M52 65h67v28H52z M122 65h63v28h-63z M188 65h67v28h-67z M258 65h62v28h-62z" />
+          <path d="M0 96h23v29H0z M26 96h62v29H26z M91 96h65v29H91z M159 96h65v29h-65z M227 96h63v29h-63z M293 96h27v29h-27z" />
+          <path d="M0 128h51v30H0z M54 128h64v30H54z M121 128h63v30h-63z M187 128h68v30h-68z M258 128h62v30h-62z" />
+          <path d="M0 161h26v29H0z M29 161h58v29H29z M90 161h66v29H90z M159 161h63v29h-63z M225 161h68v29h-68z M296 161h24v29h-24z" />
+          <path d="M0 193h51v27H0z M54 193h64v27H54z M121 193h64v27h-64z M188 193h67v27h-67z M258 193h62v27h-62z" />
+        </g>
+        <g fill="#252733">
+          <path d="M53 6h56v22H53z M187 6h64v22h-64z M28 35h54v25H28z M260 67h58v24h-58z M28 98h58v25H28z M229 98h59v25h-59z M56 130h60v26H56z M31 163h54v25H31z M227 163h64v25h-64z" />
+        </g>
+        <g fill="#2e303c" opacity=".55">
+          <path d="M3 4h39v1H3z M54 4h49v1H54z M188 4h58v1h-58z M29 33h47v1H29z M224 33h57v1h-57z M3 65h38v1H3z M261 65h48v1h-48z M29 96h49v1H29z M230 96h52v1h-52z M57 128h51v1H57z M261 128h50v1h-50z M32 161h47v1H32z M228 161h53v1h-53z M3 193h39v1H3z M261 193h48v1h-48z" />
+        </g>
+        <g fill="#161820">
+          <path d="M47 24h2v6h-2z M78 33h6v2h-6z M258 65h5v2h-5z M26 119h3v6h-3z M287 118h3v7h-3z M54 128h5v2h-5z M81 184h6v6h-6z M290 161h3v4h-3z" />
+        </g>
       </g>
-      <g opacity=".18">
-        <path d="M87 340h171v9H87Zm555 0h171v9H642Z" fill="#9b8153" />
-        <path d="M106 339v-35l7-8v-13h12v13l7 8v35Zm45 0v-25l8-7v-17h9v17l9 7v25Z" fill="#66765b" stroke="#b4ab7f" stroke-width="1" />
-        <path d="M700 339v-40l8-9v-10h12v10l8 9v40Z" fill="#6a6678" stroke="#b4ab7f" stroke-width="1" />
+
+      <g class="workshop-niche">
+        <path d="M140 25h40v5h12v7h9v10h7v14h5v163H107V61h5V47h7V37h9v-7h12z" fill="#24232d" />
+        <path d="M141 34h38v5h11v8h8v13h6v164h-88V60h6V47h8v-8h11z" fill="#11131a" />
+        <g fill="#2e303c">
+          <path d="M140 25h40v2h-40z M129 30h11v2h-11z M120 37h8v2h-8z M113 47h6v2h-6z M108 61h4v46h-4z M108 111h4v39h-4z M108 154h4v39h-4z" />
+        </g>
+        <g fill="#161820">
+          <path d="M128 32h2v6h-2z M118 41h2v7h-2z M111 58h6v2h-6z M108 107h8v3h-8z M108 150h8v3h-8z M108 193h8v3h-8z M204 107h8v3h-8z M204 150h8v3h-8z M204 193h8v3h-8z" />
+        </g>
+        <path d="M118 203h84v4h-84z M114 207h92v5h-92z M110 212h100v12H110z" fill="#1e2029" />
       </g>
-      <ellipse cx="774" cy="300" rx="65" ry="83" fill="url(#${prefix}-candle)" />
-      <g opacity=".4">
-        <path d="M767 339v-36h14v36" fill="#ab9f72" stroke="#d0ba80" stroke-width="1" />
-        <path d="M774 302c-12-10-2-18 0-26 8 10 10 19 0 26Z" fill="#d6bd72" />
-        <path d="M774 300c-5-5-1-8 0-12 3 5 4 9 0 12Z" fill="#f2dda5" />
+
+      <g class="workshop-shelves">
+        <path d="M14 117h78v4H14z M19 121h5v9h-5z M82 121h5v9h-5z M227 107h79v4h-79z M232 111h5v8h-5z M296 111h5v8h-5z" fill="#11131a" />
+        <path d="M14 116h78v2H14z M227 106h79v2h-79z" fill="#37313e" />
+        <path d="M27 91h7v5h3v18H24V96h3z M67 99h9v4h3v11H64v-11h3z M243 86h6v6h3v12h-12V92h3z" fill="#37313e" />
+        <path d="M27 97h2v13h-2z M67 104h2v7h-2z M243 93h2v8h-2z" fill="#4d3c3a" />
+        <path d="M45 102h10v12H45z M47 99h6v3h-6z M264 90h5v14h-5z M270 92h4v12h-4z" fill="#4d3c3a" />
+        <path d="M45 103h2v8h-2z M264 90h2v14h-2z" fill="#74604c" opacity=".45" />
+      </g>
+
+      <g class="workshop-accent" opacity=".7">
+        <path d="M285 94h5v10h-5z M283 104h9v2h-9z" fill="#74604c" />
+        <path d="M287 83h1v2h1v3h1v3h-1v2h-3v-2h-1v-3h1v-3h1z" fill="#a88a5b" />
+        <path d="M287 88h1v4h-1z" fill="#cbc097" />
+        <path d="M72 71h2v2h-2z M74 69h2v2h-2z M76 71h2v2h-2z M74 73h2v2h-2z" fill="#37313e" />
       </g>
     </svg>
   `;
