@@ -23,8 +23,8 @@ function freezeState(state) {
   return Object.freeze(state);
 }
 
-function addSuccessfully(state, id) {
-  const result = addIngredient(state, id);
+function addSuccessfully(state, id, difficulty = 'medium') {
+  const result = addIngredient(state, id, difficulty);
   assert.equal(result.accepted, true);
   return result.state;
 }

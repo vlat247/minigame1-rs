@@ -1,14 +1,16 @@
-import { LEVEL_ONE_INGREDIENTS } from '../data/ingredients.ts';
-import { MEDIUM_RECIPES } from '../data/recipes.ts';
+import { DIFFICULTY_SETTINGS } from '../data/difficulty.ts';
+import type { Difficulty } from '../data/difficulty.ts';
+import { getShelfIngredients } from '../data/ingredients.ts';
+import { getRecipesByDifficulty } from '../data/recipes.ts';
 import type { Recipe, RecipeRange } from '../data/recipes.ts';
 import type { GameEndReason, GameState } from '../state/game.ts';
 import { calculateTotals } from './ingredients.ts';
 import type { MixingState, MixtureTotals } from './ingredients.ts';
 
-export const BREW_TOLERANCE = 8;
-export const SCORE_PER_BREW = 200;
-export const TIME_BONUS = 10;
-export const MAX_TIME = 150;
+export const BREW_TOLERANCE = DIFFICULTY_SETTINGS.medium.tolerance;
+export const SCORE_PER_BREW = DIFFICULTY_SETTINGS.medium.scorePerBrew;
+export const TIME_BONUS = DIFFICULTY_SETTINGS.medium.timeBonus;
+export const MAX_TIME = DIFFICULTY_SETTINGS.medium.startingTime;
 
 export interface BrewChecks {
   readonly temperature: boolean;
@@ -37,31 +39,41 @@ export type BrewResult =
       readonly state: GameState;
     };
 
-export function selectMediumRecipe(random: () => number = Math.random): Recipe {
+export function selectRecipe(difficulty: Difficulty, random: () => number = Math.random): Recipe {
   const sample = random();
 
   if (!Number.isFinite(sample) || sample < 0 || sample >= 1) {
     throw new RangeError('The random source must return a number from 0 inclusive to 1 exclusive.');
   }
 
-  const recipe = MEDIUM_RECIPES[Math.floor(sample * MEDIUM_RECIPES.length)];
+  const recipes = getRecipesByDifficulty(difficulty);
+  const recipe = recipes[Math.floor(sample * recipes.length)];
 
   if (recipe === undefined) {
-    throw new Error('The Medium recipe pool must contain at least one recipe.');
+    throw new Error(`The ${difficulty} recipe pool must contain at least one recipe.`);
   }
 
   return recipe;
 }
 
-function isInRange(value: number, range: RecipeRange): boolean {
-  return value >= range.min - BREW_TOLERANCE && value <= range.max + BREW_TOLERANCE;
+export function selectMediumRecipe(random: () => number = Math.random): Recipe {
+  return selectRecipe('medium', random);
 }
 
-export function checkBrew(totals: MixtureTotals, recipe: Recipe): BrewCheck {
+function isInRange(value: number, range: RecipeRange, tolerance: number): boolean {
+  return value >= range.min - tolerance && value <= range.max + tolerance;
+}
+
+export function checkBrew(
+  totals: MixtureTotals,
+  recipe: Recipe,
+  difficulty: Difficulty = recipe.difficulty,
+): BrewCheck {
+  const tolerance = DIFFICULTY_SETTINGS[difficulty].tolerance;
   const checks: BrewChecks = {
-    temperature: isInRange(totals.temperature, recipe.temperature),
-    density: isInRange(totals.density, recipe.density),
-    magicPower: isInRange(totals.magicPower, recipe.magicPower),
+    temperature: isInRange(totals.temperature, recipe.temperature, tolerance),
+    density: isInRange(totals.density, recipe.density, tolerance),
+    magicPower: isInRange(totals.magicPower, recipe.magicPower, tolerance),
   };
 
   return {
@@ -70,8 +82,10 @@ export function checkBrew(totals: MixtureTotals, recipe: Recipe): BrewCheck {
   };
 }
 
-function hasNoStock(mixing: MixingState): boolean {
-  return LEVEL_ONE_INGREDIENTS.every((ingredient) => mixing.inventory[ingredient.id] <= 0);
+function hasNoStock(mixing: MixingState, difficulty: Difficulty): boolean {
+  return getShelfIngredients(difficulty).every(
+    (ingredient) => mixing.inventory[ingredient.id] <= 0,
+  );
 }
 
 export function brewGame(state: GameState, random: () => number = Math.random): BrewResult {
@@ -79,7 +93,7 @@ export function brewGame(state: GameState, random: () => number = Math.random): 
     state.status === 'game-over' ||
     state.lives <= 0 ||
     state.timeRemaining <= 0 ||
-    (state.mixing.mixture.length === 0 && hasNoStock(state.mixing))
+    (state.mixing.mixture.length === 0 && hasNoStock(state.mixing, state.difficulty))
   ) {
     return { accepted: false, reason: 'game-over', state };
   }
@@ -88,12 +102,13 @@ export function brewGame(state: GameState, random: () => number = Math.random): 
     return { accepted: false, reason: 'empty-cauldron', state };
   }
 
+  const settings = DIFFICULTY_SETTINGS[state.difficulty];
   const totals = calculateTotals(state.mixing.mixture);
-  const check = checkBrew(totals, state.recipe);
+  const check = checkBrew(totals, state.recipe, state.difficulty);
   const lives = state.lives - (check.success ? 0 : 1);
-  const score = state.score + (check.success ? SCORE_PER_BREW : 0);
+  const score = state.score + (check.success ? settings.scorePerBrew : 0);
   const timeRemaining = check.success
-    ? Math.min(MAX_TIME, state.timeRemaining + TIME_BONUS)
+    ? Math.min(settings.startingTime, state.timeRemaining + settings.timeBonus)
     : state.timeRemaining;
   const mixing: MixingState = {
     inventory: state.mixing.inventory,
@@ -101,14 +116,18 @@ export function brewGame(state: GameState, random: () => number = Math.random): 
     totals: calculateTotals([]),
   };
   const endReason: GameEndReason =
-    lives === 0 ? 'out-of-lives' : hasNoStock(mixing) ? 'out-of-ingredients' : null;
+    lives === 0
+      ? 'out-of-lives'
+      : hasNoStock(mixing, state.difficulty)
+        ? 'out-of-ingredients'
+        : null;
 
   return {
     accepted: true,
     state: {
       ...state,
       mixing,
-      recipe: check.success ? selectMediumRecipe(random) : state.recipe,
+      recipe: check.success ? selectRecipe(state.difficulty, random) : state.recipe,
       score,
       lives,
       timeRemaining,
