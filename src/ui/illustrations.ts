@@ -1,165 +1,93 @@
-let illustrationSequence = 0;
-
-function illustrationPrefix(subject: string): string {
-  illustrationSequence += 1;
-  return `alchemy-${subject}-${illustrationSequence}`;
-}
-
 export function cauldronIllustration(filled = false): string {
-  const prefix = illustrationPrefix('cauldron');
   const title = filled ? 'Potion cauldron' : 'Empty cauldron';
-  const liquid = filled
+  const runeColor = filled ? '#d5e991' : '#b79a70';
+  const contents = filled
     ? `
-      <ellipse cx="300" cy="163" rx="149" ry="30" fill="url(#${prefix}-potion)" stroke="#b9dc72" stroke-width="1.5" />
-      <path d="M166 162c37-24 180-32 263-5" fill="none" stroke="#f0ffc0" stroke-width="2.5" opacity=".55" />
-      <path d="M206 176c48 12 116 13 166 3m-130-30c28-5 67-5 91-1" fill="none" stroke="#517a27" stroke-width="2" opacity=".48" />
-      <g fill="url(#${prefix}-bubble)" stroke="#d3ed9c" stroke-width="1">
-        <circle class="potion-bubble" cx="219" cy="161" r="7" />
-        <circle class="potion-bubble" cx="337" cy="157" r="5" />
-        <circle class="potion-bubble" cx="382" cy="165" r="8" />
-        <circle class="potion-bubble" cx="260" cy="125" r="10" />
-        <circle class="potion-bubble" cx="355" cy="112" r="6" />
+      <path d="M38 33h52v2h10v2h4v2h-4v2H90v2H38v-2H28v-2h-4v-2h4v-2h10z" fill="#9bb85b" />
+      <path d="M28 37h10v-2h52v2h10v2H88v2H40v-2H28z" fill="#c8df80" />
+      <path d="M38 35h24v2H38z M66 35h8v2h-8z M30 37h8v2h-8z" fill="#ecf3b4" />
+      <path d="M42 41h44v2H42z M92 39h8v2h-8z" fill="#718a43" />
+      <g class="potion-bubble">
+        <path d="M42 31h4v2h2v4h-2v2h-4v-2h-2v-4h2z" fill="#718a43" />
+        <path d="M42 33h4v4h-4z" fill="#ecf3b4" />
+        <path d="M44 35h2v2h-2z" fill="#c8df80" />
       </g>
-      <g class="potion-steam" fill="none" stroke-linecap="round">
-        <path d="M242 132c-26-30 26-42 4-77" stroke="url(#${prefix}-steam)" stroke-width="7" opacity=".38" />
-        <path d="M300 124c-25-29 26-53 4-91" stroke="url(#${prefix}-steam)" stroke-width="9" opacity=".3" />
-        <path d="M366 140c24-27-20-43-3-69" stroke="url(#${prefix}-steam)" stroke-width="6" opacity=".32" />
-        <path d="M276 103c-12-15 11-26 4-43" stroke="#dcebb2" stroke-width="2" opacity=".22" />
+      <g class="potion-bubble">
+        <path d="M80 32h4v2h2v4h-2v2h-4v-2h-2v-4h2z" fill="#718a43" />
+        <path d="M80 34h4v4h-4z" fill="#ecf3b4" />
+      </g>
+      <g class="potion-bubble">
+        <path d="M66 25h4v2h2v4h-2v2h-4v-2h-2v-4h2z" fill="#718a43" />
+        <path d="M66 27h4v4h-4z" fill="#ecf3b4" />
+      </g>
+      <g class="potion-steam" fill="#a5bd91">
+        <path d="M47 28v-5h-2v-5h2v-5h2v-4h2v6h-2v5h-2v3h2v5z" />
+        <path d="M62 25v-5h2v-4h-2v-5h2V5h2v8h-2v3h2v5h-2v4z" />
+        <path d="M79 27v-5h2v-4h-2v-5h2v-4h2v6h-2v3h2v5h-2v4z" />
       </g>
     `
     : `
-      <ellipse cx="300" cy="164" rx="150" ry="31" fill="url(#${prefix}-inside)" />
-      <path d="M164 166c42 23 224 23 272 0" fill="none" stroke="#485342" stroke-width="2" opacity=".5" />
+      <path d="M38 33h52v2h10v2h4v2h-4v2H90v2H38v-2H28v-2h-4v-2h4v-2h10z" fill="#15121d" />
+      <path d="M38 33h52v2h10v2H90v-2H38v2H28v-2h10z" fill="#0d0b13" />
+      <path d="M40 41h48v2H40z M30 39h10v2H30z" fill="#312b3b" />
     `;
 
+  const handle = `
+    <path d="M18 40h10v4h4v4h2v10h-4v4H18v-2h-6v-4H8V46h4v-4h6z M18 47v2h-2v5h3v2h6v-2h3v-5h-2v-2z" fill="#100e18" fill-rule="evenodd" />
+    <path d="M18 43h9v3h3v3h1v6h-4v4h-8v-2h-5v-3h-2v-7h3v-2h3z M18 47v2h-2v5h3v2h6v-2h3v-5h-2v-2z" fill="#a57b50" fill-rule="evenodd" />
+    <path d="M18 43h8v2h-8z M14 46h4v2h-4z M12 48h2v6h-2z" fill="#ddc38e" />
+    <path d="M19 57h8v2h-8z M28 52h3v3h-3z" fill="#70513d" />`;
+
   return `
-    <svg xmlns="http://www.w3.org/2000/svg" class="cauldron-illustration" width="600" height="480" viewBox="0 0 600 480" role="img" aria-label="${title}" focusable="false">
+    <svg xmlns="http://www.w3.org/2000/svg" class="cauldron-illustration" width="600" height="480" viewBox="0 0 128 104" shape-rendering="crispEdges" role="img" aria-label="${title}" focusable="false">
       <title>${title}</title>
-      <defs>
-        <radialGradient id="${prefix}-iron" cx=".29" cy=".18" r=".9">
-          <stop stop-color="#778074" />
-          <stop offset=".18" stop-color="#414d43" />
-          <stop offset=".48" stop-color="#202a24" />
-          <stop offset=".79" stop-color="#101814" />
-          <stop offset="1" stop-color="#070c09" />
-        </radialGradient>
-        <linearGradient id="${prefix}-rim" x1="0" y1="0" x2="0" y2="1">
-          <stop stop-color="#d2c39b" />
-          <stop offset=".2" stop-color="#8d947d" />
-          <stop offset=".45" stop-color="#3e493a" />
-          <stop offset=".7" stop-color="#89947a" />
-          <stop offset="1" stop-color="#263025" />
-        </linearGradient>
-        <linearGradient id="${prefix}-brass" x1="0" y1="0" x2="1" y2="1">
-          <stop stop-color="#635033" />
-          <stop offset=".25" stop-color="#e3c58b" />
-          <stop offset=".49" stop-color="#ab8952" />
-          <stop offset=".72" stop-color="#5b4328" />
-          <stop offset="1" stop-color="#bc9b62" />
-        </linearGradient>
-        <linearGradient id="${prefix}-stone" x1="0" y1="0" x2="0" y2="1">
-          <stop stop-color="#72745e" />
-          <stop offset=".3" stop-color="#4e5342" />
-          <stop offset="1" stop-color="#242b23" />
-        </linearGradient>
-        <radialGradient id="${prefix}-hearth">
-          <stop stop-color="#b9d353" stop-opacity="${filled ? '.55' : '.38'}" />
-          <stop offset=".48" stop-color="#7a9d32" stop-opacity="${filled ? '.3' : '.12'}" />
-          <stop offset="1" stop-color="#5c8c2c" stop-opacity="0" />
-        </radialGradient>
-        <radialGradient id="${prefix}-inside" cx=".5" cy=".85" r=".8">
-          <stop stop-color="#222b1e" />
-          <stop offset=".6" stop-color="#10180f" />
-          <stop offset="1" stop-color="#050a06" />
-        </radialGradient>
-        <radialGradient id="${prefix}-potion" cx=".44" cy=".35" r=".75">
-          <stop stop-color="#efffa5" />
-          <stop offset=".32" stop-color="#c7e26c" />
-          <stop offset=".68" stop-color="#8db53e" />
-          <stop offset="1" stop-color="#406d25" />
-        </radialGradient>
-        <radialGradient id="${prefix}-bubble" cx=".3" cy=".25" r=".8">
-          <stop stop-color="#f4ffd0" stop-opacity=".9" />
-          <stop offset=".4" stop-color="#c2df72" stop-opacity=".45" />
-          <stop offset="1" stop-color="#5e8a32" stop-opacity=".8" />
-        </radialGradient>
-        <linearGradient id="${prefix}-steam" x1="0" y1="1" x2="0" y2="0">
-          <stop stop-color="#c3df89" stop-opacity=".8" />
-          <stop offset="1" stop-color="#dfe9be" stop-opacity="0" />
-        </linearGradient>
-      </defs>
-
-      <ellipse cx="300" cy="415" rx="245" ry="62" fill="url(#${prefix}-hearth)" />
-      <ellipse cx="300" cy="426" rx="210" ry="34" fill="#060b07" opacity=".68" />
-      <path d="m132 396 29-21 47-9 45 7 47-6 43 5 48-6 47 16 30 22-2 26-50 16H181l-47-20Z" fill="#242b20" stroke="#151d14" stroke-width="3" />
-      <g fill="url(#${prefix}-stone)" stroke="#1c251a" stroke-width="2" stroke-linejoin="round">
-        <path d="m136 395 32-17 42-5 6 22-40 12-39 4Z" />
-        <path d="m216 373 43-3 37 8-4 21-41-1-34-5Z" />
-        <path d="m303 377 43-5 41 1 4 23-44 4-42-2Z" />
-        <path d="m394 374 40 10 28 15-2 14-40-5-27-13Z" />
+      <g class="cauldron-hearth">
+        <path d="M24 88h80v2h10v6h4v4h-10v2H20v-2H10v-4h4v-6h10z" fill="#100e18" />
+        <path d="M24 90h16v6H18v-4h6z M42 89h20v8H40v-3h2z M64 89h20v8H64z M86 90h18v2h6v4H86z" fill="#514554" />
+        <path d="M24 90h14v2H24z M44 89h16v2H44z M66 89h16v2H66z M88 90h14v2H88z" fill="#796877" />
+        <path d="M18 97h20v3H20v-1h-2z M40 98h22v2H40z M64 98h20v2H64z M86 97h24v2h-4v1H86z" fill="#312b3b" />
+        <path d="M30 92h2v4h-2z M52 91h2v3h-2v3h-2v-4h2z M74 92h2v4h-2z M96 92h2v3h2v1h-4z" fill="#312b3b" />
       </g>
-      <ellipse cx="300" cy="402" rx="159" ry="25" fill="url(#${prefix}-hearth)" />
-
-      <g stroke="#101810" stroke-width="4" stroke-linejoin="round">
-        <path d="m190 359-15 48c-1 5 2 9 7 9h35c5 0 8-4 7-9l-9-38Z" fill="url(#${prefix}-iron)" />
-        <path d="m410 359 15 48c1 5-2 9-7 9h-35c-5 0-8-4-7-9l9-38Z" fill="url(#${prefix}-iron)" />
+      <g class="cauldron-feet" fill="#100e18">
+        <path d="M35 78h12v8h-3v7h-3v2H30v-5h2v-6h3z" />
+        <path d="M81 78h12v6h3v6h2v5H87v-2h-3v-7h-3z" />
+        <path d="M36 82h7v5h-3v5h-7v-2h2v-5h1z M85 82h6v3h2v5h2v2h-7v-5h-3z" fill="#514554" />
+        <path d="M34 90h6v2h-6z M88 90h6v2h-6z" fill="#a57b50" />
       </g>
-      <path d="M183 408h32m170 0h32" fill="none" stroke="#8e8054" stroke-width="3" opacity=".6" />
-
-      <g fill="none" stroke-linecap="round">
-        <path d="M148 204c-34-32-69-9-66 22 3 32 39 49 66 29m304-51c34-32 69-9 66 22-3 32-39 49-66 29" stroke="#0a100c" stroke-width="22" />
-        <path d="M148 204c-34-32-69-9-66 22 3 32 39 49 66 29m304-51c34-32 69-9 66 22-3 32-39 49-66 29" stroke="url(#${prefix}-brass)" stroke-width="14" />
-        <path d="M131 200c-24-12-44 3-43 23m381-23c24-12 44 3 43 23" stroke="#e0c087" stroke-width="2" opacity=".8" />
+      <g class="cauldron-handles">
+        ${handle}
+        <g transform="translate(128 0) scale(-1 1)">${handle}</g>
       </g>
-
-      <path d="M145 167c-20 46-20 111 1 158 24 52 77 74 154 74s130-22 154-74c21-47 21-112 1-158Z" fill="url(#${prefix}-iron)" stroke="#10180f" stroke-width="4" />
-      <path d="M153 206c-11 46-3 101 23 129 20 22 43 35 66 40-32-33-45-76-43-120 1-21 5-39 10-54Z" fill="#abb59d" opacity=".09" />
-      <path d="M158 215c-8 33-3 66 7 91" fill="none" stroke="#c1cdb0" stroke-width="4" stroke-linecap="round" opacity=".2" />
-      <path d="M448 211c11 37 7 83-10 113-16 28-45 48-69 54 28-34 42-75 44-114 1-23-1-41-7-57Z" fill="#040a06" opacity=".37" />
-      <path d="M454 223c9 37 2 77-16 104" fill="none" stroke="#8daa6c" stroke-width="2.5" opacity=".2" />
-      <path d="M188 357c59 35 166 39 226 0" fill="none" stroke="#9fa88c" stroke-width="2" opacity=".15" />
-      <path d="m207 226 7-3m-41 46 5-2m239-33 6 3m-17 99 6-4m-176 34 9 1" fill="none" stroke="#a1ac93" stroke-width="1.5" stroke-linecap="round" opacity=".25" />
-
-      <g fill="url(#${prefix}-brass)" stroke="#2a2a1c" stroke-width="2.5">
-        <path d="m138 210 13-5 9 15-2 26-16 4-7-15Z" />
-        <path d="m462 210-13-5-9 15 2 26 16 4 7-15Z" />
-        <circle cx="148" cy="223" r="4" />
-        <circle cx="452" cy="223" r="4" />
+      <g class="cauldron-body">
+        <path d="M28 38h72v4h4v22h-4v10h-4v6h-8v6h-8v4H48v-4h-8v-4h-8v-8h-4V64h-4V46h4z" fill="#100e18" />
+        <path d="M30 44h68v6h2v13h-4v10h-6v6H80v6H48v-3h-8v-6h-6V66h-4z" fill="#403747" />
+        <path d="M32 48h12v4h-3v14h3v9h6v5h-8v-5h-5v-8h-3V57h-2z" fill="#625666" />
+        <path d="M34 50h4v13h-2v-7h-2z M39 69h3v5h-3z" fill="#91818b" />
+        <path d="M48 50h35v8h-5v20H56v-4h-8z" fill="#493f50" />
+        <path d="M86 48h12v2h2v13h-4v10h-6v6H80v6H64v-4h14v-6h5V63h3z" fill="#292331" />
+        <path d="M46 82h34v3H48v-1h-2z M53 86h24v2H53z" fill="#201b29" />
+        <path d="M43 57h3v2h-3z M86 65h3v2h-3z M45 73h2v2h-2z M77 79h3v2h-3z" fill="#625666" />
       </g>
-      <path d="M147 217v10m306-10v10" stroke="#f1d29a" stroke-width="1.5" opacity=".6" />
-
-      <ellipse cx="300" cy="172" rx="171" ry="47" fill="url(#${prefix}-rim)" stroke="#172113" stroke-width="4" />
-      <ellipse cx="300" cy="164" rx="154" ry="34" fill="#080f08" stroke="#b5bb93" stroke-width="1.5" />
-      ${liquid}
-      <path d="M136 169c17 24 86 41 164 41s147-17 164-41" fill="none" stroke="#c0c7a4" stroke-width="2" opacity=".6" />
-      <path d="M145 150c27-15 86-24 155-24s128 9 155 24" fill="none" stroke="#d5d6b3" stroke-width="2.5" opacity=".75" />
-      <path d="M151 184c35 19 92 28 149 28s114-9 149-28" fill="none" stroke="#1c2918" stroke-width="4" opacity=".68" />
-
-      <g fill="none" stroke="url(#${prefix}-brass)" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="300" cy="294" r="49" stroke-width="2.5" opacity=".7" />
-        <circle cx="300" cy="294" r="43" stroke-width="1" opacity=".45" />
-        <path d="M300 237v7m0 100v7m-57-57h7m100 0h7" stroke-width="2" />
+      <g class="cauldron-rivets">
+        <path d="M29 45h7v3h2v9h-2v2h-6v-3h-2v-8h1z M92 45h7v3h1v8h-2v3h-6v-2h-2v-9h2z" fill="#70513d" />
+        <path d="M30 46h5v3h1v6h-5v-2h-1z M93 46h4v3h1v4h-1v2h-5v-6h1z" fill="#b79a70" />
+        <path d="M32 49h2v3h-2z M94 49h2v3h-2z" fill="#403747" />
       </g>
-      <g fill="none" stroke="#bfe574" stroke-linecap="round" stroke-linejoin="round">
-        <g stroke-width="9" opacity=".14">
-          <path d="m300 259-30 53h60Z" />
-          <path d="M280 294h40" />
-          <circle cx="300" cy="294" r="4" />
-        </g>
-        <path d="m300 259-30 53h60Z" stroke-width="2.5" />
-        <path d="M280 294h40" stroke-width="2" />
-        <circle cx="300" cy="294" r="4" stroke-width="1.5" />
+      <g class="cauldron-rim">
+        <path d="M38 28h52v2h10v2h8v4h4v6h-4v4h-8v2H28v-2h-8v-4h-4v-6h4v-4h8v-2h10z" fill="#100e18" />
+        <path d="M38 30h52v2h10v2h6v3h2v4h-8v3H28v-3h-8v-4h2v-3h6v-2h10z" fill="#91818b" />
+        <path d="M38 30h52v2H38z M28 32h10v2H28z M22 35h6v2h-6z" fill="#c4b3a8" />
+        <path d="M28 42h72v2H90v2H38v-2H28z M100 39h8v3h-8z" fill="#625666" />
+        <path d="M38 32h52v2h10v2h6v4h-6v2H90v2H38v-2H28v-2h-6v-4h6v-2h10z" fill="#292331" />
       </g>
-      <path d="m300 261-27 49" fill="none" stroke="#e8ffb0" stroke-width=".8" opacity=".55" />
-
-      <g fill="url(#${prefix}-stone)" stroke="#20291d" stroke-width="2" stroke-linejoin="round">
-        <path d="m132 414 43-8 35 10-5 22-30 8-39-15Z" />
-        <path d="m212 418 39-10 44 8 1 25-44 8-42-8Z" />
-        <path d="m301 417 44-9 39 10 5 23-43 8-45-8Z" />
-        <path d="m391 416 34-10 43 8-4 17-40 15-29-8Z" />
+      ${contents}
+      <g class="cauldron-emblem">
+        <path d="M57 52h14v2h4v4h2v14h-2v4h-4v2H57v-2h-4v-4h-2V58h2v-4h4z" fill="#70513d" />
+        <path d="M58 54h12v2h4v4h1v10h-2v4h-4v2H59v-2h-4v-4h-2V60h2v-4h3z" fill="#b79a70" />
+        <path d="M59 57h10v2h3v12h-3v3H59v-3h-3V59h3z" fill="#292331" />
+        <path d="M63 58h2v4h-2z M61 62h2v4h-2z M65 62h2v4h-2z M59 66h2v4h-2z M67 66h2v4h-2z M57 70h2v4h-2z M69 70h2v4h-2z M59 72h10v2H59z M60 69h8v1h-8z" fill="${runeColor}" />
+        <path d="M59 54h9v1h-9z" fill="${runeColor}" />
       </g>
-      <path d="m145 416 27-3 20 6m30 2 28-6 30 6m34 0 30-6 27 6m29-1 22-7 31 5" fill="none" stroke="#b3b49a" stroke-width="1.5" stroke-linecap="round" opacity=".33" />
-      <path d="m168 414 6 10-5 8m82-16 5 10-5 8m93-18-6 10 4 9m82-21-5 10 6 8" fill="none" stroke="#283424" stroke-width="1.5" />
     </svg>
   `;
 }

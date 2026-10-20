@@ -524,6 +524,7 @@ ul {
   height: 100%;
   max-height: 460px;
   overflow: visible;
+  image-rendering: pixelated;
 }
 [data-feedback='true'] .cauldron-scene {
   display: none;
@@ -1153,16 +1154,24 @@ ul {
 
 @keyframes potion-rise {
   from {
-    transform: translateY(3px);
-    opacity: 0.5;
+    transform: translateY(0);
   }
   to {
-    transform: translateY(-10px);
-    opacity: 0.9;
+    transform: translateY(-4px);
+  }
+}
+@keyframes potion-steam-rise {
+  from {
+    transform: translateY(0);
+    opacity: 0.35;
+  }
+  to {
+    transform: translateY(-2px);
+    opacity: 0.6;
   }
 }
 .potion-bubble {
-  animation: potion-rise 2.2s ease-in-out alternate infinite;
+  animation: potion-rise 2.4s steps(4, end) alternate infinite;
   transform-box: fill-box;
   transform-origin: center;
 }
@@ -1170,7 +1179,7 @@ ul {
   animation-delay: -0.8s;
 }
 .potion-steam {
-  animation: potion-rise 3.8s ease-in-out alternate infinite;
+  animation: potion-steam-rise 3.2s steps(2, end) alternate infinite;
 }
 [data-paused='true'] .potion-bubble,
 [data-paused='true'] .potion-steam {
