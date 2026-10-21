@@ -2,7 +2,8 @@ import { getIngredient } from '../data/ingredients.ts';
 import type { Ingredient } from '../data/ingredients.ts';
 import type { RecipeRange } from '../data/recipes.ts';
 import type { GameState } from '../state/game.ts';
-import { addIngredient } from './ingredients.ts';
+import type { Reaction } from '../data/reactions.ts';
+import { addGameIngredient } from './gameplay.ts';
 import type { MixtureTotals } from './ingredients.ts';
 
 export interface IngredientProjection {
@@ -10,9 +11,13 @@ export interface IngredientProjection {
   readonly current: MixtureTotals;
   readonly projected: MixtureTotals;
   readonly delta: MixtureTotals;
+  readonly reactions: readonly Reaction[];
+  readonly timeDelta: number;
+  readonly livesDelta: number;
+  readonly cleared: boolean;
 }
 
-/** Inspect the ordinary addition result without applying it to the game or spending stock. */
+/** Simulate the complete addition, including reactions, without applying any game changes. */
 export function projectIngredient(
   game: GameState | null,
   id: string,
@@ -21,18 +26,19 @@ export function projectIngredient(
   if (game === null || game.status !== 'playing' || paused) return null;
   const ingredient = getIngredient(id);
   if (ingredient === undefined) return null;
-  const addition = addIngredient(game.mixing, id, game.difficulty);
+  const addition = addGameIngredient(game, id);
   if (!addition.accepted) return null;
 
   return {
     ingredient,
     current: game.mixing.totals,
-    projected: addition.state.totals,
+    projected: addition.state.mixing.totals,
     delta: {
-      temperature: ingredient.temperature,
-      density: ingredient.density,
-      magicPower: ingredient.magicPower,
+      temperature: addition.state.mixing.totals.temperature - game.mixing.totals.temperature,
+      density: addition.state.mixing.totals.density - game.mixing.totals.density,
+      magicPower: addition.state.mixing.totals.magicPower - game.mixing.totals.magicPower,
     },
+    ...addition.feedback,
   };
 }
 

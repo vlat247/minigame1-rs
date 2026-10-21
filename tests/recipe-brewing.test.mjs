@@ -156,7 +156,7 @@ test('each parameter uses inclusive ±8 boundaries, including negative ranges', 
 
 test('success awards score, applies the actual time bonus, picks a new recipe, and preserves spent stock', () => {
   const game = freezeGame({
-    ...gameWithMixture(['fairy-dust', 'caustic-acid']),
+    ...gameWithMixture(['dragon-tears', 'caustic-acid']),
     timeRemaining: 130,
   });
   let calls = 0;
@@ -180,12 +180,12 @@ test('success awards score, applies the actual time bonus, picks a new recipe, a
     success: true,
     checks: { temperature: true, density: true, magicPower: true },
     recipe: game.recipe,
-    totals: { temperature: 22, density: 23, magicPower: 34 },
+    totals: { temperature: 35, density: 22, magicPower: 32 },
     scoreDelta: 200,
     timeDelta: TIME_BONUS,
     livesDelta: 0,
   });
-  assert.deepEqual(game.mixing.mixture, ['fairy-dust', 'caustic-acid']);
+  assert.deepEqual(game.mixing.mixture, ['dragon-tears', 'caustic-acid']);
   assert.equal(game.score, 0);
 });
 
@@ -197,7 +197,7 @@ test('success caps the bonus at 150 and reports only the time actually gained', 
     [150, 150, 0],
   ]) {
     const game = freezeGame({
-      ...gameWithMixture(['fairy-dust', 'caustic-acid']),
+      ...gameWithMixture(['dragon-tears', 'caustic-acid']),
       timeRemaining: before,
     });
     const result = brewGame(game, () => 0);
@@ -235,7 +235,7 @@ test('failure loses exactly one life, keeps the recipe and score, and clears onl
 });
 
 test('brew checks recalculate ingredients instead of trusting cached totals', () => {
-  const correctMixture = gameWithMixture(['fairy-dust', 'caustic-acid']);
+  const correctMixture = gameWithMixture(['dragon-tears', 'caustic-acid']);
   const cachedFailure = freezeGame({
     ...correctMixture,
     mixing: {
@@ -246,12 +246,12 @@ test('brew checks recalculate ingredients instead of trusting cached totals', ()
   const success = brewGame(cachedFailure, () => 0);
   assert.equal(success.accepted, true);
   assert.equal(success.feedback.success, true);
-  assert.deepEqual(success.feedback.totals, { temperature: 22, density: 23, magicPower: 34 });
+  assert.deepEqual(success.feedback.totals, { temperature: 35, density: 22, magicPower: 32 });
 
   const wrongMixture = gameWithMixture(Array(4).fill('essence-of-the-void'));
   const cachedSuccess = freezeGame({
     ...wrongMixture,
-    mixing: { ...wrongMixture.mixing, totals: { temperature: 22, density: 23, magicPower: 34 } },
+    mixing: { ...wrongMixture.mixing, totals: { temperature: 35, density: 22, magicPower: 32 } },
   });
   const failure = brewGame(cachedSuccess);
   assert.equal(failure.accepted, true);
@@ -281,21 +281,21 @@ test('repeated successful brews can repeat the recipe while stock stays spent an
   assert.equal(game.recipe.id, 'acid-spark');
 
   for (let count = 1; count <= 2; count += 1) {
-    game = freezeGame(addPortions(game, ['fairy-dust', 'caustic-acid']));
+    game = freezeGame(addPortions(game, ['dragon-tears', 'caustic-acid']));
     const stockBeforeBrew = game.mixing.inventory;
     const result = brewGame(game, () => 0);
     assert.equal(result.accepted, true);
     assert.equal(result.feedback.success, true);
     assert.equal(result.state.recipe, game.recipe);
     assert.equal(result.state.mixing.inventory, stockBeforeBrew);
-    assert.equal(result.state.mixing.inventory['fairy-dust'], 2 - count);
+    assert.equal(result.state.mixing.inventory['dragon-tears'], 2 - count);
     assert.equal(result.state.mixing.inventory['caustic-acid'], 2 - count);
     assert.equal(result.state.score, count * 200);
     assert.equal(result.state.timeRemaining, 120 + count * 10);
     assert.equal(result.state.lives, 3);
     game = result.state;
   }
-  assert.equal(game.mixing.inventory['dragon-tears'], 2);
+  assert.equal(game.mixing.inventory['fairy-dust'], 2);
   assert.equal(game.status, 'playing');
 });
 
@@ -335,7 +335,7 @@ test('losing the last life ends the game and the terminal state cannot be brewed
 });
 
 test('the final stocked mixture may be brewed, then an empty shelf and cauldron end the game', () => {
-  for (const ids of [['fairy-dust', 'caustic-acid'], ['dragon-tears']]) {
+  for (const ids of [['dragon-tears', 'caustic-acid'], ['dragon-tears']]) {
     const mixed = gameWithMixture(ids);
     const game = freezeGame({
       ...mixed,

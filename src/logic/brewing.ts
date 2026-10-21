@@ -1,11 +1,11 @@
 import { DIFFICULTY_SETTINGS } from '../data/difficulty.ts';
 import type { Difficulty } from '../data/difficulty.ts';
-import { getShelfIngredients } from '../data/ingredients.ts';
 import { getRecipesByDifficulty } from '../data/recipes.ts';
 import type { Recipe, RecipeRange } from '../data/recipes.ts';
 import type { GameEndReason, GameState } from '../state/game.ts';
-import { calculateTotals } from './ingredients.ts';
-import type { MixingState, MixtureTotals } from './ingredients.ts';
+import { clearCauldron, hasNoStock } from './ingredients.ts';
+import type { MixtureTotals } from './ingredients.ts';
+import { calculateCauldronTotals } from './reactions.ts';
 
 export const BREW_TOLERANCE = DIFFICULTY_SETTINGS.medium.tolerance;
 export const SCORE_PER_BREW = DIFFICULTY_SETTINGS.medium.scorePerBrew;
@@ -82,12 +82,6 @@ export function checkBrew(
   };
 }
 
-function hasNoStock(mixing: MixingState, difficulty: Difficulty): boolean {
-  return getShelfIngredients(difficulty).every(
-    (ingredient) => mixing.inventory[ingredient.id] <= 0,
-  );
-}
-
 export function brewGame(state: GameState, random: () => number = Math.random): BrewResult {
   if (
     state.status === 'game-over' ||
@@ -103,18 +97,14 @@ export function brewGame(state: GameState, random: () => number = Math.random): 
   }
 
   const settings = DIFFICULTY_SETTINGS[state.difficulty];
-  const totals = calculateTotals(state.mixing.mixture);
+  const totals = calculateCauldronTotals(state.mixing.mixture, state.difficulty);
   const check = checkBrew(totals, state.recipe, state.difficulty);
   const lives = state.lives - (check.success ? 0 : 1);
   const score = state.score + (check.success ? settings.scorePerBrew : 0);
   const timeRemaining = check.success
     ? Math.min(settings.startingTime, state.timeRemaining + settings.timeBonus)
     : state.timeRemaining;
-  const mixing: MixingState = {
-    inventory: state.mixing.inventory,
-    mixture: [],
-    totals: calculateTotals([]),
-  };
+  const mixing = clearCauldron(state.mixing);
   const endReason: GameEndReason =
     lives === 0
       ? 'out-of-lives'
