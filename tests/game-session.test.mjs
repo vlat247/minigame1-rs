@@ -51,7 +51,7 @@ function freezeGame(game) {
 
 function winningGame(timeRemaining) {
   let game = { ...createGame(() => 0), timeRemaining };
-  for (const id of ['fairy-dust', 'caustic-acid']) {
+  for (const id of ['dragon-tears', 'caustic-acid']) {
     const result = addIngredient(game.mixing, id);
     assert.equal(result.accepted, true);
     game = { ...game, mixing: result.state };

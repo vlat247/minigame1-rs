@@ -83,6 +83,14 @@ export function createMixingState(
   };
 }
 
+export function clearCauldron(state: MixingState): MixingState {
+  return { inventory: state.inventory, mixture: [], totals: calculateTotals([]) };
+}
+
+export function hasNoStock(state: MixingState, difficulty: Difficulty): boolean {
+  return getShelfIngredients(difficulty).every((ingredient) => state.inventory[ingredient.id] <= 0);
+}
+
 export function addIngredient(
   state: MixingState,
   id: string,
