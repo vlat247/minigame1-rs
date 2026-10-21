@@ -1,5 +1,6 @@
 import { DIFFICULTIES, DIFFICULTY_SETTINGS } from '../data/difficulty';
 import type { Difficulty } from '../data/difficulty';
+import { getReactions } from '../data/reactions';
 import type { GameState } from '../state/game';
 import type { LeaderboardEntry } from '../logic/leaderboard';
 import { icon } from './icons';
@@ -36,6 +37,7 @@ interface DialogContent {
 
 function helpContent(difficulty: Difficulty): DialogContent {
   const settings = DIFFICULTY_SETTINGS[difficulty];
+  const reactions = getReactions(difficulty);
   return {
     title: 'How to play',
     description: 'A good potion is a matter of balance.',
@@ -44,9 +46,16 @@ function helpContent(difficulty: Difficulty): DialogContent {
         <li><strong>Read the recipe.</strong><p>Find its Temperature, Density, and Magic Power target ranges.</p></li>
         <li><strong>Choose your ingredients.</strong><p>Each ingredient changes the three values. Use up to ${settings.maxIngredients} portions per mixture; every added portion is spent.</p></li>
         <li><strong>Brew a potion.</strong><p>All three values must fit the targets, with a tolerance of ±${settings.tolerance} in ${settings.label} mode. Success earns ${settings.scorePerBrew} points, adds up to ${settings.timeBonus} seconds without exceeding ${settings.startingTime} seconds, and selects another recipe. Failure costs one life and keeps the recipe.</p></li>
+        <li><strong>Pour Out a wrong mixture.</strong><p>Empty the cauldron for 10 seconds without losing a life. Your score and recipe stay the same. Spent ingredients are not returned.</p></li>
       </ol>
       <p class="dialog-note">${difficulty === 'easy' ? 'An' : 'A'} ${settings.label} game begins with ${settings.startingTime} seconds, ${settings.lives} lives and ${settings.ingredientCount} ingredient types. Choose the difficulty in Menu before starting.</p>
       <p class="dialog-note">Every brew clears the cauldron. Spent ingredients never return to the shelf. Outlined targets show the recipe ranges; a green gauge means its value is in range. Brewing also allows the ±${settings.tolerance} tolerance.</p>
+      ${
+        reactions.length === 0
+          ? '<p class="dialog-note">Easy mode has no chemical reactions.</p>'
+          : `<p class="dialog-note">${settings.label} mode enables ${reactions.length} reactions. Active combinations modify the values shown on the gauges. Time and life penalties happen only when a combination first activates, and can happen again after the cauldron is cleared.</p><ul class="help-reactions">${reactions.map(({ name, description }) => `<li><strong>${escapeHtml(name)}.</strong> ${escapeHtml(description)}</li>`).join('')}</ul>`
+      }
+      <p class="dialog-note">Hover or focus an ingredient to preview the resulting values and reaction penalties without spending stock, time, or lives. On touch screens, switch Preview on to inspect ingredients, then off to add them.</p>
       <p class="dialog-note">Pause freezes the clock and hides the workbench. Switching tabs pauses automatically; return and choose Resume. Help, Menu, and Leaderboard keep the clock running unless you pause first.</p>
       <p class="dialog-note">Progress saves automatically. After a reload, Continue Game restores your unfinished run paused. Exit to Menu discards that save.</p>
       <p class="dialog-note">A run ends when time or lives run out, or the shelf and cauldron are both empty. Each difficulty has its own Top 10.</p>

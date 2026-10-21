@@ -24,7 +24,8 @@ export interface GameViewState {
 }
 
 function signed(value: number): string {
-  return value > 0 ? `+${value}` : `${value}`;
+  const displayed = Number(value.toFixed(2));
+  return displayed > 0 ? `+${displayed}` : `${displayed}`;
 }
 
 function ingredientShelf(mixing: MixingState | null, difficulty: Difficulty): string {
@@ -150,6 +151,7 @@ export function renderGameView(container: HTMLElement, state: GameViewState): vo
             <ol class="mixture-slots" aria-label="Cauldron contents"></ol>
             <p class="cauldron-caption sr-only">The cauldron is empty.</p>
             <p class="ingredient-feedback" id="ingredient-feedback" role="status" aria-atomic="true"></p>
+            <p class="mechanics-preview-warning" data-mechanics-preview-warning hidden></p>
           </section>
           ${recipePanel(recipe, difficulty)}
         </div>
@@ -161,6 +163,7 @@ export function renderGameView(container: HTMLElement, state: GameViewState): vo
           <button class="button button-primary main-action" type="button" data-action="${started ? 'brew' : 'start'}">
             ${started ? 'Brew potion' : 'Start Game'}
           </button>
+          ${started ? '<button class="button button-secondary pour-out-action" type="button" data-action="pour-out" aria-label="Pour Out: clear the cauldron for 10 seconds" title="Clear the cauldron for 10 seconds. Spent ingredients are not returned.">Pour Out</button>' : ''}
           ${!started && state.canContinue ? '<button class="button button-secondary continue-action" type="button" data-action="continue">Continue Game</button>' : ''}
         </div>
         <button class="button button-quiet footer-button" type="button" data-action="menu">${icon('menu')}<span>Menu</span></button>
@@ -257,6 +260,8 @@ export function updateGameView(container: HTMLElement, state: GameViewState): vo
   if (pause !== null) pause.disabled = game === null || ended;
   const brew = container.querySelector<HTMLButtonElement>('[data-action="brew"]');
   if (brew !== null) brew.disabled = count === 0 || state.paused || ended;
+  const pourOut = container.querySelector<HTMLButtonElement>('[data-action="pour-out"]');
+  if (pourOut !== null) pourOut.disabled = count === 0 || state.paused || ended;
   container.dataset.feedback = String(state.lastBrew !== null);
   const feedback = container.querySelector<HTMLElement>('.brew-feedback');
   if (feedback !== null) {
@@ -330,7 +335,8 @@ export function updateIngredientPreview(container: HTMLElement, state: GameViewS
       if (currentPreview !== null) currentPreview.textContent = `${signed(value)} `;
       if (projectedPreview !== null)
         projectedPreview.textContent = `→ ${signed(projection.projected[parameter.key])}`;
-      if (deltaPreview !== null) deltaPreview.textContent = ` (${delta >= 0 ? '+' : ''}${delta})`;
+      if (deltaPreview !== null)
+        deltaPreview.textContent = ` (${delta >= 0 ? '+' : ''}${Number(delta.toFixed(2))})`;
     }
     const track = panel.querySelector('.parameter-track');
     track?.setAttribute('aria-valuemin', String(-limit));
@@ -354,15 +360,30 @@ export function updateIngredientPreview(container: HTMLElement, state: GameViewS
     if (recipeRange !== null) recipeRange.textContent = range === undefined ? '—' : `${min}–${max}`;
   }
 
+  const reactionPreview =
+    projection === null || projection.reactions.length === 0
+      ? ''
+      : ` ${projection.reactions.map(({ name }) => name).join(' + ')} will activate.${projection.timeDelta < 0 ? ` Costs ${Number((-projection.timeDelta).toFixed(1))} seconds.` : ''}${projection.livesDelta < 0 ? ` Costs ${-projection.livesDelta} life.` : ''}${projection.cleared ? ' Clears the cauldron.' : ''}`;
+  const warning = container.querySelector<HTMLElement>('[data-mechanics-preview-warning]');
+  if (warning !== null) {
+    const hazardous =
+      projection !== null &&
+      (projection.timeDelta < 0 || projection.livesDelta < 0 || projection.cleared);
+    warning.hidden = !hazardous;
+    warning.textContent =
+      hazardous && projection !== null
+        ? `${projection.reactions.map(({ name }) => name).join(' + ')}${projection.timeDelta < 0 ? ` · −${Number((-projection.timeDelta).toFixed(1))}s` : ''}${projection.livesDelta < 0 ? ` · −${-projection.livesDelta} life` : ''}${projection.cleared ? ' · clears cauldron' : ''}`
+        : '';
+  }
   const status = container.querySelector('#ingredient-preview-status');
   const message =
     projection === null
       ? state.previewMode && canPreview
         ? full
-          ? 'Cauldron full. Brew before previewing another ingredient.'
+          ? 'Cauldron full. Brew or Pour Out before previewing another ingredient.'
           : 'Tap an ingredient to preview. Switch Preview off to add.'
         : ''
-      : `${projection.ingredient.name} preview. ${PARAMETERS.map(({ key, name }) => `${name}: ${signed(projection.current[key])} to ${signed(projection.projected[key])}, change ${signed(projection.delta[key])}`).join('. ')}. No stock is spent.`;
+      : `${projection.ingredient.name} preview. ${PARAMETERS.map(({ key, name }) => `${name}: ${signed(projection.current[key])} to ${signed(projection.projected[key])}, change ${signed(projection.delta[key])}`).join('. ')}.${reactionPreview} Preview spends no stock, time, or lives.`;
   if (status !== null && status.textContent !== message) status.textContent = message;
 }
 

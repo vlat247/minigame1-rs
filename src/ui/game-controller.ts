@@ -3,7 +3,7 @@ import { projectIngredient } from '../logic/ingredient-preview';
 import { DIFFICULTY_SETTINGS, isDifficulty } from '../data/difficulty';
 import type { Difficulty } from '../data/difficulty';
 import { brewGame } from '../logic/brewing';
-import { addIngredient } from '../logic/ingredients';
+import { addGameIngredient, pourOutGame } from '../logic/gameplay';
 import { addLeaderboardEntry, isQualifyingScore, validatePlayerName } from '../logic/leaderboard';
 import type { LeaderboardEntry } from '../logic/leaderboard';
 import { advanceGameTime } from '../logic/session';
@@ -22,6 +22,7 @@ import {
 import type { GameViewState } from './game-view';
 import { createSessionClock } from './session-clock';
 import '../styles/ingredient-preview.css';
+import '../styles/gameplay-mechanics.css';
 
 export function mountGame(container: HTMLElement): () => void {
   const view = document.createElement('div');
@@ -386,7 +387,7 @@ export function mountGame(container: HTMLElement): () => void {
       return;
     }
     clearIngredientPreview();
-    const result = addIngredient(state.game.mixing, id, state.game.difficulty);
+    const result = addGameIngredient(state.game, id);
     const ingredient = getIngredient(id);
     if (ingredient === undefined) return;
     const feedback = view.querySelector('#ingredient-feedback');
@@ -396,22 +397,59 @@ export function mountGame(container: HTMLElement): () => void {
         feedback.classList.add('is-error');
         feedback.textContent =
           result.reason === 'cauldron-full'
-            ? `Cauldron full (${DIFFICULTY_SETTINGS[state.game.difficulty].maxIngredients}/${DIFFICULTY_SETTINGS[state.game.difficulty].maxIngredients}). Brew to continue.`
+            ? `Cauldron full (${DIFFICULTY_SETTINGS[state.game.difficulty].maxIngredients}/${DIFFICULTY_SETTINGS[state.game.difficulty].maxIngredients}). Brew or Pour Out to continue.`
             : `${ingredient.name} is out of stock.`;
       }
       return;
     }
 
-    state = { ...state, game: { ...state.game, mixing: result.state }, lastBrew: null };
-    persistGame();
+    state = { ...state, game: result.state, lastBrew: null };
     // Update existing controls and gauges so keyboard focus and CSS transitions survive.
     updateGameView(view, state);
     if (feedback !== null) {
-      feedback.classList.remove('is-error');
-      const totals = result.state.totals;
-      feedback.textContent = `${ingredient.name} added. Temperature ${totals.temperature}, Density ${totals.density}, Magic Power ${totals.magicPower}.`;
+      const outcome = result.feedback;
+      const reacted = outcome.reactions.length > 0;
+      feedback.classList.toggle('is-mechanics-feedback', reacted);
+      feedback.classList.toggle('is-error', outcome.timeDelta < 0 || outcome.livesDelta < 0);
+      const totals = result.state.mixing.totals;
+      const reactionMessage = reacted
+        ? ` ${outcome.reactions.map(({ name }) => name).join(' + ')} activated.${outcome.timeDelta < 0 ? ` ${Number((-outcome.timeDelta).toFixed(1))} seconds lost.` : ''}${outcome.livesDelta < 0 ? ` ${-outcome.livesDelta} life lost.` : ''}${outcome.cleared ? ' Cauldron cleared; ingredients remain spent.' : ''}`
+        : '';
+      const message = `${ingredient.name} added.${reactionMessage} Temperature ${Number(totals.temperature.toFixed(2))}, Density ${Number(totals.density.toFixed(2))}, Magic Power ${Number(totals.magicPower.toFixed(2))}.`;
+      feedback.textContent = reacted ? reactionMessage.trim() : message;
+      if (reacted) announcement.textContent = message;
     }
-    if (result.state.inventory[ingredient.id] === 0) {
+    if (result.state.status === 'game-over') {
+      finishGame();
+      return;
+    }
+    persistGame();
+    if (result.state.mixing.inventory[ingredient.id] === 0) {
+      focusAvailableIngredient();
+    }
+  }
+
+  function pourOut(): void {
+    clock.synchronize();
+    if (state.game === null || state.paused || dialog.open) return;
+    const result = pourOutGame(state.game);
+    if (!result.accepted) return;
+
+    clearIngredientPreview();
+    state = { ...state, game: result.state, lastBrew: null };
+    updateGameView(view, state);
+    const message = `Cauldron poured out. ${Number((-result.timeDelta).toFixed(1))} seconds lost. Ingredients remain spent; score and lives are unchanged.`;
+    const feedback = view.querySelector('#ingredient-feedback');
+    if (feedback !== null) {
+      feedback.classList.add('is-mechanics-feedback');
+      feedback.classList.remove('is-error');
+      feedback.textContent = `Cauldron cleared · −${Number((-result.timeDelta).toFixed(1))}s · stock stays spent.`;
+    }
+    announcement.textContent = message;
+    if (result.state.status === 'game-over') {
+      finishGame();
+    } else {
+      persistGame();
       focusAvailableIngredient();
     }
   }
@@ -432,7 +470,7 @@ export function mountGame(container: HTMLElement): () => void {
     const feedback = view.querySelector('#ingredient-feedback');
     if (feedback !== null) {
       feedback.textContent = '';
-      feedback.classList.remove('is-error');
+      feedback.classList.remove('is-error', 'is-mechanics-feedback');
     }
     if (result.state.status === 'game-over') {
       finishGame();
@@ -533,6 +571,9 @@ export function mountGame(container: HTMLElement): () => void {
         break;
       case 'brew':
         brewPotion();
+        break;
+      case 'pour-out':
+        pourOut();
         break;
       case 'help':
       case 'menu':
