@@ -28,6 +28,8 @@ Randomly select from the chosen difficulty's recipe pool at the start and after 
 
 The result panel replaces the cauldron scene after brewing and preserves the recipe just checked, raw totals, accepted ranges, individual pass/fail results, and actual score/time/life changes until another portion is added. The next ingredient restores the cauldron scene. Results reuse the same space so the board never grows after a brew.
 
+Preview one additional portion on ingredient hover or keyboard focus. Keep actual totals and meter values intact; show signed deltas, projected raw totals, and dashed ghost markers on a scale that includes current, target, and projected values. A compact Preview toggle supports touch inspection without spending stock; ordinary taps add immediately when it is off. Escape returns to ordinary addition. Reject unavailable additions and clear previews on leave, gameplay changes, dialogs, pause, restart, or completion. Keep this state transient and fit prediction text within the existing full-width gauges.
+
 Timed sessions use the selected starting time and lives. The timestamp-based countdown drives the MM:SS display and shrinking time bar. Below 15 seconds, the timer turns red and pulses unless reduced motion is requested. Reconcile elapsed time before ingredient additions and brews so an expired run cannot receive an extra action or time bonus.
 
 Pause freezes the clock without losing fractional seconds, blocks gameplay, and blurs the workbench and brew results. Resume continues the same score, lives, mixture, stock, recipe, and remaining time. Switching tabs pauses automatically; returning requires Resume. Help, Menu, and Leaderboard keep the clock running unless the player pauses first.

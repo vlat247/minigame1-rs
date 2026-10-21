@@ -1,0 +1,92 @@
+.shelf-preview-controls {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  min-width: 0;
+}
+
+.preview-toggle {
+  min-height: 24px;
+  padding: 2px 6px;
+  border: 1px solid var(--border);
+  color: var(--ink);
+  font-size: var(--text-caption);
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.preview-toggle[aria-pressed='true'] {
+  border-color: var(--primary);
+  color: var(--primary-ink, var(--background));
+  background: var(--primary);
+}
+
+.ingredient.is-previewed {
+  outline: 2px dashed var(--primary);
+  outline-offset: -4px;
+  background: var(--surface-raised, var(--surface-muted));
+}
+
+.projected-marker {
+  position: absolute;
+  z-index: 3;
+  top: -6px;
+  bottom: -6px;
+  left: calc(var(--projected-position, 50%) - 5px);
+  width: 10px;
+  border: 2px dashed var(--primary);
+  background: transparent;
+  pointer-events: none;
+}
+
+.parameter-projection {
+  color: var(--ink);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.projection-total {
+  color: var(--primary);
+}
+
+.projection-delta {
+  color: var(--muted);
+}
+
+[data-previewing='true'] .parameter-target > :not(.parameter-projection) {
+  display: none;
+}
+
+@media (max-width: 1100px), (max-height: 700px) {
+  .shelf-preview-controls {
+    gap: 6px;
+  }
+}
+
+@media (max-width: 900px) and (min-height: 501px) {
+  [data-previewing='true'] .parameter {
+    grid-template-columns: 134px minmax(0, 1fr) 84px;
+    gap: 6px;
+  }
+
+  .parameter-projection .projection-current {
+    display: none;
+  }
+
+  .preview-toggle {
+    min-height: 22px;
+    padding-block: 1px;
+  }
+}
+
+@media (max-height: 500px) and (min-width: 600px) {
+  .shelf-preview-controls {
+    gap: 4px;
+  }
+
+  .preview-toggle {
+    min-height: 20px;
+    padding: 1px 4px;
+  }
+}

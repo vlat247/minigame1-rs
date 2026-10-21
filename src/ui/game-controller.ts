@@ -1,4 +1,5 @@
 import { getIngredient } from '../data/ingredients';
+import { projectIngredient } from '../logic/ingredient-preview';
 import { DIFFICULTY_SETTINGS, isDifficulty } from '../data/difficulty';
 import type { Difficulty } from '../data/difficulty';
 import { brewGame } from '../logic/brewing';
@@ -12,9 +13,15 @@ import { createGameSaveStore } from '../storage/save';
 import type { SavedGame } from '../storage/save';
 import { dialogMarkup } from './dialogs';
 import type { GameDialog } from './dialogs';
-import { renderGameView, updateGameView, updateSessionView } from './game-view';
+import {
+  renderGameView,
+  updateGameView,
+  updateIngredientPreview,
+  updateSessionView,
+} from './game-view';
 import type { GameViewState } from './game-view';
 import { createSessionClock } from './session-clock';
+import '../styles/ingredient-preview.css';
 
 export function mountGame(container: HTMLElement): () => void {
   const view = document.createElement('div');
@@ -29,6 +36,8 @@ export function mountGame(container: HTMLElement): () => void {
     lastBrew: null,
     selectedDifficulty: savedGame?.game.difficulty ?? 'medium',
     canContinue: savedGame !== null,
+    previewMode: false,
+    previewIngredient: null,
     saveNotice:
       initialSave.error === 'unavailable'
         ? 'Game saving is unavailable. Progress may be lost when you leave this page.'
@@ -60,6 +69,9 @@ export function mountGame(container: HTMLElement): () => void {
   let warnedAboutTime = false;
   const memoryOnlyBoards = new Set<Difficulty>();
   let lastSavedSecond: number | null = null;
+  let previewSource: 'pointer' | 'focus' | 'selection' | null = null;
+  let lastInputWasPointer = false;
+  let suppressFocusPreview = false;
 
   dialog.className = 'game-dialog';
   dialog.setAttribute('aria-labelledby', 'game-dialog-title');
@@ -134,6 +146,7 @@ export function mountGame(container: HTMLElement): () => void {
   function finishGame(): void {
     if (state.game?.status !== 'game-over' || finishHandled) return;
     finishHandled = true;
+    clearIngredientPreview(true);
     clock.stop();
     clearSavedGame();
     finishedAt = new Date().toISOString();
@@ -150,6 +163,40 @@ export function mountGame(container: HTMLElement): () => void {
 
   function focusAction(action: string): void {
     view.querySelector<HTMLElement>(`[data-action="${action}"]`)?.focus();
+  }
+
+  function clearIngredientPreview(resetMode = false): void {
+    previewSource = null;
+    if (state.previewIngredient === null && (!resetMode || !state.previewMode)) return;
+    state = {
+      ...state,
+      previewIngredient: null,
+      previewMode: resetMode ? false : state.previewMode,
+    };
+    updateIngredientPreview(view, state);
+  }
+
+  function showIngredientPreview(
+    id: string | undefined,
+    source: NonNullable<typeof previewSource>,
+  ): void {
+    if (id === undefined || dialog.open) return;
+    const projection = projectIngredient(state.game, id, state.paused);
+    if (projection === null) {
+      clearIngredientPreview();
+      return;
+    }
+    previewSource = source;
+    state = { ...state, previewIngredient: projection.ingredient.id };
+    updateIngredientPreview(view, state);
+  }
+
+  function focusAvailableIngredient(): void {
+    suppressFocusPreview = true;
+    view
+      .querySelector<HTMLButtonElement>('.ingredient:not(:disabled)')
+      ?.focus({ preventScroll: true });
+    suppressFocusPreview = false;
   }
 
   function renderDialog(kind: GameDialog): void {
@@ -172,6 +219,7 @@ export function mountGame(container: HTMLElement): () => void {
   }
 
   function openDialog(kind: GameDialog): void {
+    clearIngredientPreview();
     if (kind === 'leaderboard') refreshLeaderboard();
     if (!dialog.open) {
       const focused = document.activeElement;
@@ -208,6 +256,8 @@ export function mountGame(container: HTMLElement): () => void {
       game: createGame(Math.random, state.selectedDifficulty),
       paused: false,
       lastBrew: null,
+      previewMode: false,
+      previewIngredient: null,
     };
     persistGame();
     render();
@@ -253,6 +303,8 @@ export function mountGame(container: HTMLElement): () => void {
       selectedDifficulty: savedGame.game.difficulty,
       canContinue: true,
       saveNotice: '',
+      previewMode: false,
+      previewIngredient: null,
     };
     persistGame();
     render();
@@ -275,6 +327,7 @@ export function mountGame(container: HTMLElement): () => void {
     if (state.game === null || state.game.status !== 'playing' || state.paused) return;
     clock.pause();
     if (state.game.status !== 'playing') return;
+    clearIngredientPreview();
     state = { ...state, paused: true };
     persistGame();
     render();
@@ -311,6 +364,7 @@ export function mountGame(container: HTMLElement): () => void {
     clock.stop();
     dismissDialogs();
     if (state.game !== null) clearSavedGame();
+    clearIngredientPreview(true);
     state = { ...state, game: null, paused: false, lastBrew: null };
     render();
     focusAction('start');
@@ -327,6 +381,11 @@ export function mountGame(container: HTMLElement): () => void {
       id === undefined
     )
       return;
+    if (state.previewMode) {
+      showIngredientPreview(id, 'selection');
+      return;
+    }
+    clearIngredientPreview();
     const result = addIngredient(state.game.mixing, id, state.game.difficulty);
     const ingredient = getIngredient(id);
     if (ingredient === undefined) return;
@@ -353,8 +412,7 @@ export function mountGame(container: HTMLElement): () => void {
       feedback.textContent = `${ingredient.name} added. Temperature ${totals.temperature}, Density ${totals.density}, Magic Power ${totals.magicPower}.`;
     }
     if (result.state.inventory[ingredient.id] === 0) {
-      const next = view.querySelector<HTMLButtonElement>('.ingredient:not(:disabled)');
-      next?.focus({ preventScroll: true });
+      focusAvailableIngredient();
     }
   }
 
@@ -364,6 +422,7 @@ export function mountGame(container: HTMLElement): () => void {
     const result = brewGame(state.game);
     if (!result.accepted) return;
 
+    clearIngredientPreview();
     state = { ...state, game: result.state, lastBrew: result.feedback };
     updateGameView(view, state);
     const outcome = result.feedback;
@@ -379,7 +438,7 @@ export function mountGame(container: HTMLElement): () => void {
       finishGame();
     } else {
       persistGame();
-      view.querySelector<HTMLButtonElement>('.ingredient:not(:disabled)')?.focus();
+      focusAvailableIngredient();
     }
   }
 
@@ -463,6 +522,15 @@ export function mountGame(container: HTMLElement): () => void {
       case 'add-ingredient':
         addPortion(control.dataset.ingredient);
         break;
+      case 'toggle-preview':
+        if (state.game?.status !== 'playing' || state.paused || dialog.open) return;
+        clearIngredientPreview();
+        state = { ...state, previewMode: !state.previewMode };
+        updateIngredientPreview(view, state);
+        announcement.textContent = state.previewMode
+          ? 'Preview on. Tap an ingredient to preview. Switch Preview off to add.'
+          : 'Preview off. Ingredients add normally.';
+        break;
       case 'brew':
         brewPotion();
         break;
@@ -525,6 +593,61 @@ export function mountGame(container: HTMLElement): () => void {
     if (dialogs.at(-1) !== 'pause') closeDialog();
   }
 
+  function ingredientButton(target: EventTarget | null): HTMLButtonElement | null {
+    if (!(target instanceof Element)) return null;
+    const button = target.closest<HTMLButtonElement>('[data-action="add-ingredient"]');
+    return button !== null && view.contains(button) ? button : null;
+  }
+
+  function handlePointerOver(event: PointerEvent): void {
+    if (event.pointerType === 'touch') return;
+    const button = ingredientButton(event.target);
+    if (button === null || button === ingredientButton(event.relatedTarget)) return;
+    showIngredientPreview(button.dataset.ingredient, 'pointer');
+  }
+
+  function handlePointerOut(event: PointerEvent): void {
+    if (
+      event.pointerType === 'touch' ||
+      (previewSource !== 'pointer' && previewSource !== 'selection')
+    )
+      return;
+    const button = ingredientButton(event.target);
+    if (button !== null && button !== ingredientButton(event.relatedTarget))
+      clearIngredientPreview();
+  }
+
+  function handlePointerDown(event: PointerEvent): void {
+    lastInputWasPointer = true;
+    if (ingredientButton(event.target) === null) clearIngredientPreview();
+  }
+
+  function handleFocusIn(event: FocusEvent): void {
+    if (lastInputWasPointer || suppressFocusPreview) return;
+    const button = ingredientButton(event.target);
+    if (button !== null) showIngredientPreview(button.dataset.ingredient, 'focus');
+  }
+
+  function handleFocusOut(event: FocusEvent): void {
+    if (previewSource !== 'focus' && previewSource !== 'selection') return;
+    const button = ingredientButton(event.target);
+    if (button !== null && button !== ingredientButton(event.relatedTarget))
+      clearIngredientPreview();
+  }
+
+  function handlePreviewKeydown(event: KeyboardEvent): void {
+    lastInputWasPointer = false;
+    if (
+      event.key === 'Escape' &&
+      !dialog.open &&
+      (state.previewIngredient !== null || state.previewMode)
+    ) {
+      event.preventDefault();
+      clearIngredientPreview(true);
+      announcement.textContent = 'Preview closed. Ingredients add normally.';
+    }
+  }
+
   function handleVisibility(): void {
     if (document.hidden) pauseGame();
   }
@@ -554,6 +677,12 @@ export function mountGame(container: HTMLElement): () => void {
 
   render();
   container.addEventListener('click', handleClick);
+  container.addEventListener('pointerover', handlePointerOver);
+  container.addEventListener('pointerout', handlePointerOut);
+  container.addEventListener('pointerdown', handlePointerDown);
+  container.addEventListener('focusin', handleFocusIn);
+  container.addEventListener('focusout', handleFocusOut);
+  container.addEventListener('keydown', handlePreviewKeydown);
   dialog.addEventListener('cancel', handleCancel);
   dialog.addEventListener('keydown', handleDialogKeydown);
   dialog.addEventListener('submit', handleScoreSubmit);
@@ -565,6 +694,12 @@ export function mountGame(container: HTMLElement): () => void {
     persistGame();
     clock.dispose();
     container.removeEventListener('click', handleClick);
+    container.removeEventListener('pointerover', handlePointerOver);
+    container.removeEventListener('pointerout', handlePointerOut);
+    container.removeEventListener('pointerdown', handlePointerDown);
+    container.removeEventListener('focusin', handleFocusIn);
+    container.removeEventListener('focusout', handleFocusOut);
+    container.removeEventListener('keydown', handlePreviewKeydown);
     dialog.removeEventListener('cancel', handleCancel);
     dialog.removeEventListener('keydown', handleDialogKeydown);
     dialog.removeEventListener('submit', handleScoreSubmit);

@@ -1,10 +1,12 @@
 import { DIFFICULTY_SETTINGS } from '../data/difficulty';
 import type { Difficulty } from '../data/difficulty';
 import { getShelfIngredients, getIngredient } from '../data/ingredients';
+import type { IngredientId } from '../data/ingredients';
 import type { Recipe } from '../data/recipes';
 import type { BrewFeedback } from '../logic/brewing';
 import type { MixingState } from '../logic/ingredients';
 import type { GameState } from '../state/game';
+import { parameterScaleLimit, projectIngredient } from '../logic/ingredient-preview';
 import { PARAMETERS } from './parameters';
 import { icon } from './icons';
 import { cauldronIllustration, workshopScenery } from './illustrations';
@@ -17,6 +19,8 @@ export interface GameViewState {
   readonly selectedDifficulty: Difficulty;
   readonly canContinue: boolean;
   readonly saveNotice: string;
+  readonly previewMode: boolean;
+  readonly previewIngredient: IngredientId | null;
 }
 
 function signed(value: number): string {
@@ -35,7 +39,7 @@ function ingredientShelf(mixing: MixingState | null, difficulty: Difficulty): st
     .map(
       (ingredient) => `
       <li>
-        <button class="ingredient" type="button" data-action="add-ingredient" data-ingredient="${ingredient.id}" aria-describedby="ingredient-feedback">
+        <button class="ingredient" type="button" data-action="add-ingredient" data-ingredient="${ingredient.id}" aria-describedby="ingredient-feedback ingredient-preview-help">
           ${ingredientIllustration(ingredient.id)}
           <span class="ingredient-content">
             <span class="ingredient-name">${ingredient.name}</span>
@@ -93,9 +97,10 @@ function parameterBars(recipe: Recipe | undefined): string {
           <span class="track-zero" aria-hidden="true"></span>
           ${recipe !== undefined ? '<span class="target-zone" aria-hidden="true"></span>' : ''}
           <span class="current-marker" aria-hidden="true"></span>
+          <span class="projected-marker" aria-hidden="true" hidden></span>
         </div>
         <div class="parameter-scale" aria-hidden="true"><span data-scale-min>−100</span><span>0</span><span data-scale-max>+100</span></div>
-        <p class="parameter-target"><span class="parameter-target-label">Target </span><strong data-target-range>${recipe !== undefined ? `${recipe[parameter.key].min}–${recipe[parameter.key].max}` : '—'}</strong><span class="parameter-match" hidden> · In range</span></p>
+        <p class="parameter-target"><span class="parameter-target-label">Target </span><strong data-target-range>${recipe !== undefined ? `${recipe[parameter.key].min}–${recipe[parameter.key].max}` : '—'}</strong><span class="parameter-match" hidden> · In range</span><span class="parameter-projection" data-parameter-projection aria-hidden="true" hidden><span class="projection-current" data-projection-current></span><span class="projection-total" data-projection-total></span><span class="projection-delta" data-projection-delta></span></span></p>
       </section>`,
   ).join('');
 }
@@ -133,7 +138,9 @@ export function renderGameView(container: HTMLElement, state: GameViewState): vo
         <div class="workshop-backdrop" aria-hidden="true">${workshopScenery()}</div>
         <div class="workbench-grid">
           <section class="shelf-panel" aria-labelledby="shelf-heading">
-            <div class="section-heading"><h2 id="shelf-heading">Ingredients</h2><span class="shelf-count">${started ? `${settings.ingredientCount} types` : 'Empty shelf'}</span></div>
+            <div class="section-heading"><h2 id="shelf-heading">Ingredients</h2><div class="shelf-preview-controls"><span class="shelf-count" data-shelf-count>${started ? `${settings.ingredientCount} types` : 'Empty shelf'}</span><button class="button button-quiet preview-toggle" type="button" data-action="toggle-preview" aria-pressed="false" aria-label="Preview ingredients without adding" aria-describedby="ingredient-preview-help" title="When on, tap ingredients to preview. Turn off to add." ${started ? '' : 'disabled'}>Preview</button></div></div>
+            <p class="sr-only" id="ingredient-preview-help">Hover or focus an ingredient to preview its totals. When Preview is on, taps preview without spending stock. Switch Preview off to add.</p>
+            <p class="sr-only" id="ingredient-preview-status" role="status" aria-atomic="true"></p>
             <ul class="ingredient-list" aria-label="${started ? 'Ingredient shelf' : 'Empty ingredient shelf'}">${ingredientShelf(state.game?.mixing ?? null, difficulty)}</ul>
           </section>
           <section class="brew-station" aria-labelledby="cauldron-heading">
@@ -227,46 +234,7 @@ export function updateGameView(container: HTMLElement, state: GameViewState): vo
         : `${count} of ${settings.maxIngredients} portions added${full ? ' · Cauldron full' : ''}.`;
   }
 
-  for (const parameter of PARAMETERS) {
-    const panel = container.querySelector<HTMLElement>(`.parameter.${parameter.className}`);
-    if (panel === null) continue;
-    const value = mixing?.totals[parameter.key] ?? 0;
-    const range = recipe?.[parameter.key];
-    const min = range?.min ?? 0;
-    const max = range?.max ?? 0;
-    const limit = Math.max(
-      100,
-      Math.ceil(Math.max(Math.abs(value), Math.abs(min), Math.abs(max)) / 100) * 100,
-    );
-    const inRange = range !== undefined && value >= min && value <= max;
-    const position = (number: number): string => `${50 + (number / (limit * 2)) * 100}%`;
-    panel.classList.toggle('is-in-range', inRange);
-    panel.style.setProperty('--current-position', position(value));
-    panel.style.setProperty('--target-start', position(min));
-    panel.style.setProperty('--target-width', `${((max - min) / (limit * 2)) * 100}%`);
-    const current = panel.querySelector('[data-parameter-value]');
-    if (current !== null) current.textContent = signed(value);
-    const track = panel.querySelector('.parameter-track');
-    track?.setAttribute('aria-valuemin', String(-limit));
-    track?.setAttribute('aria-valuemax', String(limit));
-    track?.setAttribute('aria-valuenow', String(value));
-    track?.setAttribute(
-      'aria-valuetext',
-      mixing === null
-        ? String(value)
-        : `${signed(value)}; target ${min} to ${max}${inRange ? '; in range' : ''}`,
-    );
-    const low = panel.querySelector('[data-scale-min]');
-    const high = panel.querySelector('[data-scale-max]');
-    if (low !== null) low.textContent = `−${limit}`;
-    if (high !== null) high.textContent = `+${limit}`;
-    const match = panel.querySelector<HTMLElement>('.parameter-match');
-    if (match !== null) match.hidden = !inRange;
-    const target = panel.querySelector('[data-target-range]');
-    if (target !== null) target.textContent = range === undefined ? '—' : `${min}–${max}`;
-    const recipeRange = container.querySelector(`[data-recipe-range="${parameter.key}"]`);
-    if (recipeRange !== null) recipeRange.textContent = range === undefined ? '—' : `${min}–${max}`;
-  }
+  updateIngredientPreview(container, state);
 
   const recipeName = container.querySelector('[data-recipe-name]');
   if (recipeName !== null) recipeName.textContent = recipe?.name ?? 'No recipe yet';
@@ -296,6 +264,106 @@ export function updateGameView(container: HTMLElement, state: GameViewState): vo
     feedback.innerHTML = state.lastBrew === null ? '' : brewFeedbackMarkup(state.lastBrew);
   }
   updateSessionView(container, state);
+}
+
+export function updateIngredientPreview(container: HTMLElement, state: GameViewState): void {
+  const game = state.game;
+  const mixing = game?.mixing ?? null;
+  const recipe = game?.recipe;
+  const settings = DIFFICULTY_SETTINGS[game?.difficulty ?? state.selectedDifficulty];
+  const projection =
+    state.previewIngredient === null
+      ? null
+      : projectIngredient(game, state.previewIngredient, state.paused);
+  const canPreview = game?.status === 'playing' && !state.paused;
+  const full = (mixing?.mixture.length ?? 0) >= settings.maxIngredients;
+  container.dataset.previewing = String(projection !== null);
+  container.dataset.previewMode = String(state.previewMode);
+  const toggle = container.querySelector<HTMLButtonElement>('[data-action="toggle-preview"]');
+  if (toggle !== null) {
+    toggle.disabled = !canPreview || full;
+    toggle.setAttribute('aria-pressed', String(state.previewMode));
+  }
+  const count = container.querySelector('[data-shelf-count]');
+  if (count !== null) {
+    count.textContent =
+      game === null
+        ? 'Empty shelf'
+        : state.previewMode
+          ? 'Tap to inspect'
+          : `${settings.ingredientCount} types`;
+  }
+  for (const button of container.querySelectorAll<HTMLElement>('[data-action="add-ingredient"]')) {
+    button.classList.toggle(
+      'is-previewed',
+      button.dataset.ingredient === projection?.ingredient.id,
+    );
+  }
+
+  for (const parameter of PARAMETERS) {
+    const panel = container.querySelector<HTMLElement>(`.parameter.${parameter.className}`);
+    if (panel === null) continue;
+    const value = mixing?.totals[parameter.key] ?? 0;
+    const range = recipe?.[parameter.key];
+    const min = range?.min ?? 0;
+    const max = range?.max ?? 0;
+    const projected = projection?.projected[parameter.key];
+    const limit = parameterScaleLimit(value, range, projected);
+    const inRange = range !== undefined && value >= min && value <= max;
+    const position = (number: number): string => `${50 + (number / (limit * 2)) * 100}%`;
+    panel.classList.toggle('is-in-range', inRange);
+    panel.style.setProperty('--current-position', position(value));
+    panel.style.setProperty('--projected-position', position(projected ?? value));
+    panel.style.setProperty('--target-start', position(min));
+    panel.style.setProperty('--target-width', `${((max - min) / (limit * 2)) * 100}%`);
+    const current = panel.querySelector('[data-parameter-value]');
+    if (current !== null) current.textContent = signed(value);
+    const ghost = panel.querySelector<HTMLElement>('.projected-marker');
+    if (ghost !== null) ghost.hidden = projection === null;
+    const preview = panel.querySelector<HTMLElement>('[data-parameter-projection]');
+    if (preview !== null) preview.hidden = projection === null;
+    if (projection !== null) {
+      const currentPreview = panel.querySelector('[data-projection-current]');
+      const projectedPreview = panel.querySelector('[data-projection-total]');
+      const deltaPreview = panel.querySelector('[data-projection-delta]');
+      const delta = projection.delta[parameter.key];
+      if (currentPreview !== null) currentPreview.textContent = `${signed(value)} `;
+      if (projectedPreview !== null)
+        projectedPreview.textContent = `→ ${signed(projection.projected[parameter.key])}`;
+      if (deltaPreview !== null) deltaPreview.textContent = ` (${delta >= 0 ? '+' : ''}${delta})`;
+    }
+    const track = panel.querySelector('.parameter-track');
+    track?.setAttribute('aria-valuemin', String(-limit));
+    track?.setAttribute('aria-valuemax', String(limit));
+    track?.setAttribute('aria-valuenow', String(value));
+    track?.setAttribute(
+      'aria-valuetext',
+      mixing === null
+        ? String(value)
+        : `${signed(value)}; target ${min} to ${max}${inRange ? '; in range' : ''}`,
+    );
+    const low = panel.querySelector('[data-scale-min]');
+    const high = panel.querySelector('[data-scale-max]');
+    if (low !== null) low.textContent = `−${limit}`;
+    if (high !== null) high.textContent = `+${limit}`;
+    const match = panel.querySelector<HTMLElement>('.parameter-match');
+    if (match !== null) match.hidden = !inRange;
+    const target = panel.querySelector('[data-target-range]');
+    if (target !== null) target.textContent = range === undefined ? '—' : `${min}–${max}`;
+    const recipeRange = container.querySelector(`[data-recipe-range="${parameter.key}"]`);
+    if (recipeRange !== null) recipeRange.textContent = range === undefined ? '—' : `${min}–${max}`;
+  }
+
+  const status = container.querySelector('#ingredient-preview-status');
+  const message =
+    projection === null
+      ? state.previewMode && canPreview
+        ? full
+          ? 'Cauldron full. Brew before previewing another ingredient.'
+          : 'Tap an ingredient to preview. Switch Preview off to add.'
+        : ''
+      : `${projection.ingredient.name} preview. ${PARAMETERS.map(({ key, name }) => `${name}: ${signed(projection.current[key])} to ${signed(projection.projected[key])}, change ${signed(projection.delta[key])}`).join('. ')}. No stock is spent.`;
+  if (status !== null && status.textContent !== message) status.textContent = message;
 }
 
 export function updateSessionView(container: HTMLElement, state: GameViewState): void {
