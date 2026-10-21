@@ -63,7 +63,7 @@ function recipePanel(recipe: Recipe | undefined, difficulty: Difficulty): string
   const settings = DIFFICULTY_SETTINGS[difficulty];
   return `
     <aside class="recipe-panel" aria-labelledby="recipe-heading">
-      <div class="section-heading">${icon('magic')}<h2 id="recipe-heading">Current recipe</h2></div>
+      <div class="section-heading"><h2 id="recipe-heading">Current recipe</h2></div>
       <div class="recipe-heading-block">
         <h3 data-recipe-name>${recipe?.name ?? 'No recipe yet'}</h3>
       </div>
@@ -111,8 +111,7 @@ export function renderGameView(container: HTMLElement, state: GameViewState): vo
   container.innerHTML = `
     <header class="app-header">
       <div class="brand">
-        <a class="brand-symbol" href="#" data-action="home" aria-label="Return to start screen">${icon('spark')}</a>
-        <h1>Alchemist’s Cauldron</h1>
+        <h1><a href="#" data-action="home" aria-label="Alchemist’s Cauldron · Return to start screen">Alchemist’s Cauldron</a></h1>
       </div>
       <nav class="header-actions" aria-label="Game navigation">
         <button class="button button-quiet" type="button" data-action="leaderboard">${icon('trophy')}<span>Leaderboard</span></button>
@@ -120,7 +119,7 @@ export function renderGameView(container: HTMLElement, state: GameViewState): vo
     </header>
     <main class="game-main">
       <div class="game-toolbar" role="group" aria-label="Game status">
-        <div class="stat">${icon('spark')}<span>Score</span><strong data-score>0</strong></div>
+        <div class="stat"><span>Score</span><strong data-score>0</strong></div>
         <div class="stat stat-time" role="timer" aria-label="Time remaining"><strong data-time>00:00</strong></div>
         <div class="toolbar-actions">
           <div class="lives" role="group" aria-label="${started ? `${settings.lives} lives` : 'No lives before starting'}">
@@ -154,7 +153,7 @@ export function renderGameView(container: HTMLElement, state: GameViewState): vo
         <button class="button button-quiet footer-button" type="button" data-action="help">${icon('help')}<span>Help</span></button>
         <div class="main-action-group">
           <button class="button button-primary main-action" type="button" data-action="${started ? 'brew' : 'start'}">
-            ${icon('spark')} ${started ? 'Brew potion' : 'Start Game'} ${icon('spark')}
+            ${started ? 'Brew potion' : 'Start Game'}
           </button>
           ${!started && state.canContinue ? '<button class="button button-secondary continue-action" type="button" data-action="continue">Continue Game</button>' : ''}
         </div>

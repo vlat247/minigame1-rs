@@ -1,5 +1,4 @@
 export type IconName =
-  | 'spark'
   | 'temperature'
   | 'density'
   | 'magic'
@@ -45,9 +44,6 @@ const pixelIconPaths: Record<PixelIconName, string> = {
 };
 
 const iconPaths: Record<Exclude<IconName, PixelIconName>, string> = {
-  spark: `
-    <path d="m12 3 2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5Z" />
-  `,
   heart: `
     <path d="M12 21 3.8 13a5.7 5.7 0 0 1 8.2-7.9A5.7 5.7 0 0 1 20.2 13Z" />
   `,
