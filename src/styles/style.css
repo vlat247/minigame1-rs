@@ -285,11 +285,12 @@ ul {
 .life-icons .icon {
   width: 24px;
   height: 24px;
-  fill: #9a4956;
-  stroke: #e7a5a2;
+  display: block;
 }
 .life-lost {
-  opacity: 0.25;
+  --heart-fill: #45383d;
+  --heart-shadow: #30252b;
+  --heart-highlight: #6a565c;
 }
 .lives-empty {
   min-width: 78px;
@@ -1372,15 +1373,12 @@ ul {
   .stat strong {
     font-size: var(--text-subheading);
   }
-  .lives > span:first-child {
-    display: none;
-  }
   .life-icons {
-    gap: 2px;
+    gap: 0;
   }
   .life-icons .icon {
-    width: 18px;
-    height: 18px;
+    width: 16px;
+    height: 16px;
   }
   .lives-empty {
     min-width: 54px;

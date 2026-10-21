@@ -123,7 +123,6 @@ export function renderGameView(container: HTMLElement, state: GameViewState): vo
         <div class="stat stat-time" role="timer" aria-label="Time remaining"><strong data-time>00:00</strong></div>
         <div class="toolbar-actions">
           <div class="lives" role="group" aria-label="${started ? `${settings.lives} lives` : 'No lives before starting'}">
-            <span>Lives</span>
             ${started ? '<span class="life-icons" aria-hidden="true"></span>' : '<span class="lives-empty">—</span>'}
           </div>
           <button class="button button-quiet pause-button" type="button" data-action="pause" ${started ? '' : 'disabled'}>${icon('pause')}<span>Pause</span></button>

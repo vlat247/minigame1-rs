@@ -18,9 +18,15 @@ export type IconName =
   | 'acid'
   | 'void';
 
-type PixelIconName = 'temperature' | 'density' | 'magic';
+type PixelIconName = 'temperature' | 'density' | 'magic' | 'heart';
 
 const pixelIconPaths: Record<PixelIconName, string> = {
+  heart: `
+    <path d="M2 1h3v1h1V1h3v1h1v4H9v1H8v1H7v1H6v1H5V9H4V8H3V7H2V6H1V2h1z" fill="var(--heart-outline, #190f12)" />
+    <path d="M2 2h3v1h1V2h3v4H8v1H7v1H6v1H5V8H4V7H3V6H2z" fill="var(--heart-shadow, #a32334)" />
+    <path d="M2 2h3v1h1V2h3v3H8v1H7v1H6v1H5V7H4V6H3V5H2z" fill="var(--heart-fill, #ed3f45)" />
+    <path d="M2 2h2v1H3v1H2z M7 2h1v1H7z" fill="var(--heart-highlight, #ffc2ba)" />
+  `,
   temperature: `
     <path d="M5 1h3v1H5z M4 2h1v7H4z M8 2h1v7H8z M6 3h1v8H6z
       M11 3h3v1h-3z M11 6h2v1h-2z M11 9h3v1h-3z
@@ -44,9 +50,6 @@ const pixelIconPaths: Record<PixelIconName, string> = {
 };
 
 const iconPaths: Record<Exclude<IconName, PixelIconName>, string> = {
-  heart: `
-    <path d="M12 21 3.8 13a5.7 5.7 0 0 1 8.2-7.9A5.7 5.7 0 0 1 20.2 13Z" />
-  `,
   clock: `
     <circle cx="12" cy="12" r="9" />
     <path d="M12 7v5l3.5 2" />
@@ -118,14 +121,14 @@ function escapeAttribute(value: string): string {
 }
 
 export function icon(name: IconName, className = 'icon'): string {
-  if (name === 'temperature' || name === 'density' || name === 'magic') {
+  if (name === 'temperature' || name === 'density' || name === 'magic' || name === 'heart') {
     return `
       <svg
         xmlns="http://www.w3.org/2000/svg"
         class="${escapeAttribute(className)} icon-pixel"
         width="24"
         height="24"
-        viewBox="0 0 16 16"
+        viewBox="${name === 'heart' ? '0 0 11 11' : '0 0 16 16'}"
         shape-rendering="crispEdges"
         fill="currentColor"
         aria-hidden="true"
