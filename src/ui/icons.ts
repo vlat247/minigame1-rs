@@ -1,5 +1,4 @@
 export type IconName =
-  | 'spark'
   | 'temperature'
   | 'density'
   | 'magic'
@@ -19,28 +18,38 @@ export type IconName =
   | 'acid'
   | 'void';
 
-const iconPaths: Record<IconName, string> = {
-  spark: `
-    <path d="m12 3 2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5Z" />
+type PixelIconName = 'temperature' | 'density' | 'magic' | 'heart';
+
+const pixelIconPaths: Record<PixelIconName, string> = {
+  heart: `
+    <path d="M2 1h3v1h1V1h3v1h1v4H9v1H8v1H7v1H6v1H5V9H4V8H3V7H2V6H1V2h1z" fill="var(--heart-outline, #190f12)" />
+    <path d="M2 2h3v1h1V2h3v4H8v1H7v1H6v1H5V8H4V7H3V6H2z" fill="var(--heart-shadow, #a32334)" />
+    <path d="M2 2h3v1h1V2h3v3H8v1H7v1H6v1H5V7H4V6H3V5H2z" fill="var(--heart-fill, #ed3f45)" />
+    <path d="M2 2h2v1H3v1H2z M7 2h1v1H7z" fill="var(--heart-highlight, #ffc2ba)" />
   `,
   temperature: `
-    <path d="M9 14.5V5a3 3 0 0 1 6 0v9.5a5 5 0 1 1-6 0Z" />
-    <path d="M12 7v10" />
-    <circle cx="12" cy="18" r="1.5" />
-    <path d="M18 6h2m-2 4h2" />
+    <path d="M5 1h3v1H5z M4 2h1v7H4z M8 2h1v7H8z M6 3h1v8H6z
+      M11 3h3v1h-3z M11 6h2v1h-2z M11 9h3v1h-3z
+      M3 9h2v1H3z M8 9h2v1H8z M2 10h1v3H2z M10 10h1v3h-1z
+      M4 11h5v2H4z M3 13h1v1H3z M5 13h3v1H5z M9 13h1v1H9z M4 14h5v1H4z" />
   `,
   density: `
-    <path d="m3 7 9-4 9 4-9 4Z" />
-    <path d="m3 12 9 4 9-4M3 17l9 4 9-4" />
+    <path d="M6 1h4v1H6z M4 2h8v1H4z M2 3h12v1H2z M1 4h14v1H1z
+      M3 5h10v1H3z M5 6h6v1H5z M1 7h2v1H1z M7 7h2v1H7z M13 7h2v1h-2z
+      M2 8h3v1H2z M11 8h3v1h-3z M4 9h3v1H4z M9 9h3v1H9z
+      M1 10h2v1H1z M6 10h4v1H6z M13 10h2v1h-2z
+      M2 11h3v1H2z M11 11h3v1h-3z M4 12h3v1H4z M9 12h3v1H9z M6 13h4v1H6z" />
   `,
   magic: `
-    <path d="m5 21 11-11-2-2L3 19Z" />
-    <path d="m17 2 .9 2.1L20 5l-2.1.9L17 8l-.9-2.1L14 5l2.1-.9ZM21 10v3m-1.5-1.5h3M6 5v4M4 7h4" />
-    <path d="m10 12 2 2" />
+    <path d="M11 1h1v1h-1z M10 2h3v1h-3z M3 3h1v1H3z M9 3h5v1H9z
+      M2 4h3v1H2z M10 4h3v1h-3z M3 5h1v1H3z M11 5h1v1h-1z
+      M9 6h2v1H9z M8 7h3v1H8z M7 8h3v1H7z M6 9h3v1H6z M13 9h1v1h-1z
+      M5 10h3v1H5z M12 10h3v1h-3z M4 11h3v1H4z M13 11h1v1h-1z
+      M3 12h3v1H3z M2 13h3v1H2z M2 14h2v1H2z" />
   `,
-  heart: `
-    <path d="M12 21 3.8 13a5.7 5.7 0 0 1 8.2-7.9A5.7 5.7 0 0 1 20.2 13Z" />
-  `,
+};
+
+const iconPaths: Record<Exclude<IconName, PixelIconName>, string> = {
   clock: `
     <circle cx="12" cy="12" r="9" />
     <path d="M12 7v5l3.5 2" />
@@ -112,6 +121,22 @@ function escapeAttribute(value: string): string {
 }
 
 export function icon(name: IconName, className = 'icon'): string {
+  if (name === 'temperature' || name === 'density' || name === 'magic' || name === 'heart') {
+    return `
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        class="${escapeAttribute(className)} icon-pixel"
+        width="24"
+        height="24"
+        viewBox="${name === 'heart' ? '0 0 11 11' : '0 0 16 16'}"
+        shape-rendering="crispEdges"
+        fill="currentColor"
+        aria-hidden="true"
+        focusable="false"
+      >${pixelIconPaths[name]}</svg>
+    `;
+  }
+
   return `
     <svg
       xmlns="http://www.w3.org/2000/svg"

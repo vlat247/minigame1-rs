@@ -45,8 +45,8 @@ function helpContent(difficulty: Difficulty): DialogContent {
         <li><strong>Choose your ingredients.</strong><p>Each ingredient changes the three values. Use up to ${settings.maxIngredients} portions per mixture; every added portion is spent.</p></li>
         <li><strong>Brew a potion.</strong><p>All three values must fit the targets, with a tolerance of ±${settings.tolerance} in ${settings.label} mode. Success earns ${settings.scorePerBrew} points, adds up to ${settings.timeBonus} seconds without exceeding ${settings.startingTime} seconds, and selects another recipe. Failure costs one life and keeps the recipe.</p></li>
       </ol>
-      <p class="dialog-note">A ${settings.label} game begins with ${settings.startingTime} seconds, ${settings.lives} lives and ${settings.ingredientCount} ingredient types. Choose the difficulty in Menu before starting.</p>
-      <p class="dialog-note">Every brew clears the cauldron. Spent ingredients never return to the shelf. Green gauges mark the original recipe ranges; brewing also allows the ±${settings.tolerance} tolerance.</p>
+      <p class="dialog-note">${difficulty === 'easy' ? 'An' : 'A'} ${settings.label} game begins with ${settings.startingTime} seconds, ${settings.lives} lives and ${settings.ingredientCount} ingredient types. Choose the difficulty in Menu before starting.</p>
+      <p class="dialog-note">Every brew clears the cauldron. Spent ingredients never return to the shelf. Outlined targets show the recipe ranges; a green gauge means its value is in range. Brewing also allows the ±${settings.tolerance} tolerance.</p>
       <p class="dialog-note">Pause freezes the clock and hides the workbench. Switching tabs pauses automatically; return and choose Resume. Help, Menu, and Leaderboard keep the clock running unless you pause first.</p>
       <p class="dialog-note">Progress saves automatically. After a reload, Continue Game restores your unfinished run paused. Exit to Menu discards that save.</p>
       <p class="dialog-note">A run ends when time or lives run out, or the shelf and cauldron are both empty. Each difficulty has its own Top 10.</p>

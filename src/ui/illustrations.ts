@@ -1,349 +1,155 @@
-import { icon } from './icons';
-import type { IconName } from './icons';
-
-let illustrationSequence = 0;
-
-function illustrationPrefix(subject: string): string {
-  illustrationSequence += 1;
-  return `alchemy-${subject}-${illustrationSequence}`;
-}
-
 export function cauldronIllustration(filled = false): string {
-  const prefix = illustrationPrefix('cauldron');
   const title = filled ? 'Potion cauldron' : 'Empty cauldron';
-  const liquid = filled
+  const contents = filled
     ? `
-      <ellipse cx="300" cy="163" rx="149" ry="30" fill="url(#${prefix}-potion)" stroke="#b9dc72" stroke-width="1.5" />
-      <path d="M166 162c37-24 180-32 263-5" fill="none" stroke="#f0ffc0" stroke-width="2.5" opacity=".55" />
-      <path d="M206 176c48 12 116 13 166 3m-130-30c28-5 67-5 91-1" fill="none" stroke="#517a27" stroke-width="2" opacity=".48" />
-      <g fill="url(#${prefix}-bubble)" stroke="#d3ed9c" stroke-width="1">
-        <circle class="potion-bubble" cx="219" cy="161" r="7" />
-        <circle class="potion-bubble" cx="337" cy="157" r="5" />
-        <circle class="potion-bubble" cx="382" cy="165" r="8" />
-        <circle class="potion-bubble" cx="260" cy="125" r="10" />
-        <circle class="potion-bubble" cx="355" cy="112" r="6" />
+      <path d="M43 17H85V18H94V20H97V23H92V25H36V23H31V20H34V18H43z" fill="var(--potion-base, #58976b)" />
+      <path d="M43 19H85V20H94V23H85V24H43V23H34V20H43z" fill="var(--potion-light, #66c774)" />
+      <path d="M43 19H60V20H43zM64 19H71V20H64zM36 20H43V21H36z" fill="var(--potion-highlight, #c5ecc9)" />
+      <path d="M48 22H73V23H48zM78 21H87V22H78z" fill="var(--potion-base, #58976b)" />
+      <g class="potion-bubble">
+        <path d="M45 15H48V17H50V21H48V23H45V21H43V17H45z" fill="var(--potion-base, #58976b)" />
+        <path d="M45 17H48V21H45z" fill="var(--potion-highlight, #c5ecc9)" />
+        <path d="M46 19H48V21H46z" fill="var(--potion-light, #66c774)" />
       </g>
-      <g class="potion-steam" fill="none" stroke-linecap="round">
-        <path d="M242 132c-26-30 26-42 4-77" stroke="url(#${prefix}-steam)" stroke-width="7" opacity=".38" />
-        <path d="M300 124c-25-29 26-53 4-91" stroke="url(#${prefix}-steam)" stroke-width="9" opacity=".3" />
-        <path d="M366 140c24-27-20-43-3-69" stroke="url(#${prefix}-steam)" stroke-width="6" opacity=".32" />
-        <path d="M276 103c-12-15 11-26 4-43" stroke="#dcebb2" stroke-width="2" opacity=".22" />
+      <g class="potion-bubble">
+        <path d="M78 16H82V18H83V22H82V24H78V22H76V18H78z" fill="var(--potion-base, #58976b)" />
+        <path d="M78 18H82V22H78z" fill="var(--potion-highlight, #c5ecc9)" />
+      </g>
+      <g class="potion-bubble">
+        <path d="M66 11H69V13H71V17H69V19H66V17H64V13H66z" fill="var(--potion-base, #58976b)" />
+        <path d="M66 13H69V17H66z" fill="var(--potion-highlight, #c5ecc9)" />
+      </g>
+      <g class="potion-steam" fill="var(--potion-steam, #a8dcb1)">
+        <path d="M49 13V10H47V8H49V5H51V3H53V7H51V9H49V10H51V13z" />
+        <path d="M61 11V8H63V7H61V4H63V2H65V5H63V7H65V9H63V11z" />
+        <path d="M77 13V11H79V9H77V7H79V4H81V8H79V9H81V11H79V13z" />
       </g>
     `
     : `
-      <ellipse cx="300" cy="164" rx="150" ry="31" fill="url(#${prefix}-inside)" />
-      <path d="M164 166c42 23 224 23 272 0" fill="none" stroke="#485342" stroke-width="2" opacity=".5" />
+      <path d="M43 17H85V18H94V20H97V23H92V25H36V23H31V20H34V18H43z" fill="var(--surface-recessed, #241b1a)" />
+      <path d="M43 17H85V18H94V20H85V19H43V20H34V18H43z" fill="var(--cauldron-outline, #120d09)" />
+      <path d="M38 22H46V23H82V22H90V24H38z" fill="var(--cauldron-shade, #3b423b)" />
     `;
 
+  const handle = `
+    <path d="M10 19H22V21H28V25H32V33H28V41H24V47H18V43H14V37H10V29H6V23H10zM14 25V29H16V35H20V31H24V27H20V25z" fill="var(--cauldron-outline, #120d09)" fill-rule="evenodd" />
+    <path d="M10 21H22V23H26V27H30V31H26V39H22V44H18V39H14V33H12V27H10zM14 25V29H16V35H20V31H24V27H20V25z" fill="var(--cauldron-base, #5a6258)" fill-rule="evenodd" />
+    <path d="M10 21H20V23H10zM8 23H12V27H8zM12 29H14V33H12zM14 33H16V37H14z" fill="var(--cauldron-light, #a0aa90)" />
+    <path d="M20 21H22V23H20zM24 25H26V29H24zM18 39H22V43H18zM16 35H18V39H16z" fill="var(--cauldron-shade, #3b423b)" />`;
+
   return `
-    <svg xmlns="http://www.w3.org/2000/svg" class="cauldron-illustration" width="600" height="480" viewBox="0 0 600 480" role="img" aria-label="${title}" focusable="false">
+    <svg xmlns="http://www.w3.org/2000/svg" class="cauldron-illustration" width="600" height="480" viewBox="0 0 128 104" shape-rendering="crispEdges" role="img" aria-label="${title}" focusable="false">
       <title>${title}</title>
-      <defs>
-        <radialGradient id="${prefix}-iron" cx=".29" cy=".18" r=".9">
-          <stop stop-color="#778074" />
-          <stop offset=".18" stop-color="#414d43" />
-          <stop offset=".48" stop-color="#202a24" />
-          <stop offset=".79" stop-color="#101814" />
-          <stop offset="1" stop-color="#070c09" />
-        </radialGradient>
-        <linearGradient id="${prefix}-rim" x1="0" y1="0" x2="0" y2="1">
-          <stop stop-color="#d2c39b" />
-          <stop offset=".2" stop-color="#8d947d" />
-          <stop offset=".45" stop-color="#3e493a" />
-          <stop offset=".7" stop-color="#89947a" />
-          <stop offset="1" stop-color="#263025" />
-        </linearGradient>
-        <linearGradient id="${prefix}-brass" x1="0" y1="0" x2="1" y2="1">
-          <stop stop-color="#635033" />
-          <stop offset=".25" stop-color="#e3c58b" />
-          <stop offset=".49" stop-color="#ab8952" />
-          <stop offset=".72" stop-color="#5b4328" />
-          <stop offset="1" stop-color="#bc9b62" />
-        </linearGradient>
-        <linearGradient id="${prefix}-stone" x1="0" y1="0" x2="0" y2="1">
-          <stop stop-color="#72745e" />
-          <stop offset=".3" stop-color="#4e5342" />
-          <stop offset="1" stop-color="#242b23" />
-        </linearGradient>
-        <radialGradient id="${prefix}-hearth">
-          <stop stop-color="#b9d353" stop-opacity="${filled ? '.55' : '.38'}" />
-          <stop offset=".48" stop-color="#7a9d32" stop-opacity="${filled ? '.3' : '.12'}" />
-          <stop offset="1" stop-color="#5c8c2c" stop-opacity="0" />
-        </radialGradient>
-        <radialGradient id="${prefix}-inside" cx=".5" cy=".85" r=".8">
-          <stop stop-color="#222b1e" />
-          <stop offset=".6" stop-color="#10180f" />
-          <stop offset="1" stop-color="#050a06" />
-        </radialGradient>
-        <radialGradient id="${prefix}-potion" cx=".44" cy=".35" r=".75">
-          <stop stop-color="#efffa5" />
-          <stop offset=".32" stop-color="#c7e26c" />
-          <stop offset=".68" stop-color="#8db53e" />
-          <stop offset="1" stop-color="#406d25" />
-        </radialGradient>
-        <radialGradient id="${prefix}-bubble" cx=".3" cy=".25" r=".8">
-          <stop stop-color="#f4ffd0" stop-opacity=".9" />
-          <stop offset=".4" stop-color="#c2df72" stop-opacity=".45" />
-          <stop offset="1" stop-color="#5e8a32" stop-opacity=".8" />
-        </radialGradient>
-        <linearGradient id="${prefix}-steam" x1="0" y1="1" x2="0" y2="0">
-          <stop stop-color="#c3df89" stop-opacity=".8" />
-          <stop offset="1" stop-color="#dfe9be" stop-opacity="0" />
-        </linearGradient>
-      </defs>
-
-      <ellipse cx="300" cy="415" rx="245" ry="62" fill="url(#${prefix}-hearth)" />
-      <ellipse cx="300" cy="426" rx="210" ry="34" fill="#060b07" opacity=".68" />
-      <path d="m132 396 29-21 47-9 45 7 47-6 43 5 48-6 47 16 30 22-2 26-50 16H181l-47-20Z" fill="#242b20" stroke="#151d14" stroke-width="3" />
-      <g fill="url(#${prefix}-stone)" stroke="#1c251a" stroke-width="2" stroke-linejoin="round">
-        <path d="m136 395 32-17 42-5 6 22-40 12-39 4Z" />
-        <path d="m216 373 43-3 37 8-4 21-41-1-34-5Z" />
-        <path d="m303 377 43-5 41 1 4 23-44 4-42-2Z" />
-        <path d="m394 374 40 10 28 15-2 14-40-5-27-13Z" />
+      <path d="M30 99h68v1h8v2H22v-2h8z" fill="var(--shadow, #120d09)" />
+      <g class="cauldron-handles">
+        ${handle}
+        <g transform="translate(128 0) scale(-1 1)">${handle}</g>
       </g>
-      <ellipse cx="300" cy="402" rx="159" ry="25" fill="url(#${prefix}-hearth)" />
-
-      <g stroke="#101810" stroke-width="4" stroke-linejoin="round">
-        <path d="m190 359-15 48c-1 5 2 9 7 9h35c5 0 8-4 7-9l-9-38Z" fill="url(#${prefix}-iron)" />
-        <path d="m410 359 15 48c1 5-2 9-7 9h-35c-5 0-8-4-7-9l9-38Z" fill="url(#${prefix}-iron)" />
+      <g class="cauldron-feet">
+        <path d="M32 82h14v7h-5v5h-2v2h2v4h-4v2H24v-2h-4v-5h5v-3h3v-6h4z M82 82h14v4h4v6h3v3h5v5h-4v2H91v-2h-4v-4h2v-2h-2v-5h-5z" fill="var(--cauldron-outline, #120d09)" />
+        <path d="M33 85h10v3h-5v5h-3v4h3v2H25v-1h-3v-2h6v-4h3v-5h2z M85 85h10v2h2v5h3v4h6v2h-3v1H90v-2h3v-4h-3v-5h-5z" fill="var(--cauldron-base, #5a6258)" />
+        <path d="M33 85h8v2h-8z M31 87h6v3h-6z M24 96h5v2h-5z M88 85h7v2h-7z M91 87h6v3h-6z M98 96h6v2h-6z" fill="var(--cauldron-light, #a0aa90)" />
+        <path d="M30 91h5v4h-5z M92 91h5v4h-5z M29 99h7v1h-7z M94 99h7v1h-7z" fill="var(--cauldron-shade, #3b423b)" />
       </g>
-      <path d="M183 408h32m170 0h32" fill="none" stroke="#8e8054" stroke-width="3" opacity=".6" />
-
-      <g fill="none" stroke-linecap="round">
-        <path d="M148 204c-34-32-69-9-66 22 3 32 39 49 66 29m304-51c34-32 69-9 66 22-3 32-39 49-66 29" stroke="#0a100c" stroke-width="22" />
-        <path d="M148 204c-34-32-69-9-66 22 3 32 39 49 66 29m304-51c34-32 69-9 66 22-3 32-39 49-66 29" stroke="url(#${prefix}-brass)" stroke-width="14" />
-        <path d="M131 200c-24-12-44 3-43 23m381-23c24-12 44 3 43 23" stroke="#e0c087" stroke-width="2" opacity=".8" />
+      <g class="cauldron-body">
+        <path d="M30 30H98V35H104V39H108V46H112V55H114V67H112V76H108V83H102V88H94V90H34V88H26V83H20V76H16V67H14V55H16V46H20V39H24V35H30z" fill="var(--cauldron-outline, #120d09)" />
+        <path d="M32 32H96V37H102V42H106V48H110V58H112V65H110V74H106V81H100V85H92V88H36V85H28V81H22V74H18V65H16V58H18V48H22V42H26V37H32z" fill="var(--cauldron-base, #5a6258)" />
+        <path d="M34 35H94V39H100V44H104V51H108V72H104V78H98V83H82V85H48V81H36V74H30V53H34z" fill="var(--cauldron-mid, #7a8272)" />
+        <path d="M34 35H48V39H40V46H36V69H40V78H46V83H56V88H36V85H28V81H22V74H18V65H16V58H18V48H22V42H26V37H34z" fill="var(--cauldron-shade, #3b423b)" />
+        <path d="M28 42H34V46H30V58H28V69H30V76H34V81H28V78H24V72H20V55H22V48H26V44H28z" fill="var(--cauldron-dark, #382a32)" />
+        <path d="M56 39H80V44H92V53H98V74H92V81H62V76H54V51H56z" fill="var(--cauldron-light, #a0aa90)" />
+        <path d="M64 43H76V47H84V57H88V72H84V78H68V74H62V53H64z" fill="var(--cauldron-highlight, #bdc5a8)" />
+        <path d="M98 42H104V51H108V72H104V78H98V83H82V85H56V83H78V78H92V72H98z" fill="var(--cauldron-base, #5a6258)" />
+        <path d="M36 83H48V85H82V83H98V85H92V88H36zM46 88H82V89H46z" fill="var(--cauldron-dark, #382a32)" />
       </g>
-
-      <path d="M145 167c-20 46-20 111 1 158 24 52 77 74 154 74s130-22 154-74c21-47 21-112 1-158Z" fill="url(#${prefix}-iron)" stroke="#10180f" stroke-width="4" />
-      <path d="M153 206c-11 46-3 101 23 129 20 22 43 35 66 40-32-33-45-76-43-120 1-21 5-39 10-54Z" fill="#abb59d" opacity=".09" />
-      <path d="M158 215c-8 33-3 66 7 91" fill="none" stroke="#c1cdb0" stroke-width="4" stroke-linecap="round" opacity=".2" />
-      <path d="M448 211c11 37 7 83-10 113-16 28-45 48-69 54 28-34 42-75 44-114 1-23-1-41-7-57Z" fill="#040a06" opacity=".37" />
-      <path d="M454 223c9 37 2 77-16 104" fill="none" stroke="#8daa6c" stroke-width="2.5" opacity=".2" />
-      <path d="M188 357c59 35 166 39 226 0" fill="none" stroke="#9fa88c" stroke-width="2" opacity=".15" />
-      <path d="m207 226 7-3m-41 46 5-2m239-33 6 3m-17 99 6-4m-176 34 9 1" fill="none" stroke="#a1ac93" stroke-width="1.5" stroke-linecap="round" opacity=".25" />
-
-      <g fill="url(#${prefix}-brass)" stroke="#2a2a1c" stroke-width="2.5">
-        <path d="m138 210 13-5 9 15-2 26-16 4-7-15Z" />
-        <path d="m462 210-13-5-9 15 2 26 16 4 7-15Z" />
-        <circle cx="148" cy="223" r="4" />
-        <circle cx="452" cy="223" r="4" />
+      <g class="cauldron-patina" fill="var(--cauldron-base, #5a6258)">
+        <path d="M42 42H48V46H44V53H40V46H42zM52 37H58V42H56V46H52zM72 37H80V39H84V44H80V42H72zM88 42H92V46H90V51H86V46H88z" />
+        <path d="M50 53H54V60H52V65H48V58H50zM76 53H80V58H84V62H82V67H76V62H78V58H76zM90 67H94V74H92V76H88V72H90zM58 76H62V78H68V83H60V81H56V78H58z" />
+        <path d="M96 53H98V58H96zM70 72H72V76H70zM82 78H86V81H82zM60 46H62V48H60z" />
       </g>
-      <path d="M147 217v10m306-10v10" stroke="#f1d29a" stroke-width="1.5" opacity=".6" />
-
-      <ellipse cx="300" cy="172" rx="171" ry="47" fill="url(#${prefix}-rim)" stroke="#172113" stroke-width="4" />
-      <ellipse cx="300" cy="164" rx="154" ry="34" fill="#080f08" stroke="#b5bb93" stroke-width="1.5" />
-      ${liquid}
-      <path d="M136 169c17 24 86 41 164 41s147-17 164-41" fill="none" stroke="#c0c7a4" stroke-width="2" opacity=".6" />
-      <path d="M145 150c27-15 86-24 155-24s128 9 155 24" fill="none" stroke="#d5d6b3" stroke-width="2.5" opacity=".75" />
-      <path d="M151 184c35 19 92 28 149 28s114-9 149-28" fill="none" stroke="#1c2918" stroke-width="4" opacity=".68" />
-
-      <g fill="none" stroke="url(#${prefix}-brass)" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="300" cy="294" r="49" stroke-width="2.5" opacity=".7" />
-        <circle cx="300" cy="294" r="43" stroke-width="1" opacity=".45" />
-        <path d="M300 237v7m0 100v7m-57-57h7m100 0h7" stroke-width="2" />
+      <g fill="var(--cauldron-shade, #3b423b)">
+        <path d="M44 39H48V42H44zM48 46H50V51H48zM54 39H56V42H54zM76 37H80V39H76zM88 44H90V46H88zM78 58H82V60H78zM58 78H62V81H58zM92 72H94V74H92z" />
       </g>
-      <g fill="none" stroke="#bfe574" stroke-linecap="round" stroke-linejoin="round">
-        <g stroke-width="9" opacity=".14">
-          <path d="m300 259-30 53h60Z" />
-          <path d="M280 294h40" />
-          <circle cx="300" cy="294" r="4" />
-        </g>
-        <path d="m300 259-30 53h60Z" stroke-width="2.5" />
-        <path d="M280 294h40" stroke-width="2" />
-        <circle cx="300" cy="294" r="4" stroke-width="1.5" />
+      <g fill="var(--cauldron-light, #a0aa90)">
+        <path d="M38 53H40V60H38zM40 65H42V69H40zM44 72H46V76H44zM50 78H54V81H50zM56 48H58V53H56zM72 48H74V51H72zM86 65H88V69H86zM98 60H100V65H98z" />
       </g>
-      <path d="m300 261-27 49" fill="none" stroke="#e8ffb0" stroke-width=".8" opacity=".55" />
-
-      <g fill="url(#${prefix}-stone)" stroke="#20291d" stroke-width="2" stroke-linejoin="round">
-        <path d="m132 414 43-8 35 10-5 22-30 8-39-15Z" />
-        <path d="m212 418 39-10 44 8 1 25-44 8-42-8Z" />
-        <path d="m301 417 44-9 39 10 5 23-43 8-45-8Z" />
-        <path d="m391 416 34-10 43 8-4 17-40 15-29-8Z" />
+      <g class="cauldron-collar">
+        <path d="M22 22H106V29H104V34H100V38H28V34H24V29H22z" fill="var(--cauldron-outline, #120d09)" />
+        <path d="M24 24H104V29H102V34H98V36H30V34H26V29H24z" fill="var(--cauldron-base, #5a6258)" />
+        <path d="M28 26H54V30H48V34H32V32H28z" fill="var(--cauldron-shade, #3b423b)" />
+        <path d="M58 27H100V31H98V34H58z" fill="var(--cauldron-mid, #7a8272)" />
+        <path d="M32 34H44V35H32zM52 35H92V36H52zM88 28H94V30H88zM64 30H68V32H64z" fill="var(--cauldron-light, #a0aa90)" />
+        <path d="M40 28H44V30H40zM70 28H76V30H70zM82 32H86V34H82zM96 27H100V29H96z" fill="var(--cauldron-shade, #3b423b)" />
       </g>
-      <path d="m145 416 27-3 20 6m30 2 28-6 30 6m34 0 30-6 27 6m29-1 22-7 31 5" fill="none" stroke="#b3b49a" stroke-width="1.5" stroke-linecap="round" opacity=".33" />
-      <path d="m168 414 6 10-5 8m82-16 5 10-5 8m93-18-6 10 4 9m82-21-5 10 6 8" fill="none" stroke="#283424" stroke-width="1.5" />
-    </svg>
-  `;
-}
-
-type IngredientName = 'dragon' | 'fairy' | 'lotus' | 'mandrake' | 'acid' | 'void';
-
-interface IngredientPalette {
-  light: string;
-  medium: string;
-  dark: string;
-}
-
-const ingredientPalettes: Record<IngredientName, IngredientPalette> = {
-  dragon: { light: '#b5f5f1', medium: '#4bafbd', dark: '#153c47' },
-  fairy: { light: '#edd0ff', medium: '#ad79cf', dark: '#3c2655' },
-  lotus: { light: '#e1f6ff', medium: '#85bad8', dark: '#25465e' },
-  mandrake: { light: '#d2cf9b', medium: '#91905b', dark: '#3e4828' },
-  acid: { light: '#eef9af', medium: '#b6d354', dark: '#445c27' },
-  void: { light: '#d8bbff', medium: '#9370c4', dark: '#2c2048' },
-};
-
-const bottlePaths: Record<IngredientName, string> = {
-  dragon: 'M24 17h16v11c0 4 12 6 13 18l-1 12c-1 7-8 10-20 10S13 65 12 58l-1-12c1-12 13-14 13-18Z',
-  fairy: 'M24 17h16v10l11 10 3 16-5 12H15l-5-12 3-16 11-10Z',
-  lotus: 'M23 17h18v9c0 3 9 5 10 10v24c0 5-6 8-19 8s-19-3-19-8V36c1-5 10-7 10-10Z',
-  mandrake: 'M23 17h18v10l9 6 2 8v19c0 5-7 8-20 8s-20-3-20-8V41l2-8 9-6Z',
-  acid: 'M25 17h14v13l16 28c3 6-3 10-23 10S6 64 9 58l16-28Z',
-  void: 'M24 17h16v11c0 4 14 9 14 22 0 12-9 18-22 18s-22-6-22-18c0-13 14-18 14-22Z',
-};
-
-function ingredientMaterial(name: IngredientName, prefix: string): string {
-  switch (name) {
-    case 'dragon':
-      return `
-        <ellipse cx="32" cy="59" rx="17" ry="5" fill="url(#${prefix}-material)" opacity=".8" />
-        <path d="M33 29c-4 7-13 13-13 21a12 12 0 0 0 24 0c0-8-7-14-11-21Z" fill="url(#${prefix}-material)" stroke="#abeee8" stroke-width=".8" />
-        <path d="M29 39c-3 4-6 7-6 11 0 3 1 5 3 6" fill="none" stroke="#e2fff5" stroke-width="2.5" stroke-linecap="round" opacity=".75" />
-        <circle cx="41" cy="39" r="1.4" fill="#c8fff1" />
-      `;
-    case 'fairy':
-      return `
-        <path d="M13 48c13-7 26-3 38-1l-3 15H17Z" fill="url(#${prefix}-material)" opacity=".78" />
-        <g fill="#e2b7f9">
-          <circle cx="22" cy="53" r="1.3" /><circle cx="36" cy="58" r="1.5" />
-          <circle cx="43" cy="51" r="1" /><circle cx="29" cy="61" r=".9" />
-          <circle cx="20" cy="60" r=".8" /><circle cx="41" cy="62" r=".7" />
-          <circle cx="29" cy="44" r="1" /><circle cx="38" cy="36" r=".9" />
-        </g>
-        <path d="m31 32 2.2 6.4L39 41l-5.8 2.6L31 50l-2.2-6.4L23 41l5.8-2.6Z" fill="#f4d8ff" />
-        <path d="m43 40 .9 2.6 2.6.9-2.6.9L43 47l-.9-2.6-2.6-.9 2.6-.9Z" fill="#ffedca" />
-      `;
-    case 'lotus':
-      return `
-        <path d="M32 47v17m0-6c-8 1-13-1-15-6 6-1 11 1 15 6Zm0 3c8 0 12-3 15-8-7-1-12 2-15 8Z" fill="#658f86" stroke="#a2c0ac" stroke-width=".6" />
-        <path d="M32 52c-10-5-12-14 0-25 12 11 10 20 0 25Z" fill="url(#${prefix}-material)" stroke="#e1f9ff" stroke-width=".7" />
-        <path d="M32 52c-12 0-18-8-17-18 10 1 16 8 17 18Z" fill="#79a6c8" stroke="#d9f4ff" stroke-width=".7" />
-        <path d="M32 52c12 0 18-8 17-18-10 1-16 8-17 18Z" fill="#a9d4e9" stroke="#effaff" stroke-width=".7" />
-        <path d="M32 53c-10 6-19 1-22-8 10-2 17 1 22 8Z" fill="#98bfd8" stroke="#d6effd" stroke-width=".7" />
-        <path d="M32 53c10 6 19 1 22-8-10-2-17 1-22 8Z" fill="#bfdced" stroke="#eafaff" stroke-width=".7" />
-        <path d="M32 32v18" fill="none" stroke="#fff" stroke-width="1" opacity=".55" />
-      `;
-    case 'mandrake':
-      return `
-        <path d="M31 35c-9-2-13 3-11 12l-4 8 6-2 1 11 7-9 2 11 5-11 6 7-1-12 6 1-7-10c0-7-4-9-10-6Z" fill="url(#${prefix}-material)" stroke="#c4bc81" stroke-width=".8" />
-        <path d="M31 36c-2-9-10-12-15-10 2 8 8 11 15 10Zm1-1c7 0 13-4 14-11-8 1-12 4-14 11Z" fill="#8e9d55" stroke="#c5cf8a" stroke-width=".6" />
-        <path d="m29 39-2 11 2 4m8-15-2 10 3 3m-13 8-3 6m15-5 4 5" fill="none" stroke="#615c36" stroke-width="1.2" stroke-linecap="round" />
-        <path d="m26 43 3 1m5 0 3-1m-7 6 3 1" stroke="#3b3a22" stroke-width="1.3" stroke-linecap="round" />
-      `;
-    case 'acid':
-      return `
-        <path d="M16 47c10-5 23 4 32 0l9 15c-10 7-40 7-50 0Z" fill="url(#${prefix}-material)" />
-        <path d="M16 47c11-4 23 4 32 0" fill="none" stroke="#edf8b6" stroke-width="1.5" />
-        <g fill="none" stroke="#eefdb4" stroke-width="1">
-          <circle cx="25" cy="55" r="2.4" /><circle cx="39" cy="58" r="3" />
-          <circle cx="33" cy="42" r="1.8" />
-        </g>
-        <path d="m33 23-2 8h5l-3 7" fill="none" stroke="#ccd591" stroke-width="1.2" opacity=".7" />
-      `;
-    case 'void':
-      return `
-        <circle cx="32" cy="48" r="16" fill="url(#${prefix}-material)" />
-        <circle cx="33" cy="48" r="6" fill="#21162f" />
-        <path d="M22 39c11-10 25 1 20 12-3 7-13 8-18 2-4-4-2-11 4-13 5-2 10 2 9 6" fill="none" stroke="#d3adf6" stroke-width="2" stroke-linecap="round" />
-        <path d="M20 53c2 9 16 15 24 4M27 34c8-3 16 2 18 8" fill="none" stroke="#9d7ac2" stroke-width="1" />
-        <path d="m44 32 .8 2.2 2.2.8-2.2.8L44 38l-.8-2.2L41 35l2.2-.8Z" fill="#f0dfff" />
-        <circle cx="20" cy="45" r="1" fill="#eedbff" />
-      `;
-  }
-}
-
-function isIngredientName(name: IconName): name is IngredientName {
-  return Object.hasOwn(ingredientPalettes, name);
-}
-
-export function ingredientIllustration(name: IconName): string {
-  if (!isIngredientName(name)) {
-    return `
-      <svg xmlns="http://www.w3.org/2000/svg" class="ingredient-illustration" width="64" height="72" viewBox="0 0 64 72" aria-hidden="true" focusable="false">
-        <g transform="translate(20 24)">${icon(name)}</g>
-      </svg>
-    `;
-  }
-
-  const prefix = illustrationPrefix(name);
-  const palette = ingredientPalettes[name];
-  const bottle = bottlePaths[name];
-
-  return `
-    <svg xmlns="http://www.w3.org/2000/svg" class="ingredient-illustration ingredient-illustration--${name}" width="64" height="72" viewBox="0 0 64 72" aria-hidden="true" focusable="false">
-      <defs>
-        <linearGradient id="${prefix}-glass" x1="0" y1="0" x2="1" y2=".2">
-          <stop stop-color="#222c2b" />
-          <stop offset=".18" stop-color="${palette.dark}" />
-          <stop offset=".36" stop-color="${palette.medium}" stop-opacity=".5" />
-          <stop offset=".67" stop-color="#20282a" />
-          <stop offset=".9" stop-color="${palette.dark}" />
-          <stop offset="1" stop-color="${palette.medium}" stop-opacity=".7" />
-        </linearGradient>
-        <radialGradient id="${prefix}-material" cx=".35" cy=".28" r=".82">
-          <stop stop-color="${palette.light}" />
-          <stop offset=".5" stop-color="${palette.medium}" />
-          <stop offset="1" stop-color="${palette.dark}" />
-        </radialGradient>
-        <linearGradient id="${prefix}-copper" x1="0" y1="0" x2="1" y2=".3">
-          <stop stop-color="#715335" />
-          <stop offset=".35" stop-color="#dec18b" />
-          <stop offset=".64" stop-color="#a98551" />
-          <stop offset="1" stop-color="#5b432c" />
-        </linearGradient>
-        <linearGradient id="${prefix}-cork" x1="0" y1="0" x2="1" y2="0">
-          <stop stop-color="#705036" />
-          <stop offset=".35" stop-color="#c49b62" />
-          <stop offset="1" stop-color="#8f653e" />
-        </linearGradient>
-        <clipPath id="${prefix}-bottle-clip"><path d="${bottle}" /></clipPath>
-      </defs>
-      <ellipse cx="32" cy="68" rx="23" ry="3" fill="#020806" opacity=".4" />
-      <path d="${bottle}" fill="url(#${prefix}-glass)" stroke="#a79874" stroke-width="1.2" />
-      <g clip-path="url(#${prefix}-bottle-clip)">
-        ${ingredientMaterial(name, prefix)}
-        <path d="M19 35c-3 5-3 13-2 21" fill="none" stroke="#edffe8" stroke-width="2.2" stroke-linecap="round" opacity=".32" />
-        <path d="M47 39c2 8 2 15-1 21" fill="none" stroke="${palette.light}" stroke-width="1" stroke-linecap="round" opacity=".45" />
-        <path d="M18 62c7 4 21 5 29 0" fill="none" stroke="${palette.light}" stroke-width=".8" opacity=".45" />
+      <g class="cauldron-rim">
+        <path d="M45 10H83V11H94V13H101V15H104V18H106V23H104V26H99V28H90V30H38V28H29V26H24V23H22V18H24V15H27V13H34V11H45z" fill="var(--cauldron-outline, #120d09)" />
+        <path d="M45 12H83V13H94V15H101V17H102V23H97V26H88V28H40V26H31V23H26V17H27V15H34V13H45z" fill="var(--cauldron-light, #a0aa90)" />
+        <path d="M45 12H83V13H45zM34 13H45V15H34zM27 15H34V17H27zM26 17H29V21H26z" fill="var(--cauldron-rim-light, #e0dcc6)" />
+        <path d="M46 13H82V14H46zM85 14H94V15H85zM96 16H101V18H96z" fill="var(--cauldron-rim, #b8bda4)" />
+        <path d="M43 15H85V16H94V18H99V24H92V26H36V24H29V18H34V16H43z" fill="var(--cauldron-shade, #3b423b)" />
       </g>
-      <path d="M26 6h12l1 10H25Z" fill="url(#${prefix}-cork)" stroke="#cfad77" stroke-width=".7" />
-      <ellipse cx="32" cy="6" rx="6" ry="1.7" fill="#cfaa72" stroke="#7f5d3c" stroke-width=".7" />
-      <path d="m28 8 1 5m5-5v3m3 0-1 3" stroke="#6d4b32" stroke-width=".8" opacity=".7" />
-      <rect x="22" y="15" width="20" height="5" rx="1.3" fill="url(#${prefix}-copper)" stroke="#5c4b31" stroke-width=".7" />
-      <path d="M24 16.5h15M26 21v5m12-5v5" fill="none" stroke="#f1d9aa" stroke-width=".8" opacity=".6" />
-      <path d="M26 28c2 1 10 1 12 0" fill="none" stroke="#b7bc9d" stroke-width=".8" opacity=".45" />
+      ${contents}
+      <g class="cauldron-rim-front">
+        <path d="M26 21H29V23H36V25H92V23H99V21H102V24H99V27H90V29H38V27H29V24H26z" fill="var(--cauldron-mid, #7a8272)" />
+        <path d="M29 22H36V24H45V25H83V24H92V22H99V24H92V26H83V27H45V26H36V24H29z" fill="var(--cauldron-rim, #b8bda4)" />
+        <path d="M38 26H54V27H38zM57 27H83V28H57z" fill="var(--cauldron-rim-light, #e0dcc6)" />
+        <path d="M38 29H90V30H38z" fill="var(--cauldron-shade, #3b423b)" />
+      </g>
     </svg>
   `;
 }
 
 export function workshopScenery(): string {
-  const prefix = illustrationPrefix('workshop');
-
   return `
-    <svg xmlns="http://www.w3.org/2000/svg" class="workshop-scenery" width="900" height="620" viewBox="0 0 900 620" aria-hidden="true" focusable="false">
-      <defs>
-        <radialGradient id="${prefix}-candle">
-          <stop stop-color="#d8b96a" stop-opacity=".18" />
-          <stop offset="1" stop-color="#c19f50" stop-opacity="0" />
-        </radialGradient>
-      </defs>
-      <g fill="none" stroke="#85816a" stroke-width="2" opacity=".12">
-        <path d="M46 588V210C46 69 249 24 302 193v395M67 588V210C67 91 237 54 281 198v390" />
-        <path d="M598 588V193C651 24 854 69 854 210v378M619 588V198C663 54 833 91 833 210v378" />
-        <path d="m55 167 23 8m-3-55 22 14m24-51 12 24m36-40v25m47-17-7 24m47 5-16 18m-186 144h24m-24 106h24m-24 111h24m207-215h24m-24 106h24m-24 111h24" />
-        <path d="m845 167-23 8m3-55-22 14m-24-51-12 24m-36-40v25m-47-17 7 24m-47 5 16 18m186 144h-24m24 106h-24m24 111h-24m-207-215h-24m24 106h-24m24 111h-24" />
+    <svg xmlns="http://www.w3.org/2000/svg" class="workshop-scenery" width="900" height="620" viewBox="0 0 320 224" preserveAspectRatio="xMidYMid slice" shape-rendering="crispEdges" aria-hidden="true" focusable="false">
+      <rect width="320" height="224" fill="var(--background, #1c150f)" />
+      <g class="workshop-masonry">
+        <g fill="var(--workshop-stone, #2b2224)">
+          <path d="M0 4h48v26H0z M51 4h61v26H51z M115 4h67v26h-67z M185 4h68v26h-68z M256 4h64v26h-64z" />
+          <path d="M0 33h23v29H0z M26 33h58v29H26z M87 33h69v29H87z M159 33h59v29h-59z M221 33h69v29h-69z M293 33h27v29h-27z" />
+          <path d="M0 65h49v28H0z M52 65h67v28H52z M122 65h63v28h-63z M188 65h67v28h-67z M258 65h62v28h-62z" />
+          <path d="M0 96h23v29H0z M26 96h62v29H26z M91 96h65v29H91z M159 96h65v29h-65z M227 96h63v29h-63z M293 96h27v29h-27z" />
+          <path d="M0 128h51v30H0z M54 128h64v30H54z M121 128h63v30h-63z M187 128h68v30h-68z M258 128h62v30h-62z" />
+          <path d="M0 161h26v29H0z M29 161h58v29H29z M90 161h66v29H90z M159 161h63v29h-63z M225 161h68v29h-68z M296 161h24v29h-24z" />
+          <path d="M0 193h51v27H0z M54 193h64v27H54z M121 193h64v27h-64z M188 193h67v27h-67z M258 193h62v27h-62z" />
+        </g>
+        <g fill="var(--workshop-stone-light, #35282e)">
+          <path d="M53 6h56v22H53z M187 6h64v22h-64z M28 35h54v25H28z M260 67h58v24h-58z M28 98h58v25H28z M229 98h59v25h-59z M56 130h60v26H56z M31 163h54v25H31z M227 163h64v25h-64z" />
+        </g>
+        <g fill="var(--workshop-stone-edge, #49383f)" opacity=".55">
+          <path d="M3 4h39v1H3z M54 4h49v1H54z M188 4h58v1h-58z M29 33h47v1H29z M224 33h57v1h-57z M3 65h38v1H3z M261 65h48v1h-48z M29 96h49v1H29z M230 96h52v1h-52z M57 128h51v1H57z M261 128h50v1h-50z M32 161h47v1H32z M228 161h53v1h-53z M3 193h39v1H3z M261 193h48v1h-48z" />
+        </g>
+        <g fill="var(--background, #1c150f)">
+          <path d="M47 24h2v6h-2z M78 33h6v2h-6z M258 65h5v2h-5z M26 119h3v6h-3z M287 118h3v7h-3z M54 128h5v2h-5z M81 184h6v6h-6z M290 161h3v4h-3z" />
+        </g>
       </g>
-      <g opacity=".18">
-        <path d="M87 340h171v9H87Zm555 0h171v9H642Z" fill="#9b8153" />
-        <path d="M106 339v-35l7-8v-13h12v13l7 8v35Zm45 0v-25l8-7v-17h9v17l9 7v25Z" fill="#66765b" stroke="#b4ab7f" stroke-width="1" />
-        <path d="M700 339v-40l8-9v-10h12v10l8 9v40Z" fill="#6a6678" stroke="#b4ab7f" stroke-width="1" />
+
+      <g class="workshop-niche">
+        <path d="M140 25h40v5h12v7h9v10h7v14h5v163H107V61h5V47h7V37h9v-7h12z" fill="var(--surface, #382a32)" />
+        <path d="M141 34h38v5h11v8h8v13h6v164h-88V60h6V47h8v-8h11z" fill="var(--workshop-recess, #120d09)" />
+        <g fill="var(--workshop-stone-edge, #49383f)">
+          <path d="M140 25h40v2h-40z M129 30h11v2h-11z M120 37h8v2h-8z M113 47h6v2h-6z M108 61h4v46h-4z M108 111h4v39h-4z M108 154h4v39h-4z" />
+        </g>
+        <g fill="var(--background, #1c150f)">
+          <path d="M128 32h2v6h-2z M118 41h2v7h-2z M111 58h6v2h-6z M108 107h8v3h-8z M108 150h8v3h-8z M108 193h8v3h-8z M204 107h8v3h-8z M204 150h8v3h-8z M204 193h8v3h-8z" />
+        </g>
+        <path d="M118 203h84v4h-84z M114 207h92v5h-92z M110 212h100v12H110z" fill="var(--workshop-stone, #2b2224)" />
       </g>
-      <ellipse cx="774" cy="300" rx="65" ry="83" fill="url(#${prefix}-candle)" />
-      <g opacity=".4">
-        <path d="M767 339v-36h14v36" fill="#ab9f72" stroke="#d0ba80" stroke-width="1" />
-        <path d="M774 302c-12-10-2-18 0-26 8 10 10 19 0 26Z" fill="#d6bd72" />
-        <path d="M774 300c-5-5-1-8 0-12 3 5 4 9 0 12Z" fill="#f2dda5" />
+
+      <g class="workshop-shelves">
+        <path d="M14 117h78v4H14z M19 121h5v9h-5z M82 121h5v9h-5z M227 107h79v4h-79z M232 111h5v8h-5z M296 111h5v8h-5z" fill="var(--workshop-recess, #120d09)" />
+        <path d="M14 116h78v2H14z M227 106h79v2h-79z" fill="var(--workshop-prop, #633443)" />
+        <path d="M27 91h7v5h3v18H24V96h3z M67 99h9v4h3v11H64v-11h3z M243 86h6v6h3v12h-12V92h3z" fill="var(--workshop-prop, #633443)" />
+        <path d="M27 97h2v13h-2z M67 104h2v7h-2z M243 93h2v8h-2z" fill="var(--workshop-wood, #604b3e)" />
+        <path d="M45 102h10v12H45z M47 99h6v3h-6z M264 90h5v14h-5z M270 92h4v12h-4z" fill="var(--workshop-wood, #604b3e)" />
+        <path d="M45 103h2v8h-2z M264 90h2v14h-2z" fill="var(--workshop-candle, #9d8568)" opacity=".45" />
+      </g>
+
+      <g class="workshop-accent" opacity=".7">
+        <path d="M285 94h5v10h-5z M283 104h9v2h-9z" fill="var(--workshop-candle, #9d8568)" />
+        <path d="M287 83h1v2h1v3h1v3h-1v2h-3v-2h-1v-3h1v-3h1z" fill="var(--workshop-flame, #c8ad82)" />
+        <path d="M287 88h1v4h-1z" fill="var(--ink-accent, #e4cfb3)" />
+        <path d="M72 71h2v2h-2z M74 69h2v2h-2z M76 71h2v2h-2z M74 73h2v2h-2z" fill="var(--workshop-prop, #633443)" />
       </g>
     </svg>
   `;
