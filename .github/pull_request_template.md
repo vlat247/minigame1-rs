@@ -29,9 +29,12 @@
 
 ## Verification
 
+- [ ] `npm run release:check` (lint, formatting, tests, typecheck, build, and production assets)
+- [ ] `npm test`
 - [ ] `npm run typecheck`
 - [ ] `npm run lint`
 - [ ] `npm run format:check`
 - [ ] `npm run build`
 
 <!-- Add relevant manual checks and any known limitations. For gameplay UI, record browser and viewport checks. -->
+<!-- For the final story PR, use RELEASE.md for deployment activation and submission evidence. -->

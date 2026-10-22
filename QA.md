@@ -1,10 +1,22 @@
-# Visual feedback and local QA
+# Game and release QA
 
-Branch: `chore/visual-feedback-and-qa`, based on `story-3`.
+Current release branch: `feat/release-finalcheck`, based on `story-3`. The visual feedback checks below were completed on `chore/visual-feedback-and-qa` before its merge.
 
 ## Automated validation
 
-`npm run check` passed: ESLint, Prettier, all **151 tests**, strict TypeScript, and the Vite production build. Existing tests cover difficulty rules, ingredients, reactions, brewing, timing, saves, leaderboards, shortcuts, and tooltip positioning. No runtime dependencies were added.
+`npm run release:check` passed on **23 October 2026**: ESLint, Prettier, all **169 tests**, strict TypeScript, the Vite production build, and the production asset check. The original 151 tests cover difficulty rules, ingredients, reactions, brewing, timing, saves, leaderboards, shortcuts, and tooltip positioning; 18 release tests cover valid artifacts and broken asset references. The current build contains 9 files and 9 checked local resource references. No runtime dependencies were added.
+
+## Production build checks — 23 October 2026
+
+Tested the built game in the available Codex in-app browser at `http://127.0.0.1:4173/minigame1-rs/`, using Vite's production preview with the repository subdirectory. Standalone Google Chrome was not available in the browser inventory; its public-build check remains pending.
+
+- The compiled page, local Pixelify Sans styling, favicon reference, and all visible shelf sprites load under the repository path.
+- A Medium Void Ember brew using `16` succeeds and awards 200 points. Pause → reload → Continue restores that score and remaining time paused, without a stale effect.
+- Exhausting Easy stock leaves the last stocked mixture brewable. Pour Out then ends the run with **Out of ingredients.** and no remaining shelf portions.
+- A qualifying local result saves once and appears in the Easy board with the expected name, score, difficulty, and date format.
+- The production Hard board and three-portion mixture fit all eight viewports listed below (375–1920px wide), with every ingredient, gauge, Brew, and Pour Out inside the viewport and no document overflow. No browser console errors were recorded during these checks.
+
+Production screenshots: [desktop](docs/screenshots/release-desktop.png), [mobile](docs/screenshots/release-mobile.png).
 
 ## Browser checks
 
@@ -52,4 +64,6 @@ For exact target glow, Easy Snow Dust with `234` matches all three displayed ran
 
 - Publish the production build and check the public URL in the latest Google Chrome, including a device with reduced motion enabled.
 - Add the deployment URL, current screenshots, dates, and scored self-check to the final story PR.
-- Merge this task PR into `story-3`; keep the final `story-3` → `story-2` submission PR unmerged, following the assignment workflow.
+- Merge the release task PR into `story-3`; keep the final `story-3` → `story-2` submission PR unmerged, following the assignment workflow.
+
+See [RELEASE.md](RELEASE.md) for Pages activation, workflow behavior, the implementation inventory, and final submission evidence.
