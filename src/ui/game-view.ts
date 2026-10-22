@@ -38,17 +38,12 @@ function ingredientShelf(mixing: MixingState | null, difficulty: Difficulty): st
 
   return getShelfIngredients(difficulty)
     .map(
-      (ingredient) => `
+      (ingredient, index) => `
       <li>
-        <button class="ingredient" type="button" data-action="add-ingredient" data-ingredient="${ingredient.id}" aria-describedby="ingredient-feedback ingredient-preview-help">
+        <button class="ingredient" type="button" data-action="add-ingredient" data-ingredient="${ingredient.id}" aria-keyshortcuts="${index + 1}" aria-describedby="ingredient-feedback ingredient-preview-help">
           ${ingredientIllustration(ingredient.id)}
           <span class="ingredient-content">
             <span class="ingredient-name">${ingredient.name}</span>
-            <span class="ingredient-values">
-              <span class="ingredient-temperature" aria-label="Temperature ${signed(ingredient.temperature)}">T${signed(ingredient.temperature)}</span>
-              <span class="ingredient-density" aria-label="Density ${signed(ingredient.density)}">D${signed(ingredient.density)}</span>
-              <span class="ingredient-magic" aria-label="Magic Power ${signed(ingredient.magicPower)}">M${signed(ingredient.magicPower)}</span>
-            </span>
           </span>
           <span class="stock-count"></span>
         </button>
@@ -131,7 +126,7 @@ export function renderGameView(container: HTMLElement, state: GameViewState): vo
           <div class="lives" role="group" aria-label="${started ? `${settings.lives} lives` : 'No lives before starting'}">
             ${started ? '<span class="life-icons" aria-hidden="true"></span>' : '<span class="lives-empty">—</span>'}
           </div>
-          <button class="button button-quiet pause-button" type="button" data-action="pause" ${started ? '' : 'disabled'}>${icon('pause')}<span>Pause</span></button>
+          <button class="button button-quiet pause-button" type="button" data-action="pause" aria-keyshortcuts="P" ${started ? '' : 'disabled'}>${icon('pause')}<span>Pause</span></button>
         </div>
       </div>
       <progress class="time-bar" max="${settings.startingTime}" value="0" aria-label="Time remaining"></progress>
@@ -139,12 +134,13 @@ export function renderGameView(container: HTMLElement, state: GameViewState): vo
         <div class="workshop-backdrop" aria-hidden="true">${workshopScenery()}</div>
         <div class="workbench-grid">
           <section class="shelf-panel" aria-labelledby="shelf-heading">
-            <div class="section-heading"><h2 id="shelf-heading">Ingredients</h2><div class="shelf-preview-controls"><span class="shelf-count" data-shelf-count>${started ? `${settings.ingredientCount} types` : 'Empty shelf'}</span><button class="button button-quiet preview-toggle" type="button" data-action="toggle-preview" aria-pressed="false" aria-label="Preview ingredients without adding" aria-describedby="ingredient-preview-help" title="When on, tap ingredients to preview. Turn off to add." ${started ? '' : 'disabled'}>Preview</button></div></div>
-            <p class="sr-only" id="ingredient-preview-help">Hover or focus an ingredient to preview its totals. When Preview is on, taps preview without spending stock. Switch Preview off to add.</p>
+            <div class="section-heading"><h2 id="shelf-heading">Ingredients</h2><div class="shelf-preview-controls"><span class="shelf-count" data-shelf-count>${started ? `${settings.ingredientCount} types` : 'Empty shelf'}</span><button class="button button-quiet preview-toggle" type="button" data-action="toggle-preview" aria-pressed="false" aria-keyshortcuts="V" aria-label="Preview ingredients without adding" aria-describedby="ingredient-preview-help" title="When on, tap ingredients to inspect. Drops and number shortcuts still add." ${started ? '' : 'disabled'}>Preview</button></div></div>
+            <p class="sr-only" id="ingredient-preview-help">Hover or focus an ingredient to read its base values and preview its effect. Click, drag to the cauldron, or use keys 1 to ${settings.ingredientCount} to add. When Preview is on, taps inspect without spending stock. Drops and number shortcuts still add.</p>
             <p class="sr-only" id="ingredient-preview-status" role="status" aria-atomic="true"></p>
             <ul class="ingredient-list" aria-label="${started ? 'Ingredient shelf' : 'Empty ingredient shelf'}">${ingredientShelf(state.game?.mixing ?? null, difficulty)}</ul>
           </section>
-          <section class="brew-station" aria-labelledby="cauldron-heading">
+          <section class="brew-station" aria-labelledby="cauldron-heading" aria-describedby="cauldron-drop-help">
+            <p class="sr-only" id="cauldron-drop-help">Drop an ingredient from the shelf here to add one portion.</p>
             <div class="station-heading"><h2 id="cauldron-heading">The cauldron</h2><span>${settings.label} mode</span></div>
             <div class="cauldron-scene">${cauldronIllustration()}</div>
             <section class="brew-feedback" aria-labelledby="last-brew-title" hidden></section>
@@ -160,10 +156,10 @@ export function renderGameView(container: HTMLElement, state: GameViewState): vo
       <div class="game-bottom-row">
         <button class="button button-quiet footer-button" type="button" data-action="help">${icon('help')}<span>Help</span></button>
         <div class="main-action-group">
-          <button class="button button-primary main-action" type="button" data-action="${started ? 'brew' : 'start'}">
+          <button class="button button-primary main-action" type="button" data-action="${started ? 'brew' : 'start'}" ${started ? 'aria-keyshortcuts="B"' : ''}>
             ${started ? 'Brew potion' : 'Start Game'}
           </button>
-          ${started ? '<button class="button button-secondary pour-out-action" type="button" data-action="pour-out" aria-label="Pour Out: clear the cauldron for 10 seconds" title="Clear the cauldron for 10 seconds. Spent ingredients are not returned.">Pour Out</button>' : ''}
+          ${started ? '<button class="button button-secondary pour-out-action" type="button" data-action="pour-out" aria-keyshortcuts="O" aria-label="Pour Out: clear the cauldron for 10 seconds" title="Clear the cauldron for 10 seconds. Spent ingredients are not returned.">Pour Out</button>' : ''}
           ${!started && state.canContinue ? '<button class="button button-secondary continue-action" type="button" data-action="continue">Continue Game</button>' : ''}
         </div>
         <button class="button button-quiet footer-button" type="button" data-action="menu">${icon('menu')}<span>Menu</span></button>
@@ -190,6 +186,7 @@ export function updateGameView(container: HTMLElement, state: GameViewState): vo
     const stock = mixing.inventory[ingredient.id];
     const exhausted = stock === 0;
     button.disabled = exhausted || state.paused || ended;
+    button.draggable = !exhausted && !full && !state.paused && !ended;
     button.setAttribute('aria-disabled', String(exhausted || full || state.paused || ended));
     button.classList.toggle('is-exhausted', exhausted);
     const illustration = button.querySelector('img.ingredient-illustration');
