@@ -4,7 +4,7 @@ A browser game for the [RS School qualifying-stage assignment](https://github.co
 
 ## Current status
 
-The current branch, **`feat/gameplay-mehcanics`**, builds on the completed Level 1 and Level 2 gameplay with a dark brown and plum pixel workshop, green controls, eight original pixel-art ingredients, and a play layout that fits the viewport on desktop and mobile. Difficulty selection, automatic unfinished-game saves, paused continuation, and separate local Top-10 leaderboards remain available. Level 3 chemical reactions and Pour Out are implemented. Drag and drop, ingredient tooltips, keyboard shortcuts, further visual feedback, and public deployment remain pending.
+The current branch, **`feat/game-controls`**, builds on the completed Level 1 and Level 2 gameplay with a dark brown and plum pixel workshop, green controls, eight original pixel-art ingredients, and a play layout that fits the viewport on desktop and mobile. Difficulty selection, automatic unfinished-game saves, paused continuation, and separate local Top-10 leaderboards remain available. Level 3 chemical reactions, Pour Out, HTML5 drag and drop, ingredient tooltips, and keyboard shortcuts are implemented. Further visual feedback, final browser QA, and public deployment remain pending.
 
 The application uses TypeScript and browser APIs, with Vite for development and production builds. Gameplay must use no frameworks, game engines or runtime libraries. ESLint, Prettier and Husky support development checks.
 
@@ -15,14 +15,14 @@ Use **Node.js 22.13+ on the 22.x line**, or **Node.js 24+**. **Node.js 24** is r
 ```sh
 git clone https://github.com/vlat247/minigame1-rs.git
 cd minigame1-rs
-git switch feat/gameplay-mehcanics
+git switch feat/game-controls
 npm ci
 npm run dev
 ```
 
 Open the local URL printed by Vite. `npm ci` installs the versions recorded in `package-lock.json` and its `prepare` step installs the Git hooks. If using nvm, run `nvm use` first.
 
-The commands above check out the gameplay mechanics branch. Check out the relevant story or task branch when reviewing other work.
+The commands above check out the game controls branch. Check out the relevant story or task branch when reviewing other work.
 
 ## Choose a difficulty
 
@@ -48,7 +48,9 @@ Reaction predicates inspect the raw ingredient sums. Active modifiers apply once
 
 - **Start Game** opens the selected difficulty with fresh stock, an empty cauldron, a random recipe from that difficulty's pool, zero score, and its starting lives and time. Each shelf ingredient receives its own random integer stock from **2 to 15**. All eight official ingredients are catalogued; Easy uses four shelf ingredients, Medium uses six, and Hard uses all eight.
 - **Select an ingredient** to spend one portion and add it to the cauldron. Duplicate ingredients are allowed, and mixture positions preserve addition order. Capacity is four portions on Easy and Medium, or five on Hard. A full cauldron rejects further additions without spending stock. When stock reaches zero, the card loses its illustration, keeps its `0` badge, and becomes disabled and unavailable to keyboard focus.
-- **Preview an ingredient** by hovering or focusing it with the keyboard. The gauges show reaction-adjusted projected totals and signed changes with dashed markers, while their current values stay unchanged. Preview warnings describe newly triggered reactions, time or life costs, and cauldron clearing. Inspection spends no stock, time, or lives. On touch screens, turn on **Preview**, then tap ingredients to inspect them without spending stock; turn it off to add normally. **Escape** closes the preview. Scales expand for large totals, and unavailable additions have no preview. Predictions clear when leaving the ingredient, changing the mixture, opening a dialog, pausing, or ending the run. Preview selections are never saved.
+- **Drag an ingredient** from its shelf card onto the highlighted cauldron to add one portion through the same reaction-aware rules as a click. A successful drop spends exactly one portion. Dragging is blocked for empty stock, full cauldrons, paused or ended runs, and open dialogs. Invalid or external drops do nothing. Drops and number shortcuts add even when Preview is on; click and tap addition remain available. Touch dragging is optional.
+- **Inspect an ingredient** by hovering or focusing its card. Cards show the icon, name, and remaining stock; the tooltip shows only the base Temperature, Density, and Magic Power values, with `+` or `−` signs. Tooltips open left or upward near viewport edges, stay inside the viewport and above the game UI, and hide during pause, dialogs, and dragging. On touch screens, Preview mode lets a tap inspect a card without spending stock.
+- **Preview an ingredient** by hovering or focusing it with the keyboard. The gauges show reaction-adjusted projected totals and signed changes with dashed markers, while their current values stay unchanged. Preview warnings describe newly triggered reactions, time or life costs, and cauldron clearing. Inspection spends no stock, time, or lives. On touch screens, turn on **Preview**, then tap ingredients to inspect them without spending stock; turn it off to add normally. **Escape** closes the tooltip and preview. Scales expand for large totals, and unavailable additions have no preview. Predictions clear when leaving the ingredient, changing the mixture, opening a dialog, pausing, or ending the run. Preview selections are never saved.
 - **Watch the gauges** update from the Temperature, Density, and Magic Power sums after active reaction modifiers. Zero stays centered; each gauge expands its symmetric scale when needed. Values are never clamped: four portions of Essence of the Void produce **−80 / −40 / 160**. Markers move with CSS transitions, and a value inside its displayed recipe range gains green feedback and an **In range** label.
 - **Brew potion** becomes available with at least one portion. All three reaction-adjusted totals must fall inside their recipe ranges expanded by the difficulty's tolerance, including both endpoints. Success earns the difficulty's points and capped time bonus, then selects another recipe from the same pool. Failure costs **one life** and keeps the same recipe. Both outcomes empty the cauldron, reset totals and the counter to zero, and keep all used stock spent. Medium retains the Level 1 rules: **±8**, **200 points**, and up to **10 seconds** capped at **150 seconds**.
 - **Pour Out** clears a nonempty cauldron for **10 seconds**. Ingredients stay spent; score, lives, recipe, and active time played stay unchanged. The control is disabled for an empty cauldron, a paused run, or a finished run. A time penalty reaching zero ends the game; clearing the final mixture with no stock left ends it as Out of ingredients.
@@ -64,6 +66,7 @@ Reaction predicates inspect the raw ingredient sums. Active modifiers apply once
 - **Clear Leaderboard** asks for confirmation in an in-app dialog and clears only the selected difficulty's board. Scores normally persist in browser storage. If storage is blocked or a write fails, a notice explains that scores are kept for the current visit only. Malformed leaderboard data is handled without crashing or automatically deleting it; valid rows can still be recovered.
 - **Menu → Start new game** resets the run after confirmation and replaces its unfinished save. Dialog navigation and canceled confirmations preserve the current run. A confirmed **Exit to start** discards the run, clears its unfinished save, and returns to the welcome screen. Finishing a run also clears its unfinished save.
 - **Tab / Shift+Tab** navigate buttons and stay inside an open dialog. **Escape** closes ordinary dialogs or returns to their previous dialog; Pause remains open until Resume or Exit is chosen.
+- **Keyboard shortcuts** work only during active play: **1–8** add ingredients in shelf order, **B** brews, **O** pours out, **P** pauses, and **V** toggles Preview. Keys for ingredients absent from the current difficulty are ignored. Held-key repeats, modified key combinations, and text-field input do not trigger game actions. Shortcuts are inactive on the start, pause, Game Over, and dialog screens. Use **Tab / Shift+Tab** and native **Enter / Space** on buttons, including Resume, on those screens.
 
 The welcome screen has no ingredient stock, no recipe targets, no life icons, and zero score and time. Game elements are authored with SVG and CSS; no bitmap assets or runtime libraries are used.
 
@@ -73,13 +76,13 @@ The unfinished run is saved to `localStorage` after gameplay changes and pause c
 
 Completed-result storage is separate from the unfinished-game save. Existing Medium scores keep the original `alchemists-cauldron:leaderboard:v1` key; Easy and Hard use their own keys. The unfinished game uses `alchemists-cauldron:game-save:v1`.
 
-Level 3 drag and drop, ingredient tooltips, keyboard shortcuts, and additional visual feedback remain pending. Reactions and Pour Out are implemented.
+Level 3 drag and drop, ingredient tooltips, keyboard shortcuts, reactions, and Pour Out are implemented. Additional visual feedback, final QA, public deployment, and submission evidence remain pending.
 
 Medium's **150-second cap** follows the [README difficulty table](https://github.com/rolling-scopes-school/qualifying-stage/tree/main/tasks/game-alchemists-cauldron#difficulty-table), [US 1.3](https://github.com/rolling-scopes-school/qualifying-stage/blob/main/tasks/game-alchemists-cauldron/user_story_1.3.md), and [US 1.4](https://github.com/rolling-scopes-school/qualifying-stage/blob/main/tasks/game-alchemists-cauldron/user_story_1.4.md).
 
 The interface uses the supplied six-color palette: dark brown **`#1C150F`**, dark plum **`#382A32`**, wine **`#633443`**, sage gray **`#5A6258`**, muted green **`#58976B`**, and bright green **`#66C774`**. Brown and plum form the workshop and panels; green marks primary controls, recipe targets, and successful matches; wine supports warning surfaces. Shared semantic tokens in `src/styles/tokens.css` also provide readable warm neutral, tan, and rose tints for text and the three parameters. Active life icons retain their classic red pixel hearts. The original multicolor ingredient sprites keep their own palettes.
 
-Stepped borders, an original pixel-art iron cauldron, and a compact dark recipe panel retain the pixel aesthetic. `workshopScenery()` draws an original pixel-art SVG background with stone masonry, an arched niche, shelves, bottles, and a small candle. The ingredients use eight separate hand-authored **32 × 32 pixel-art SVGs** with stepped outlines, limited palettes, and individual silhouettes. Wide screens show one compact ingredient column, with each row spanning the shelf width; resized and smaller screens use two ingredient columns. Each item shows its sprite, name, inline Temperature/Density/Magic values, and stock at the right. The cauldron slots reuse the same sprites. Integer geometry and pixelated image rendering keep their edges crisp without applying a filter to the original artwork.
+Stepped borders, an original pixel-art iron cauldron, and a compact dark recipe panel retain the pixel aesthetic. `workshopScenery()` draws an original pixel-art SVG background with stone masonry, an arched niche, shelves, bottles, and a small candle. The ingredients use eight separate hand-authored **32 × 32 pixel-art SVGs** with stepped outlines, limited palettes, and individual silhouettes. Wide screens show one compact ingredient column, with each row spanning the shelf width; resized and smaller screens use two ingredient columns. Each item shows its sprite, name, and stock at the right. Its base Temperature, Density, and Magic Power values appear in a tooltip on hover or keyboard focus. The cauldron slots reuse the same sprites. Integer geometry and pixelated image rendering keep their edges crisp without applying a filter to the original artwork.
 
 The cauldron SVG follows the supplied iron-pot reference with a rounded belly, rolled oval rim, raised collar, upper loop handles, and short splayed feet. Stepped solid shapes on a low-resolution grid depict weathered sage-gray metal, warm neutral highlights, and pixel patina. Its empty state shows a dark interior; adding the first portion reveals green liquid, pixel bubbles, and steam. Its colors share the UI tokens while the original geometry stays intact. CSS step animations move the bubbles and steam, pause with the game, and stop when reduced motion is requested. Both states retain descriptive image labels.
 
@@ -118,6 +121,8 @@ Before opening a PR, run `npm run check`. To inspect the production result, run 
 - All fifteen reaction definitions, trigger boundaries, configured subsets, catalogue-order modifiers, and noncompounding recalculation.
 - Once-per-activation penalties, reaction-adjusted brewing and pure previews, saved-game continuation without repeated charges, impossible clearing-save rejection, and reaction-driven timeout, last-life, or stock-depletion endings.
 - Pour Out costs, empty/ended no-ops, preserved stock and other run data, fractional timeout, and stock-depletion endings.
+- Shortcut mappings, active-game and text-input guards, held-key and modifier rejection, and shelf-index limits.
+- Tooltip positioning near right and bottom edges, viewport clamping, and small-screen bounds.
 
 TypeScript strict mode is enabled, including unchecked index access and exact optional properties. ESLint rejects explicit `any`, non-null assertions, `console.log`, and debugger statements. Prettier owns code formatting.
 
@@ -140,6 +145,8 @@ src/
     reactions.ts           Pure reaction evaluation and activation comparison
     gameplay.ts            Reaction-aware additions, Pour Out and terminal checks
     ingredient-preview.ts  Pure addition previews and expanding gauge scales
+    game-shortcuts.ts      Pure shortcut mapping and state/input guards
+    tooltip-position.ts    Viewport-safe tooltip placement
     brewing.ts             Recipe selection, tolerance checks and brew transitions
     session.ts             Elapsed time, countdown progression and session endings
     leaderboard.ts         Player names, score qualification and Top-10 ranking
@@ -158,8 +165,11 @@ src/
     icons.ts               Shared interface icons
     illustrations.ts       Cauldron and workshop SVG artwork
     ingredient-sprites.ts  Ingredient IDs mapped to individual pixel-art SVGs
+    ingredient-tooltip.ts  Delegated tooltip interaction and lifecycle
   styles/                  Stylesheets and responsive layout
     gameplay-mechanics.css Pour Out control and reaction preview feedback
+    game-controls.css      Drag and drop feedback and control presentation
+    ingredient-tooltip.css Base-value tooltip styling
   assets/ingredients/      Eight original 32 × 32 pixel-art SVG sprites
   assets/fonts/            Local Pixelify Sans variable font and its OFL license
 tests/
@@ -172,6 +182,8 @@ tests/
   game-session.test.mjs
   leaderboard.test.mjs
   game-save.test.mjs
+  game-shortcuts.test.mjs
+  tooltip-position.test.mjs
 ```
 
 Difficulty settings and ingredient, recipe, and reaction catalogues live in `data/`; mixing, reaction evaluation, brewing, session progression, and ranking rules live in `logic/`. `logic/gameplay.ts` resolves accepted additions and Pour Out through pure transitions. Brewing, saves, and previews share the reaction calculation rules. `state/game.ts` creates a run using the selected difficulty. The controller reconciles elapsed time before gameplay actions, routes those actions through pure transitions, and handles automatic saves and paused continuation. The clock adapter handles browser timing and cleanup, while the views render the resulting state and dialogs. Both storage modules guard browser access and validate untrusted data. `storage/save.ts` owns the unfinished-game schema; `storage/leaderboard.ts` keeps the difficulty boards independent and preserves the original Medium results key.
@@ -185,7 +197,7 @@ Difficulty settings and ingredient, recipe, and reaction catalogues live in `dat
 | Level 2 | Easy/Medium/Hard selection, automatic saves, Continue Game and separate leaderboards           |
 | Level 3 | Drag and drop, tooltips, reactions, Pour Out, visual feedback and keyboard shortcuts           |
 
-The branch implements Level 1 gameplay and Level 2 difficulty selection, automatic saves, Continue Game, and separate leaderboards. Medium retains the Level 1 rules: 6 shelf ingredients, capacity 4, 150 seconds, 3 lives, tolerance ±8, +200 score and +10 seconds per successful brew. Level 3 reactions and Pour Out are implemented. Drag and drop, ingredient tooltips, keyboard shortcuts, further visual feedback, public deployment, and final story submission remain pending.
+The branch implements Level 1 gameplay and Level 2 difficulty selection, automatic saves, Continue Game, and separate leaderboards. Medium retains the Level 1 rules: 6 shelf ingredients, capacity 4, 150 seconds, 3 lives, tolerance ±8, +200 score and +10 seconds per successful brew. Level 3 reactions, Pour Out, drag and drop, ingredient tooltips, and keyboard shortcuts are implemented. Further visual feedback, final browser QA, public deployment, and final story submission remain pending.
 
 The finished game must work in the latest Google Chrome across widths from **375 px to 1920 px**. Keep game elements as separate components; this implementation uses CSS and SVG, including the CSS/SVG ingredient icons required by US 1.1. Use the assignment's ingredient and recipe tables as the authoritative data.
 
@@ -194,7 +206,7 @@ The finished game must work in the latest Google Chrome across widths from **375
 Follow the [assignment repository workflow](https://github.com/rolling-scopes-school/qualifying-stage/tree/main/tasks/game-alchemists-cauldron#repository-workflow):
 
 1. Create `story-1` from `main` (or `master` in a repository using that default).
-2. Create a separate task branch from the current story branch. The current feature branch is `feat/gameplay-mehcanics`, based on `story-2`, which was created from the merged `story-1` work. The existing gameplay, difficulty/persistence, and redesign branches are already integrated into `story-1`. Target this feature PR at `story-2`. Create `story-3` from completed `story-2` for the next submission scope.
+2. Create a separate task branch from the current story branch. The current feature branch is `feat/game-controls`, based on `story-2` after gameplay mechanics were merged there. The existing gameplay, difficulty/persistence, and redesign branches are already integrated into `story-1`. Target this feature PR at `story-2`. Create `story-3` from completed `story-2` for the next submission scope.
 3. Keep commits small and focused. Review task changes through a PR targeting the current story branch before integrating them.
 4. When a story is finished, open its final PR to the preceding branch. For Story 1, this is `story-1` → `main`.
 5. **Keep the final story PR unmerged** and submit its link in RS App through **Cross-Check: Submit**.
