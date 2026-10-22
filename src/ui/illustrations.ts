@@ -1,4 +1,10 @@
-export function cauldronIllustration(filled = false): string {
+import type { IngredientId } from '../data/ingredients';
+import { ingredientSpriteUrl } from './ingredient-sprites';
+
+export function cauldronIllustration(
+  filled = false,
+  mixture: readonly IngredientId[] = [],
+): string {
   const title = filled ? 'Potion cauldron' : 'Empty cauldron';
   const contents = filled
     ? `
@@ -89,6 +95,14 @@ export function cauldronIllustration(filled = false): string {
         <path d="M43 15H85V16H94V18H99V24H92V26H36V24H29V18H34V16H43z" fill="var(--cauldron-shade, #3b423b)" />
       </g>
       ${contents}
+      <g class="floating-ingredients" aria-hidden="true">
+        ${mixture
+          .map(
+            (id, index) =>
+              `<image class="floating-ingredient" href="${ingredientSpriteUrl(id)}" x="${58 + (index - (mixture.length - 1) / 2) * 11}" y="12" width="12" height="12" style="--float-delay: ${-index * 0.43}s" />`,
+          )
+          .join('')}
+      </g>
       <g class="cauldron-rim-front">
         <path d="M26 21H29V23H36V25H92V23H99V21H102V24H99V27H90V29H38V27H29V24H26z" fill="var(--cauldron-mid, #7a8272)" />
         <path d="M29 22H36V24H45V25H83V24H92V22H99V24H92V26H83V27H45V26H36V24H29z" fill="var(--cauldron-rim, #b8bda4)" />

@@ -4,7 +4,7 @@ A browser game for the [RS School qualifying-stage assignment](https://github.co
 
 ## Current status
 
-The current branch, **`feat/game-controls`**, builds on the completed Level 1 and Level 2 gameplay with a dark brown and plum pixel workshop, green controls, eight original pixel-art ingredients, and a play layout that fits the viewport on desktop and mobile. Difficulty selection, automatic unfinished-game saves, paused continuation, and separate local Top-10 leaderboards remain available. Level 3 chemical reactions, Pour Out, HTML5 drag and drop, ingredient tooltips, and keyboard shortcuts are implemented. Further visual feedback, final browser QA, and public deployment remain pending.
+The current branch, **`chore/visual-feedback-and-qa`**, completes the Level 3 visual feedback on `story-3`: floating ingredient icons, success sparkles, a failure explosion and brief screen shake, and green target-zone glow. Chemical reactions, Pour Out, drag and drop, ingredient tooltips, and keyboard shortcuts are implemented alongside the completed Level 1 and Level 2 gameplay. Local browser QA and automated checks are recorded in [QA.md](QA.md). Public deployment and final submission evidence remain pending.
 
 The application uses TypeScript and browser APIs, with Vite for development and production builds. Gameplay must use no frameworks, game engines or runtime libraries. ESLint, Prettier and Husky support development checks.
 
@@ -15,14 +15,14 @@ Use **Node.js 22.13+ on the 22.x line**, or **Node.js 24+**. **Node.js 24** is r
 ```sh
 git clone https://github.com/vlat247/minigame1-rs.git
 cd minigame1-rs
-git switch feat/game-controls
+git switch chore/visual-feedback-and-qa
 npm ci
 npm run dev
 ```
 
 Open the local URL printed by Vite. `npm ci` installs the versions recorded in `package-lock.json` and its `prepare` step installs the Git hooks. If using nvm, run `nvm use` first.
 
-The commands above check out the game controls branch. Check out the relevant story or task branch when reviewing other work.
+The commands above check out the visual feedback and QA branch. Check out the relevant story or task branch when reviewing other work.
 
 ## Choose a difficulty
 
@@ -76,7 +76,7 @@ The unfinished run is saved to `localStorage` after gameplay changes and pause c
 
 Completed-result storage is separate from the unfinished-game save. Existing Medium scores keep the original `alchemists-cauldron:leaderboard:v1` key; Easy and Hard use their own keys. The unfinished game uses `alchemists-cauldron:game-save:v1`.
 
-Level 3 drag and drop, ingredient tooltips, keyboard shortcuts, reactions, and Pour Out are implemented. Additional visual feedback, final QA, public deployment, and submission evidence remain pending.
+Level 3 drag and drop, ingredient tooltips, keyboard shortcuts, reactions, Pour Out, and visual feedback are implemented. Public deployment and submission evidence remain pending.
 
 Medium's **150-second cap** follows the [README difficulty table](https://github.com/rolling-scopes-school/qualifying-stage/tree/main/tasks/game-alchemists-cauldron#difficulty-table), [US 1.3](https://github.com/rolling-scopes-school/qualifying-stage/blob/main/tasks/game-alchemists-cauldron/user_story_1.3.md), and [US 1.4](https://github.com/rolling-scopes-school/qualifying-stage/blob/main/tasks/game-alchemists-cauldron/user_story_1.4.md).
 
@@ -84,7 +84,9 @@ The interface uses the supplied six-color palette: dark brown **`#1C150F`**, dar
 
 Stepped borders, an original pixel-art iron cauldron, and a compact dark recipe panel retain the pixel aesthetic. `workshopScenery()` draws an original pixel-art SVG background with stone masonry, an arched niche, shelves, bottles, and a small candle. The ingredients use eight separate hand-authored **32 × 32 pixel-art SVGs** with stepped outlines, limited palettes, and individual silhouettes. Wide screens show one compact ingredient column, with each row spanning the shelf width; resized and smaller screens use two ingredient columns. Each item shows its sprite, name, and stock at the right. Its base Temperature, Density, and Magic Power values appear in a tooltip on hover or keyboard focus. The cauldron slots reuse the same sprites. Integer geometry and pixelated image rendering keep their edges crisp without applying a filter to the original artwork.
 
-The cauldron SVG follows the supplied iron-pot reference with a rounded belly, rolled oval rim, raised collar, upper loop handles, and short splayed feet. Stepped solid shapes on a low-resolution grid depict weathered sage-gray metal, warm neutral highlights, and pixel patina. Its empty state shows a dark interior; adding the first portion reveals green liquid, pixel bubbles, and steam. Its colors share the UI tokens while the original geometry stays intact. CSS step animations move the bubbles and steam, pause with the game, and stop when reduced motion is requested. Both states retain descriptive image labels.
+The cauldron SVG follows the supplied iron-pot reference with a rounded belly, rolled oval rim, raised collar, upper loop handles, and short splayed feet. Stepped solid shapes on a low-resolution grid depict weathered sage-gray metal, warm neutral highlights, and pixel patina. Its empty state shows a dark interior; adding portions reveals green liquid, bubbles, steam, and floating icons that preserve duplicate ingredients. CSS step animations pause with the game and stop when reduced motion is requested. Both states retain descriptive image labels.
+
+Each successful brew plays a green glow and pixel sparkle animation, with floating text for the actual positive time bonus. Failed brews show an explosion and a 280ms screen shake. CSS controls all visual timing; animation events clean up the temporary overlay, and the result panel stays readable afterward. Gameplay actions remain available during effects. Additions, Pour Out, new screens, and unmounting clear temporary effects; pause/resume does not replay them. Reduced-motion preferences skip the burst and shake while preserving all result text. The target zone glows green when the current value is inside the displayed recipe range; marker transitions remain smooth.
 
 Typography throughout the app uses the locally bundled **Pixelify Sans** variable font, including headings, controls, numeric labels, forms, and dialogs. The font is preloaded and works without an external font service; its SIL Open Font License is included in `src/assets/fonts/OFL.txt`. Temperature, Density, and Magic Power share hand-authored **16 × 16 pixel SVG icons** in both the parameter bars and recipe panel.
 
@@ -166,10 +168,13 @@ src/
     illustrations.ts       Cauldron and workshop SVG artwork
     ingredient-sprites.ts  Ingredient IDs mapped to individual pixel-art SVGs
     ingredient-tooltip.ts  Delegated tooltip interaction and lifecycle
+    brew-effects.ts        Event-driven lifecycle for CSS brew effects
   styles/                  Stylesheets and responsive layout
     gameplay-mechanics.css Pour Out control and reaction preview feedback
     game-controls.css      Drag and drop feedback and control presentation
     ingredient-tooltip.css Base-value tooltip styling
+    brew-effects.css       Success, explosion and brief screen-shake animations
+    visual-feedback.css    Floating ingredients and target-range glow
   assets/ingredients/      Eight original 32 × 32 pixel-art SVG sprites
   assets/fonts/            Local Pixelify Sans variable font and its OFL license
 tests/
@@ -197,7 +202,7 @@ Difficulty settings and ingredient, recipe, and reaction catalogues live in `dat
 | Level 2 | Easy/Medium/Hard selection, automatic saves, Continue Game and separate leaderboards           |
 | Level 3 | Drag and drop, tooltips, reactions, Pour Out, visual feedback and keyboard shortcuts           |
 
-The branch implements Level 1 gameplay and Level 2 difficulty selection, automatic saves, Continue Game, and separate leaderboards. Medium retains the Level 1 rules: 6 shelf ingredients, capacity 4, 150 seconds, 3 lives, tolerance ±8, +200 score and +10 seconds per successful brew. Level 3 reactions, Pour Out, drag and drop, ingredient tooltips, and keyboard shortcuts are implemented. Further visual feedback, final browser QA, public deployment, and final story submission remain pending.
+The branch implements Level 1 gameplay, Level 2 difficulty selection and persistence, and Level 3 reactions, Pour Out, controls, and visual feedback. Medium retains the Level 1 rules: 6 shelf ingredients, capacity 4, 150 seconds, 3 lives, tolerance ±8, +200 score and +10 seconds per successful brew. Local QA is recorded in [QA.md](QA.md); public deployment and final story submission remain pending.
 
 The finished game must work in the latest Google Chrome across widths from **375 px to 1920 px**. Keep game elements as separate components; this implementation uses CSS and SVG, including the CSS/SVG ingredient icons required by US 1.1. Use the assignment's ingredient and recipe tables as the authoritative data.
 
@@ -206,7 +211,7 @@ The finished game must work in the latest Google Chrome across widths from **375
 Follow the [assignment repository workflow](https://github.com/rolling-scopes-school/qualifying-stage/tree/main/tasks/game-alchemists-cauldron#repository-workflow):
 
 1. Create `story-1` from `main` (or `master` in a repository using that default).
-2. Create a separate task branch from the current story branch. The current feature branch is `feat/game-controls`, based on `story-2` after gameplay mechanics were merged there. The existing gameplay, difficulty/persistence, and redesign branches are already integrated into `story-1`. Target this feature PR at `story-2`. Create `story-3` from completed `story-2` for the next submission scope.
+2. Create a separate task branch from the current story branch. The current task branch is `chore/visual-feedback-and-qa`, based on `story-3`, which was created after gameplay mechanics and game controls were merged into `story-2`. Target this task PR at `story-3`.
 3. Keep commits small and focused. Review task changes through a PR targeting the current story branch before integrating them.
 4. When a story is finished, open its final PR to the preceding branch. For Story 1, this is `story-1` → `main`.
 5. **Keep the final story PR unmerged** and submit its link in RS App through **Cross-Check: Submit**.

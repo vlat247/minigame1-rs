@@ -24,9 +24,11 @@ import {
 import type { GameViewState } from './game-view';
 import { createSessionClock } from './session-clock';
 import { createIngredientTooltip } from './ingredient-tooltip';
+import { createBrewEffects } from './brew-effects';
 import '../styles/ingredient-preview.css';
 import '../styles/gameplay-mechanics.css';
 import '../styles/game-controls.css';
+import '../styles/visual-feedback.css';
 
 const INGREDIENT_DRAG_TYPE = 'application/x-alchemists-cauldron-ingredient';
 
@@ -89,6 +91,7 @@ export function mountGame(container: HTMLElement): () => void {
   announcement.className = 'sr-only';
   announcement.setAttribute('role', 'status');
   container.replaceChildren(view, dialog, announcement);
+  const brewEffects = createBrewEffects(view);
   const tooltip = createIngredientTooltip(container, {
     isAvailable: () =>
       state.game?.status === 'playing' &&
@@ -180,6 +183,7 @@ export function mountGame(container: HTMLElement): () => void {
   function render(): void {
     resetDrag();
     tooltip.hide();
+    brewEffects.clear();
     renderGameView(view, state);
   }
 
@@ -436,6 +440,7 @@ export function mountGame(container: HTMLElement): () => void {
       return;
     }
 
+    brewEffects.clear();
     state = { ...state, game: result.state, lastBrew: null };
     // Update existing controls and gauges so keyboard focus and CSS transitions survive.
     updateView();
@@ -470,6 +475,7 @@ export function mountGame(container: HTMLElement): () => void {
 
     tooltip.hide();
     clearIngredientPreview();
+    brewEffects.clear();
     state = { ...state, game: result.state, lastBrew: null };
     updateView();
     const message = `Cauldron poured out. ${Number((-result.timeDelta).toFixed(1))} seconds lost. Ingredients remain spent; score and lives are unchanged.`;
@@ -499,6 +505,7 @@ export function mountGame(container: HTMLElement): () => void {
     state = { ...state, game: result.state, lastBrew: result.feedback };
     updateView();
     const outcome = result.feedback;
+    brewEffects.play(outcome.success, outcome.timeDelta);
     announcement.textContent = outcome.success
       ? `${outcome.recipe.name} brewed. ${outcome.scoreDelta} points earned; total score ${result.state.score}. Next recipe: ${result.state.recipe.name}.`
       : `${outcome.recipe.name} failed. One life lost; ${result.state.lives} lives remain. The recipe stays the same.`;
@@ -919,6 +926,7 @@ export function mountGame(container: HTMLElement): () => void {
     clock.dispose();
     resetDrag();
     tooltip.dispose();
+    brewEffects.dispose();
     container.removeEventListener('click', handleClick);
     container.removeEventListener('pointerover', handlePointerOver);
     container.removeEventListener('pointerout', handlePointerOut);
