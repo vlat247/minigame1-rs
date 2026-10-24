@@ -125,7 +125,7 @@ function gameOverContent(game: GameState | null, context: DialogContext): Dialog
       game?.endReason === 'time-expired'
         ? 'Time is up.'
         : game?.endReason === 'out-of-ingredients'
-          ? 'Your ingredient stock is exhausted.'
+          ? 'Out of ingredients.'
           : 'You have no lives left.',
     body: `
       <p class="dialog-note">${settings.label} difficulty</p>

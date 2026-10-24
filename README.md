@@ -4,7 +4,7 @@ A browser game for the [RS School qualifying-stage assignment](https://github.co
 
 ## Current status
 
-The current branch, **`chore/visual-feedback-and-qa`**, completes the Level 3 visual feedback on `story-3`: floating ingredient icons, success sparkles, a failure explosion and brief screen shake, and green target-zone glow. Chemical reactions, Pour Out, drag and drop, ingredient tooltips, and keyboard shortcuts are implemented alongside the completed Level 1 and Level 2 gameplay. Local browser QA and automated checks are recorded in [QA.md](QA.md). Public deployment and final submission evidence remain pending.
+The current branch, **`feat/release-finalcheck`**, prepares the completed game for release from `story-3`. All three gameplay levels are implemented. Release checks now verify production assets as well as lint, formatting, types, and 169 tests. CI runs those checks, and a GitHub Pages workflow publishes checked builds from `story-3` or `main` after Pages is enabled. Production browser evidence is recorded in [QA.md](QA.md). Follow [RELEASE.md](RELEASE.md) for activation and final story submission; the public deployment and RS App submission are still pending.
 
 The application uses TypeScript and browser APIs, with Vite for development and production builds. Gameplay must use no frameworks, game engines or runtime libraries. ESLint, Prettier and Husky support development checks.
 
@@ -15,14 +15,14 @@ Use **Node.js 22.13+ on the 22.x line**, or **Node.js 24+**. **Node.js 24** is r
 ```sh
 git clone https://github.com/vlat247/minigame1-rs.git
 cd minigame1-rs
-git switch chore/visual-feedback-and-qa
+git switch feat/release-finalcheck
 npm ci
 npm run dev
 ```
 
 Open the local URL printed by Vite. `npm ci` installs the versions recorded in `package-lock.json` and its `prepare` step installs the Git hooks. If using nvm, run `nvm use` first.
 
-The commands above check out the visual feedback and QA branch. Check out the relevant story or task branch when reviewing other work.
+The commands above check out the release branch. Check out the relevant story or task branch when reviewing other work.
 
 ## Choose a difficulty
 
@@ -92,20 +92,21 @@ Typography throughout the app uses the locally bundled **Pixelify Sans** variabl
 
 The app uses the full browser width without a maximum-width cap, and the board fits the visible viewport without document or play-panel scrolling. Ingredient rows adapt to the available height without stretching into large cards. The gauge area always spans the full playfield width below the ingredient shelf, cauldron, and recipe, across all screen sizes. Tall portrait screens retain the cauldron scene; compact portrait and short landscape layouts use a smaller scene and compact recipe, with targets still visible on the gauges. Help and Menu flank the main Start/Brew action; Pour Out shares the active-game controls, and Continue Game shares the welcome action row when available. Brew results reuse the cauldron area. The footer legend and static advice have been removed. Help and Menu modal bodies can scroll when their content exceeds the available height. Styles support reduced motion and visible keyboard focus.
 
-| Command                | Purpose                                       |
-| ---------------------- | --------------------------------------------- |
-| `npm ci`               | Install dependencies from the lockfile        |
-| `npm run dev`          | Start the development server                  |
-| `npm run typecheck`    | Check TypeScript types without emitting files |
-| `npm run lint`         | Check source code with ESLint                 |
-| `npm run format`       | Format supported project files with Prettier  |
-| `npm run format:check` | Check formatting without changing files       |
-| `npm test`             | Run gameplay, session and storage tests       |
-| `npm run check`        | Run lint, formatting, tests, and build checks |
-| `npm run build`        | Create the production build in `dist/`        |
-| `npm run preview`      | Serve the production build locally            |
+| Command                 | Purpose                                       |
+| ----------------------- | --------------------------------------------- |
+| `npm ci`                | Install dependencies from the lockfile        |
+| `npm run dev`           | Start the development server                  |
+| `npm run typecheck`     | Check TypeScript types without emitting files |
+| `npm run lint`          | Check source code with ESLint                 |
+| `npm run format`        | Format supported project files with Prettier  |
+| `npm run format:check`  | Check formatting without changing files       |
+| `npm test`              | Run gameplay, session and storage tests       |
+| `npm run check`         | Run lint, formatting, tests, and build checks |
+| `npm run release:check` | Run all checks and verify production assets   |
+| `npm run build`         | Create the production build in `dist/`        |
+| `npm run preview`       | Serve the production build locally            |
 
-Before opening a PR, run `npm run check`. To inspect the production result, run `npm run build`, then `npm run preview`. The GitHub Actions checks workflow installs dependencies and runs `npm run check` on pushes and pull requests.
+Before opening a PR, run `npm run release:check`. It runs the full project check and then verifies that generated resource references resolve inside `dist/`, including compiled scripts, styles, font, favicon, sprite files, and chunks. The check rejects missing or empty resources, uncompiled source references, nonportable URLs, escaping paths, and symbolic links. No runtime dependency is added. To inspect the production result, run `npm run preview`. The GitHub Actions Checks workflow installs dependencies and runs the same release command on pushes and pull requests.
 
 `npm test` runs Node's built-in test runner with `--experimental-strip-types`, importing the TypeScript modules directly without a test framework. Regression tests cover:
 
@@ -125,12 +126,13 @@ Before opening a PR, run `npm run check`. To inspect the production result, run 
 - Pour Out costs, empty/ended no-ops, preserved stock and other run data, fractional timeout, and stock-depletion endings.
 - Shortcut mappings, active-game and text-input guards, held-key and modifier rejection, and shelf-index limits.
 - Tooltip positioning near right and bottom edges, viewport clamping, and small-screen bounds.
+- Production artifact references, missing resources, nested paths, source-file rejection, and symbolic-link rejection.
 
 TypeScript strict mode is enabled, including unchecked index access and exact optional properties. ESLint rejects explicit `any`, non-null assertions, `console.log`, and debugger statements. Prettier owns code formatting.
 
 The `commit-msg` hook checks lowercase Conventional Commit syntax, including optional scopes, breaking-change markers, and separated bodies. Keep descriptions in the imperative present tense when reviewing commits. The `pre-push` hook runs ESLint and Prettier checks and blocks a push if either fails. Run `npm run prepare` to reinstall the hooks after a fresh checkout if needed.
 
-Vite builds with relative asset paths, so `dist/` can be served from a repository subdirectory such as GitHub Pages. A public deployment will be added when preparing the story submission.
+Vite builds with relative asset paths, so `dist/` can be served from a repository subdirectory such as GitHub Pages. The Pages workflow deploys successful checked builds on pushes to `story-3` or `main`; task branches cannot deploy. The repository's Pages source must first be enabled as **GitHub Actions**. Activation, local subdirectory preview, deployment verification, and final PR evidence are documented in [RELEASE.md](RELEASE.md).
 
 ## Source architecture
 
@@ -202,7 +204,7 @@ Difficulty settings and ingredient, recipe, and reaction catalogues live in `dat
 | Level 2 | Easy/Medium/Hard selection, automatic saves, Continue Game and separate leaderboards           |
 | Level 3 | Drag and drop, tooltips, reactions, Pour Out, visual feedback and keyboard shortcuts           |
 
-The branch implements Level 1 gameplay, Level 2 difficulty selection and persistence, and Level 3 reactions, Pour Out, controls, and visual feedback. Medium retains the Level 1 rules: 6 shelf ingredients, capacity 4, 150 seconds, 3 lives, tolerance ±8, +200 score and +10 seconds per successful brew. Local QA is recorded in [QA.md](QA.md); public deployment and final story submission remain pending.
+The branch implements Level 1 gameplay, Level 2 difficulty selection and persistence, and Level 3 reactions, Pour Out, controls, and visual feedback. Medium retains the Level 1 rules: 6 shelf ingredients, capacity 4, 150 seconds, 3 lives, tolerance ±8, +200 score and +10 seconds per successful brew. Local production QA is recorded in [QA.md](QA.md). Release automation is ready; public deployment and final story submission remain pending as listed in [RELEASE.md](RELEASE.md).
 
 The finished game must work in the latest Google Chrome across widths from **375 px to 1920 px**. Keep game elements as separate components; this implementation uses CSS and SVG, including the CSS/SVG ingredient icons required by US 1.1. Use the assignment's ingredient and recipe tables as the authoritative data.
 
@@ -211,7 +213,7 @@ The finished game must work in the latest Google Chrome across widths from **375
 Follow the [assignment repository workflow](https://github.com/rolling-scopes-school/qualifying-stage/tree/main/tasks/game-alchemists-cauldron#repository-workflow):
 
 1. Create `story-1` from `main` (or `master` in a repository using that default).
-2. Create a separate task branch from the current story branch. The current task branch is `chore/visual-feedback-and-qa`, based on `story-3`, which was created after gameplay mechanics and game controls were merged into `story-2`. Target this task PR at `story-3`.
+2. Create a separate task branch from the current story branch. The current task branch is `feat/release-finalcheck`, based on `story-3` after the visual feedback merge. Target this task PR at `story-3`.
 3. Keep commits small and focused. Review task changes through a PR targeting the current story branch before integrating them.
 4. When a story is finished, open its final PR to the preceding branch. For Story 1, this is `story-1` → `main`.
 5. **Keep the final story PR unmerged** and submit its link in RS App through **Cross-Check: Submit**.
