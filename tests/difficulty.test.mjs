@@ -45,7 +45,7 @@ const expectedSettings = {
 
 const winningPortions = {
   easy: ['dragon-tears', 'fairy-dust'],
-  medium: ['fairy-dust', 'caustic-acid'],
+  medium: ['dragon-tears', 'caustic-acid'],
   hard: ['phoenix-feather', 'fairy-dust'],
 };
 
@@ -301,7 +301,7 @@ test('Hard stock includes Phoenix Feather and Toad Slime when deciding whether t
   assert.equal(result.state.endReason, null);
 });
 
-test('Hard accepts both additional ingredients and keeps five raw ingredient sums without reactions', () => {
+test('low-level additions retain raw sums for both additional Hard ingredients', () => {
   const portions = [
     'phoenix-feather',
     'toad-slime',

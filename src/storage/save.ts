@@ -3,7 +3,7 @@ import { getShelfIngredients, INGREDIENT_IDS, isIngredientId } from '../data/ing
 import type { IngredientId } from '../data/ingredients.ts';
 import { RECIPES } from '../data/recipes.ts';
 import type { Recipe, RecipeRange } from '../data/recipes.ts';
-import { calculateTotals } from '../logic/ingredients.ts';
+import { evaluateReactions } from '../logic/reactions.ts';
 import type { IngredientInventory } from '../logic/ingredients.ts';
 import type { GameState } from '../state/game.ts';
 
@@ -114,11 +114,14 @@ function normalizeSave(value: unknown): SavedGame | null {
     mixture.push(id);
   }
   if (mixture.length === 0 && INGREDIENT_IDS.every((id) => inventory[id] === 0)) return null;
+  const evaluation = evaluateReactions(mixture, difficulty);
+  // An exploding mixture cannot remain in an unfinished run after its addition resolves.
+  if (evaluation.activeReactions.some((reaction) => reaction.clearsCauldron)) return null;
 
   return {
     game: {
       difficulty,
-      mixing: { inventory, mixture, totals: calculateTotals(mixture) },
+      mixing: { inventory, mixture, totals: evaluation.totals },
       recipe,
       score: value.score,
       lives: value.lives,

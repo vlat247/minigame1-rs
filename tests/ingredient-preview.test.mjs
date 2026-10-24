@@ -2,14 +2,14 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { DIFFICULTIES, DIFFICULTY_SETTINGS } from '../src/data/difficulty.ts';
 import { getShelfIngredients, INGREDIENTS } from '../src/data/ingredients.ts';
-import { addIngredient } from '../src/logic/ingredients.ts';
+import { addGameIngredient } from '../src/logic/gameplay.ts';
 import { parameterScaleLimit, projectIngredient } from '../src/logic/ingredient-preview.ts';
 import { createGame } from '../src/state/game.ts';
 
 function add(game, id) {
-  const result = addIngredient(game.mixing, id, game.difficulty);
+  const result = addGameIngredient(game, id);
   assert.equal(result.accepted, true);
-  return { ...game, mixing: result.state };
+  return result.state;
 }
 
 function freezeGame(game) {
@@ -20,17 +20,17 @@ function freezeGame(game) {
   return Object.freeze(game);
 }
 
-test('every shelf ingredient previews the ordinary addition without consuming any game state', () => {
+test('every shelf ingredient previews the game addition without consuming any game state', () => {
   for (const difficulty of DIFFICULTIES) {
     const game = freezeGame(createGame(() => 0.5, difficulty));
     const original = structuredClone(game);
     for (const ingredient of getShelfIngredients(difficulty)) {
       const preview = projectIngredient(game, ingredient.id);
-      const addition = addIngredient(game.mixing, ingredient.id, difficulty);
+      const addition = addGameIngredient(game, ingredient.id);
       assert.equal(addition.accepted, true);
       assert.equal(preview.ingredient, ingredient);
       assert.equal(preview.current, game.mixing.totals);
-      assert.deepEqual(preview.projected, addition.state.totals);
+      assert.deepEqual(preview.projected, addition.state.mixing.totals);
       assert.deepEqual(preview.delta, {
         temperature: ingredient.temperature,
         density: ingredient.density,

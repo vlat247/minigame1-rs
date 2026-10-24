@@ -1,9 +1,11 @@
-import { getIngredient } from '../data/ingredients';
+import { getIngredient, getShelfIngredients } from '../data/ingredients';
+import type { IngredientId } from '../data/ingredients';
 import { projectIngredient } from '../logic/ingredient-preview';
+import { resolveGameShortcut } from '../logic/game-shortcuts';
 import { DIFFICULTY_SETTINGS, isDifficulty } from '../data/difficulty';
 import type { Difficulty } from '../data/difficulty';
 import { brewGame } from '../logic/brewing';
-import { addIngredient } from '../logic/ingredients';
+import { addGameIngredient, pourOutGame } from '../logic/gameplay';
 import { addLeaderboardEntry, isQualifyingScore, validatePlayerName } from '../logic/leaderboard';
 import type { LeaderboardEntry } from '../logic/leaderboard';
 import { advanceGameTime } from '../logic/session';
@@ -21,7 +23,12 @@ import {
 } from './game-view';
 import type { GameViewState } from './game-view';
 import { createSessionClock } from './session-clock';
+import { createIngredientTooltip } from './ingredient-tooltip';
 import '../styles/ingredient-preview.css';
+import '../styles/gameplay-mechanics.css';
+import '../styles/game-controls.css';
+
+const INGREDIENT_DRAG_TYPE = 'application/x-alchemists-cauldron-ingredient';
 
 export function mountGame(container: HTMLElement): () => void {
   const view = document.createElement('div');
@@ -72,6 +79,9 @@ export function mountGame(container: HTMLElement): () => void {
   let previewSource: 'pointer' | 'focus' | 'selection' | null = null;
   let lastInputWasPointer = false;
   let suppressFocusPreview = false;
+  let draggedIngredient: IngredientId | null = null;
+  let draggedButton: HTMLButtonElement | null = null;
+  let suppressDragClick = false;
 
   dialog.className = 'game-dialog';
   dialog.setAttribute('aria-labelledby', 'game-dialog-title');
@@ -79,6 +89,14 @@ export function mountGame(container: HTMLElement): () => void {
   announcement.className = 'sr-only';
   announcement.setAttribute('role', 'status');
   container.replaceChildren(view, dialog, announcement);
+  const tooltip = createIngredientTooltip(container, {
+    isAvailable: () =>
+      state.game?.status === 'playing' &&
+      !state.paused &&
+      !dialog.open &&
+      draggedIngredient === null,
+    canInspectTouch: () => state.previewMode,
+  });
   const clock = createSessionClock((elapsed) => {
     if (state.game === null || state.paused || state.game.status !== 'playing') return;
     const game = advanceGameTime(state.game, elapsed);
@@ -146,6 +164,8 @@ export function mountGame(container: HTMLElement): () => void {
   function finishGame(): void {
     if (state.game?.status !== 'game-over' || finishHandled) return;
     finishHandled = true;
+    resetDrag();
+    tooltip.hide();
     clearIngredientPreview(true);
     clock.stop();
     clearSavedGame();
@@ -158,7 +178,14 @@ export function mountGame(container: HTMLElement): () => void {
   }
 
   function render(): void {
+    resetDrag();
+    tooltip.hide();
     renderGameView(view, state);
+  }
+
+  function updateView(): void {
+    updateGameView(view, state);
+    tooltip.refresh();
   }
 
   function focusAction(action: string): void {
@@ -174,6 +201,7 @@ export function mountGame(container: HTMLElement): () => void {
       previewMode: resetMode ? false : state.previewMode,
     };
     updateIngredientPreview(view, state);
+    tooltip.refresh();
   }
 
   function showIngredientPreview(
@@ -219,6 +247,8 @@ export function mountGame(container: HTMLElement): () => void {
   }
 
   function openDialog(kind: GameDialog): void {
+    resetDrag();
+    tooltip.hide();
     clearIngredientPreview();
     if (kind === 'leaderboard') refreshLeaderboard();
     if (!dialog.open) {
@@ -371,7 +401,10 @@ export function mountGame(container: HTMLElement): () => void {
     announcement.textContent = 'Returned to the empty start screen.';
   }
 
-  function addPortion(id: string | undefined): void {
+  function addPortion(
+    id: string | undefined,
+    input: 'click' | 'drop' | 'shortcut' = 'click',
+  ): void {
     clock.synchronize();
     if (
       state.game === null ||
@@ -381,12 +414,13 @@ export function mountGame(container: HTMLElement): () => void {
       id === undefined
     )
       return;
-    if (state.previewMode) {
+    if (state.previewMode && input === 'click') {
       showIngredientPreview(id, 'selection');
       return;
     }
+    tooltip.hide();
     clearIngredientPreview();
-    const result = addIngredient(state.game.mixing, id, state.game.difficulty);
+    const result = addGameIngredient(state.game, id);
     const ingredient = getIngredient(id);
     if (ingredient === undefined) return;
     const feedback = view.querySelector('#ingredient-feedback');
@@ -396,22 +430,60 @@ export function mountGame(container: HTMLElement): () => void {
         feedback.classList.add('is-error');
         feedback.textContent =
           result.reason === 'cauldron-full'
-            ? `Cauldron full (${DIFFICULTY_SETTINGS[state.game.difficulty].maxIngredients}/${DIFFICULTY_SETTINGS[state.game.difficulty].maxIngredients}). Brew to continue.`
+            ? `Cauldron full (${DIFFICULTY_SETTINGS[state.game.difficulty].maxIngredients}/${DIFFICULTY_SETTINGS[state.game.difficulty].maxIngredients}). Brew or Pour Out to continue.`
             : `${ingredient.name} is out of stock.`;
       }
       return;
     }
 
-    state = { ...state, game: { ...state.game, mixing: result.state }, lastBrew: null };
-    persistGame();
+    state = { ...state, game: result.state, lastBrew: null };
     // Update existing controls and gauges so keyboard focus and CSS transitions survive.
-    updateGameView(view, state);
+    updateView();
     if (feedback !== null) {
-      feedback.classList.remove('is-error');
-      const totals = result.state.totals;
-      feedback.textContent = `${ingredient.name} added. Temperature ${totals.temperature}, Density ${totals.density}, Magic Power ${totals.magicPower}.`;
+      const outcome = result.feedback;
+      const reacted = outcome.reactions.length > 0;
+      feedback.classList.toggle('is-mechanics-feedback', reacted);
+      feedback.classList.toggle('is-error', outcome.timeDelta < 0 || outcome.livesDelta < 0);
+      const totals = result.state.mixing.totals;
+      const reactionMessage = reacted
+        ? ` ${outcome.reactions.map(({ name }) => name).join(' + ')} activated.${outcome.timeDelta < 0 ? ` ${Number((-outcome.timeDelta).toFixed(1))} seconds lost.` : ''}${outcome.livesDelta < 0 ? ` ${-outcome.livesDelta} life lost.` : ''}${outcome.cleared ? ' Cauldron cleared; ingredients remain spent.' : ''}`
+        : '';
+      const message = `${ingredient.name} added.${reactionMessage} Temperature ${Number(totals.temperature.toFixed(2))}, Density ${Number(totals.density.toFixed(2))}, Magic Power ${Number(totals.magicPower.toFixed(2))}.`;
+      feedback.textContent = reacted ? reactionMessage.trim() : message;
+      if (reacted) announcement.textContent = message;
     }
-    if (result.state.inventory[ingredient.id] === 0) {
+    if (result.state.status === 'game-over') {
+      finishGame();
+      return;
+    }
+    persistGame();
+    if (result.state.mixing.inventory[ingredient.id] === 0) {
+      focusAvailableIngredient();
+    }
+  }
+
+  function pourOut(): void {
+    clock.synchronize();
+    if (state.game === null || state.paused || dialog.open) return;
+    const result = pourOutGame(state.game);
+    if (!result.accepted) return;
+
+    tooltip.hide();
+    clearIngredientPreview();
+    state = { ...state, game: result.state, lastBrew: null };
+    updateView();
+    const message = `Cauldron poured out. ${Number((-result.timeDelta).toFixed(1))} seconds lost. Ingredients remain spent; score and lives are unchanged.`;
+    const feedback = view.querySelector('#ingredient-feedback');
+    if (feedback !== null) {
+      feedback.classList.add('is-mechanics-feedback');
+      feedback.classList.remove('is-error');
+      feedback.textContent = `Cauldron cleared · −${Number((-result.timeDelta).toFixed(1))}s · stock stays spent.`;
+    }
+    announcement.textContent = message;
+    if (result.state.status === 'game-over') {
+      finishGame();
+    } else {
+      persistGame();
       focusAvailableIngredient();
     }
   }
@@ -422,9 +494,10 @@ export function mountGame(container: HTMLElement): () => void {
     const result = brewGame(state.game);
     if (!result.accepted) return;
 
+    tooltip.hide();
     clearIngredientPreview();
     state = { ...state, game: result.state, lastBrew: result.feedback };
-    updateGameView(view, state);
+    updateView();
     const outcome = result.feedback;
     announcement.textContent = outcome.success
       ? `${outcome.recipe.name} brewed. ${outcome.scoreDelta} points earned; total score ${result.state.score}. Next recipe: ${result.state.recipe.name}.`
@@ -432,7 +505,7 @@ export function mountGame(container: HTMLElement): () => void {
     const feedback = view.querySelector('#ingredient-feedback');
     if (feedback !== null) {
       feedback.textContent = '';
-      feedback.classList.remove('is-error');
+      feedback.classList.remove('is-error', 'is-mechanics-feedback');
     }
     if (result.state.status === 'game-over') {
       finishGame();
@@ -484,6 +557,11 @@ export function mountGame(container: HTMLElement): () => void {
   }
 
   function handleClick(event: MouseEvent): void {
+    if (suppressDragClick && event.detail > 0 && ingredientButton(event.target) !== null) {
+      suppressDragClick = false;
+      event.preventDefault();
+      return;
+    }
     if (!(event.target instanceof Element)) return;
     const control = event.target.closest<HTMLElement>('[data-action]');
     if (control === null || !container.contains(control)) return;
@@ -523,16 +601,13 @@ export function mountGame(container: HTMLElement): () => void {
         addPortion(control.dataset.ingredient);
         break;
       case 'toggle-preview':
-        if (state.game?.status !== 'playing' || state.paused || dialog.open) return;
-        clearIngredientPreview();
-        state = { ...state, previewMode: !state.previewMode };
-        updateIngredientPreview(view, state);
-        announcement.textContent = state.previewMode
-          ? 'Preview on. Tap an ingredient to preview. Switch Preview off to add.'
-          : 'Preview off. Ingredients add normally.';
+        togglePreview();
         break;
       case 'brew':
         brewPotion();
+        break;
+      case 'pour-out':
+        pourOut();
         break;
       case 'help':
       case 'menu':
@@ -599,8 +674,99 @@ export function mountGame(container: HTMLElement): () => void {
     return button !== null && view.contains(button) ? button : null;
   }
 
+  function togglePreview(): void {
+    const control = view.querySelector<HTMLButtonElement>('[data-action="toggle-preview"]');
+    if (state.game?.status !== 'playing' || state.paused || dialog.open || control?.disabled)
+      return;
+    clearIngredientPreview();
+    state = { ...state, previewMode: !state.previewMode };
+    updateIngredientPreview(view, state);
+    tooltip.refresh();
+    announcement.textContent = state.previewMode
+      ? 'Preview on. Tap an ingredient to inspect. Drops and number shortcuts still add.'
+      : 'Preview off. Ingredients add normally.';
+  }
+
+  function resetDrag(): void {
+    draggedButton?.classList.remove('is-dragging');
+    view.querySelector('.brew-station')?.classList.remove('is-drop-target');
+    draggedIngredient = null;
+    draggedButton = null;
+  }
+
+  function dropZone(target: EventTarget | null): HTMLElement | null {
+    if (!(target instanceof Element)) return null;
+    const zone = target.closest<HTMLElement>('.brew-station');
+    return zone !== null && view.contains(zone) ? zone : null;
+  }
+
+  function canDrop(event: DragEvent): boolean {
+    return (
+      draggedIngredient !== null &&
+      !dialog.open &&
+      dropZone(event.target) !== null &&
+      event.dataTransfer?.types.includes(INGREDIENT_DRAG_TYPE) === true &&
+      projectIngredient(state.game, draggedIngredient, state.paused) !== null
+    );
+  }
+
+  function handleDragStart(event: DragEvent): void {
+    resetDrag();
+    const button = ingredientButton(event.target);
+    const ingredient = getIngredient(button?.dataset.ingredient ?? '');
+    if (
+      button === null ||
+      ingredient === undefined ||
+      event.dataTransfer === null ||
+      dialog.open ||
+      projectIngredient(state.game, ingredient.id, state.paused) === null
+    ) {
+      event.preventDefault();
+      return;
+    }
+    lastInputWasPointer = true;
+    clearIngredientPreview();
+    tooltip.hide();
+    draggedIngredient = ingredient.id;
+    draggedButton = button;
+    suppressDragClick = true;
+    button.classList.add('is-dragging');
+    event.dataTransfer.effectAllowed = 'copy';
+    event.dataTransfer.setData(INGREDIENT_DRAG_TYPE, ingredient.id);
+    event.dataTransfer.setData('text/plain', ingredient.id);
+  }
+
+  function handleDragOver(event: DragEvent): void {
+    const zone = dropZone(event.target);
+    if (zone === null) return;
+    // Prevent browser navigation for external drops, while only accepting our own live drag.
+    event.preventDefault();
+    const valid = canDrop(event);
+    zone.classList.toggle('is-drop-target', valid);
+    if (event.dataTransfer !== null) event.dataTransfer.dropEffect = valid ? 'copy' : 'none';
+  }
+
+  function handleDragLeave(event: DragEvent): void {
+    const zone = dropZone(event.target);
+    if (
+      zone === null ||
+      (event.relatedTarget instanceof Node && zone.contains(event.relatedTarget))
+    )
+      return;
+    zone.classList.remove('is-drop-target');
+  }
+
+  function handleDrop(event: DragEvent): void {
+    if (dropZone(event.target) === null) return;
+    event.preventDefault();
+    const id = draggedIngredient;
+    const valid = canDrop(event) && event.dataTransfer?.getData(INGREDIENT_DRAG_TYPE) === id;
+    resetDrag();
+    if (valid && id !== null) addPortion(id, 'drop');
+  }
+
   function handlePointerOver(event: PointerEvent): void {
-    if (event.pointerType === 'touch') return;
+    if (event.pointerType === 'touch' || draggedIngredient !== null) return;
     const button = ingredientButton(event.target);
     if (button === null || button === ingredientButton(event.relatedTarget)) return;
     showIngredientPreview(button.dataset.ingredient, 'pointer');
@@ -618,6 +784,7 @@ export function mountGame(container: HTMLElement): () => void {
   }
 
   function handlePointerDown(event: PointerEvent): void {
+    suppressDragClick = false;
     lastInputWasPointer = true;
     if (ingredientButton(event.target) === null) clearIngredientPreview();
   }
@@ -635,16 +802,66 @@ export function mountGame(container: HTMLElement): () => void {
       clearIngredientPreview();
   }
 
-  function handlePreviewKeydown(event: KeyboardEvent): void {
+  function handleGameKeydown(event: KeyboardEvent): void {
     lastInputWasPointer = false;
+    const target = event.target;
+    const editable =
+      target instanceof Element &&
+      (target.closest('input, textarea, select, [role="textbox"]') !== null ||
+        (target instanceof HTMLElement && target.isContentEditable));
     if (
       event.key === 'Escape' &&
+      state.game?.status === 'playing' &&
+      !state.paused &&
       !dialog.open &&
-      (state.previewIngredient !== null || state.previewMode)
+      !editable &&
+      !event.defaultPrevented &&
+      !event.isComposing &&
+      !event.altKey &&
+      !event.ctrlKey &&
+      !event.metaKey
     ) {
-      event.preventDefault();
+      const inspecting = state.previewIngredient !== null || state.previewMode;
+      tooltip.dismiss();
       clearIngredientPreview(true);
-      announcement.textContent = 'Preview closed. Ingredients add normally.';
+      resetDrag();
+      if (inspecting) {
+        event.preventDefault();
+        announcement.textContent = 'Inspection closed. Ingredients add normally.';
+      }
+      return;
+    }
+
+    const shortcut = resolveGameShortcut(event, {
+      playing: state.game?.status === 'playing',
+      paused: state.paused,
+      dialogOpen: dialog.open,
+      editable,
+      ingredientCount:
+        DIFFICULTY_SETTINGS[state.game?.difficulty ?? state.selectedDifficulty].ingredientCount,
+    });
+    if (shortcut === null || draggedIngredient !== null) return;
+    event.preventDefault();
+    switch (shortcut.action) {
+      case 'add-ingredient':
+        addPortion(
+          getShelfIngredients(state.game?.difficulty ?? state.selectedDifficulty)[shortcut.index]
+            ?.id,
+          'shortcut',
+        );
+        break;
+      case 'brew':
+        brewPotion();
+        break;
+      case 'pour-out':
+        pourOut();
+        break;
+      case 'pause':
+        pauseGame();
+        break;
+      case 'toggle-preview':
+        togglePreview();
+        break;
     }
   }
 
@@ -682,29 +899,45 @@ export function mountGame(container: HTMLElement): () => void {
   container.addEventListener('pointerdown', handlePointerDown);
   container.addEventListener('focusin', handleFocusIn);
   container.addEventListener('focusout', handleFocusOut);
-  container.addEventListener('keydown', handlePreviewKeydown);
+  container.addEventListener('dragstart', handleDragStart);
+  container.addEventListener('dragenter', handleDragOver);
+  container.addEventListener('dragover', handleDragOver);
+  container.addEventListener('dragleave', handleDragLeave);
+  container.addEventListener('drop', handleDrop);
+  document.addEventListener('dragend', resetDrag);
+  document.addEventListener('keydown', handleGameKeydown);
   dialog.addEventListener('cancel', handleCancel);
   dialog.addEventListener('keydown', handleDialogKeydown);
   dialog.addEventListener('submit', handleScoreSubmit);
   document.addEventListener('visibilitychange', handleVisibility);
   window.addEventListener('pagehide', handlePageHide);
+  window.addEventListener('blur', resetDrag);
 
   return () => {
     clock.synchronize();
     persistGame();
     clock.dispose();
+    resetDrag();
+    tooltip.dispose();
     container.removeEventListener('click', handleClick);
     container.removeEventListener('pointerover', handlePointerOver);
     container.removeEventListener('pointerout', handlePointerOut);
     container.removeEventListener('pointerdown', handlePointerDown);
     container.removeEventListener('focusin', handleFocusIn);
     container.removeEventListener('focusout', handleFocusOut);
-    container.removeEventListener('keydown', handlePreviewKeydown);
+    container.removeEventListener('dragstart', handleDragStart);
+    container.removeEventListener('dragenter', handleDragOver);
+    container.removeEventListener('dragover', handleDragOver);
+    container.removeEventListener('dragleave', handleDragLeave);
+    container.removeEventListener('drop', handleDrop);
+    document.removeEventListener('dragend', resetDrag);
+    document.removeEventListener('keydown', handleGameKeydown);
     dialog.removeEventListener('cancel', handleCancel);
     dialog.removeEventListener('keydown', handleDialogKeydown);
     dialog.removeEventListener('submit', handleScoreSubmit);
     document.removeEventListener('visibilitychange', handleVisibility);
     window.removeEventListener('pagehide', handlePageHide);
+    window.removeEventListener('blur', resetDrag);
     dismissDialogs();
   };
 }
