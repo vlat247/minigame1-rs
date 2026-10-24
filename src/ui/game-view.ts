@@ -222,9 +222,10 @@ export function updateGameView(container: HTMLElement, state: GameViewState): vo
 
   const scene = container.querySelector<HTMLElement>('.cauldron-scene');
   const filled = count > 0;
-  if (scene !== null && scene.dataset.filled !== String(filled)) {
-    scene.innerHTML = cauldronIllustration(filled);
-    scene.dataset.filled = String(filled);
+  const contents = mixing?.mixture.join(',') ?? '';
+  if (scene !== null && scene.dataset.contents !== contents) {
+    scene.innerHTML = cauldronIllustration(filled, mixing?.mixture);
+    scene.dataset.contents = contents;
   }
   const caption = container.querySelector('.cauldron-caption');
   if (caption !== null) {

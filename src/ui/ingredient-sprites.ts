@@ -22,3 +22,7 @@ const INGREDIENT_SPRITES: Readonly<Record<IngredientId, string>> = {
 export function ingredientIllustration(id: IngredientId): string {
   return `<img class="ingredient-illustration ingredient-illustration--${id}" src="${INGREDIENT_SPRITES[id]}" width="64" height="64" alt="" draggable="false">`;
 }
+
+export function ingredientSpriteUrl(id: IngredientId): string {
+  return INGREDIENT_SPRITES[id];
+}
