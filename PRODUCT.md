@@ -10,7 +10,7 @@ Players of the RS School browser mini-game and reviewers checking the assignment
 
 ## Product Purpose
 
-Mix limited-stock ingredients to match three recipe ranges before time or lives run out. `feat/release-finalcheck` prepares the completed game for release from `story-3`, after the visual feedback merge. Release verification checks generated assets alongside the full automated suite, and GitHub Pages automation publishes checked `story-3` or `main` builds after Pages activation. Shelf ingredients receive independent random stocks of 2–15, additions spend one portion, and the cauldron preserves ordered portions, including duplicates. All eight official ingredients and twenty official recipes are catalogued.
+Mix limited-stock ingredients to match three recipe ranges before time or lives run out. Release verification checks generated assets alongside the full automated suite, and GitHub Pages automation publishes checked `story-3` or `main` builds after Pages activation. Shelf ingredients receive independent random stocks of 2–15, additions spend one portion, and the cauldron preserves ordered portions, including duplicates. All eight official ingredients and twenty official recipes are catalogued.
 
 Choose difficulty in Menu before a run. Medium is the default. Difficulty cannot change during an unfinished run, including while paused; finishing or confirming exit makes it available again.
 
@@ -54,7 +54,15 @@ Show Continue Game on the start screen and in Menu only when a valid unfinished 
 
 Each difficulty has a separate Top-10 leaderboard in localStorage, with controls to switch the displayed board. Prompt for a name only when a result qualifies for its own difficulty, including zero scores while vacancies exist. Accept 2–15 Unicode letters, decimal digits, spaces, `_`, or `-` after trimming and NFC normalization. Escape player names in generated markup. Save each finished run at most once, using its completion timestamp. Rank by descending score, then earlier completion time; a new score tying the tenth result does not qualify. Display rank, name, score, difficulty, and DD.MM.YYYY HH:MM in the browser's local time. Clearing results requires an in-app confirmation and affects only the selected board. Medium preserves existing scores under `alchemists-cauldron:leaderboard:v1`; Easy and Hard use separate keys. Corrupt data and blocked storage remain nonfatal; when persistence is unavailable, retain results for the current visit and explain that limitation.
 
-Level 3 reactions, Pour Out, drag and drop, ingredient tooltips, keyboard shortcuts, and visual feedback are implemented. Local production browser QA is recorded in [QA.md](QA.md). Release automation and the submission checklist are in [RELEASE.md](RELEASE.md). Pages activation, public-build verification, and final story submission remain pending.
+Level 3 reactions, Pour Out, drag and drop, ingredient tooltips, keyboard shortcuts, and visual feedback are implemented. Local production browser QA is recorded in [QA.md](QA.md). The base-game release automation and story submission checklist are documented in [RELEASE.md](RELEASE.md).
+
+## Recipe Collection extension
+
+The `feat/recipe-collection` extension adds persistent discoveries across individual runs. Successful brews reveal one of the 20 canonical recipes, including its name and target ranges, in a Collection dialog accessible from Menu, Pause, and Game Over. Undiscovered entries remain visibly locked. Show total and per-difficulty counts and exactly three achievements: First Potion (one discovery), Recipe Explorer (five different discoveries), and Hard Alchemist (one Hard discovery). Failed and repeated brews do not unlock additional progress. Record the checked recipe from brew feedback before handling a final-stock Game Over.
+
+Keep collection IDs in their own versioned browser-storage key and derive achievement states from those IDs. Validate stored data, merge known discoveries on save, preserve unsupported versions, and show truthful notices for memory-only progress. Keep new discoveries through New Game, Exit, Continue, and Game Over. Scores from older versions cannot backfill recipe discoveries.
+
+Use the existing native dialog, palette, font, and focus behavior. Collection opened from Pause stays paused; active Menu navigation keeps the clock running. Announce new discoveries and achievements once. Place compact-screen notices within the existing brew-result area so ingredients, recipe, gauges, and primary controls retain their space. Dismissing a notice restores the brew result. The collection body can scroll independently on short screens.
 
 ## Brand Personality
 

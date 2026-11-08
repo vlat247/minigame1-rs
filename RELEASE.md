@@ -1,6 +1,8 @@
 # Release and final submission
 
-Release branch: `feat/release-finalcheck`. Task PR target: `story-3`.
+This document records the base-game release workflow. The base release branch, `feat/release-finalcheck`, was merged into `story-3` in PR #11.
+
+Recipe Collection is on `feat/recipe-collection`. See [QA.md](QA.md) for its verification and the [interview guide](docs/interview-prep.md) for the creative-extension demo.
 
 ## Verified locally
 
@@ -13,7 +15,7 @@ The production build was tested at `http://127.0.0.1:4173/minigame1-rs/` on **23
 The repository had no enabled Pages site when these changes were prepared. The expected URL after successful activation and deployment is [vlat247.github.io/minigame1-rs](https://vlat247.github.io/minigame1-rs/). This is a deployment target, not a verified live link yet.
 
 1. In [repository Settings → Pages](https://github.com/vlat247/minigame1-rs/settings/pages), set **Build and deployment → Source** to **GitHub Actions**. If the `github-pages` environment restricts deployment branches, allow `story-3` (and `main` for a later release).
-2. Push this task branch and open its PR into `story-3`. The Checks workflow runs `npm run release:check` for pushes and pull requests. Review the changes and merge the task PR into `story-3`.
+2. The Checks workflow runs `npm run release:check` for pushes and pull requests. Review future base-game changes through a task PR into `story-3`.
 3. The **Deploy to GitHub Pages** workflow runs on pushes to `story-3` and `main`. It installs the lockfile dependencies with Node 24, runs the same release checks, uploads only `dist/`, and deploys after a successful build. Its deployment environment records the public URL.
 4. Inspect the workflow result and open its deployment URL. Verify that the page, font, ingredient sprites, save/continue, and leaderboard work at the public address. Local browser storage is specific to its origin; development saves and scores are not transferred to the public site.
 
@@ -53,7 +55,7 @@ The following is an implementation inventory for the self-check, not a claimed f
 
 ## Remaining final checks
 
-- [ ] Activate Pages, merge the task PR into `story-3`, and verify the resulting public URL.
+- [ ] Activate Pages if needed and verify the resulting public URL.
 - [ ] Check the public build in the latest standalone Google Chrome at mobile and desktop widths, including drag/drop and native keyboard navigation.
 - [ ] With reduced motion enabled, verify that icons and result text remain visible while bursts, floating motion, timer pulse, and shake stop.
 - [ ] Confirm workflow links, screenshot accuracy, completion date, actual deadline, and scored self-check in the final story PR.

@@ -5,11 +5,14 @@ import type { GameState } from '../state/game';
 import type { LeaderboardEntry } from '../logic/leaderboard';
 import { icon } from './icons';
 import { escapeHtml, leaderboardMarkup } from './leaderboard-view';
+import type { CollectionProgress } from '../logic/collections';
+import { collectionMarkup } from './collection-view';
 
 export type GameDialog =
   | 'help'
   | 'menu'
   | 'leaderboard'
+  | 'collection'
   | 'clear-leaderboard'
   | 'pause'
   | 'exit'
@@ -27,6 +30,9 @@ export interface DialogContext {
   readonly leaderboardDifficulty: Difficulty;
   readonly canContinue: boolean;
   readonly saveNotice: string;
+  readonly collection: CollectionProgress;
+  readonly collectionNotice: string;
+  readonly collectionMessage: string;
 }
 
 interface DialogContent {
@@ -58,7 +64,8 @@ function helpContent(difficulty: Difficulty): DialogContent {
       <p class="dialog-note">Hover or focus an ingredient to preview the resulting values and reaction penalties without spending stock, time, or lives. On touch screens, switch Preview on to inspect ingredients, then off to add them.</p>
       <p class="dialog-note">Ingredient tooltips show their base Temperature, Density, and Magic Power. Click an ingredient or drag it into the cauldron to add one portion. Drops always add, including when Preview is on. Touch dragging is optional; taps remain available.</p>
       <p class="dialog-note">During active play: keys 1–${settings.ingredientCount} add ingredients in shelf order, B brews, O pours out, P pauses, V toggles Preview, and Escape closes inspection. Shortcuts ignore typing, held keys, dialogs, and inactive screens. Use Tab to focus buttons and Enter or Space to activate them, including Resume while paused.</p>
-      <p class="dialog-note">Pause freezes the clock and hides the workbench. Switching tabs pauses automatically; return and choose Resume. Help, Menu, and Leaderboard keep the clock running unless you pause first.</p>
+      <p class="dialog-note">Pause freezes the clock and hides the workbench. Switching tabs pauses automatically; return and choose Resume. Help, Menu, Leaderboard, and Collection keep the clock running unless you pause first.</p>
+      <p class="dialog-note">Successful brews discover recipes in your Collection. Discover one recipe, five different recipes, and a Hard recipe to earn the three achievements. Collection progress stays across runs and reloads in this browser when storage is available. Open it from Pause to browse without using game time.</p>
       <p class="dialog-note">Progress saves automatically. After a reload, Continue Game restores your unfinished run paused. Exit to Menu discards that save.</p>
       <p class="dialog-note">A run ends when time or lives run out, or the shelf and cauldron are both empty. Each difficulty has its own Top 10.</p>
       <div class="dialog-actions"><button class="button button-primary" type="button" data-action="dialog-close" data-dialog-focus>Got it</button></div>`,
@@ -83,6 +90,7 @@ function menuContent(game: GameState | null, context: DialogContext): DialogCont
         ${game === null && context.canContinue ? `<button class="menu-action" type="button" data-action="continue"><span>${icon('play')}Continue Game</span>${icon('arrow')}</button>` : ''}
         <button class="menu-action" type="button" data-action="new" ${running ? 'data-dialog-focus' : ''}><span>${icon('play')}Start new game</span>${icon('arrow')}</button>
         <button class="menu-action" type="button" data-action="leaderboard"><span>${icon('trophy')}Leaderboard</span>${icon('arrow')}</button>
+        <button class="menu-action" type="button" data-action="collection"><span>${icon('lotus')}Recipe collection</span>${icon('arrow')}</button>
         <button class="menu-action" type="button" data-action="help"><span>${icon('help')}How to play</span>${icon('arrow')}</button>
       </div>
       <p class="dialog-note">New Game replaces the unfinished save, resets your score and lives, gives each ingredient 2–15 portions, and selects a random ${settings.label} recipe.</p>
@@ -91,7 +99,10 @@ function menuContent(game: GameState | null, context: DialogContext): DialogCont
 }
 
 const DIALOGS: Record<
-  Exclude<GameDialog, 'game-over' | 'leaderboard' | 'help' | 'menu' | 'clear-leaderboard'>,
+  Exclude<
+    GameDialog,
+    'game-over' | 'leaderboard' | 'collection' | 'help' | 'menu' | 'clear-leaderboard'
+  >,
   DialogContent
 > = {
   pause: {
@@ -100,6 +111,7 @@ const DIALOGS: Record<
     body: `
       <div class="dialog-actions dialog-actions-stacked">
         <button class="button button-primary" type="button" data-action="resume" data-dialog-focus>${icon('play')}Resume</button>
+        <button class="button button-secondary" type="button" data-action="collection">${icon('lotus')}Recipe collection</button>
         <button class="button button-secondary" type="button" data-action="exit">Exit to Menu</button>
         <button class="button button-quiet" type="button" data-action="help">How to play</button>
       </div>`,
@@ -144,7 +156,8 @@ function gameOverContent(game: GameState | null, context: DialogContext): Dialog
       }
       ${context.scoreMessage === '' ? '' : `<p class="dialog-note" role="status">${escapeHtml(context.scoreMessage)}</p>`}
       ${context.storageNotice === '' ? '' : `<p class="dialog-note">${escapeHtml(context.storageNotice)}</p>`}
-      <div class="dialog-actions"><button class="button button-secondary" type="button" data-action="leaderboard">Leaderboard</button><button class="button button-primary" type="button" data-action="confirm-new" ${context.needsName ? '' : 'data-dialog-focus'}>Play again</button></div>`,
+      ${context.collectionMessage === '' ? '' : `<p class="collection-game-over-message" role="status">${escapeHtml(context.collectionMessage)}</p>`}
+      <div class="dialog-actions"><button class="button button-secondary" type="button" data-action="collection">Recipe collection</button><button class="button button-secondary" type="button" data-action="leaderboard">Leaderboard</button><button class="button button-primary" type="button" data-action="confirm-new" ${context.needsName ? '' : 'data-dialog-focus'}>Play again</button></div>`,
   };
 }
 
@@ -166,21 +179,27 @@ export function dialogMarkup(
               context.leaderboardDifficulty,
             ),
           }
-        : kind === 'help'
-          ? helpContent(game?.difficulty ?? context.selectedDifficulty)
-          : kind === 'menu'
-            ? menuContent(game, context)
-            : kind === 'clear-leaderboard'
-              ? {
-                  title: 'Clear the leaderboard?',
-                  description: `This removes saved ${DIFFICULTY_SETTINGS[context.leaderboardDifficulty].label} scores only. Other difficulties are kept.`,
-                  body: '<div class="dialog-actions"><button class="button button-secondary" type="button" data-action="dialog-close" data-dialog-focus>Keep scores</button><button class="button button-primary" type="button" data-action="confirm-clear-leaderboard">Clear Leaderboard</button></div>',
-                }
-              : DIALOGS[kind];
+        : kind === 'collection'
+          ? {
+              title: 'Recipe collection',
+              description: 'Brew potions to discover recipes and earn achievements.',
+              body: collectionMarkup(context.collection, context.collectionNotice),
+            }
+          : kind === 'help'
+            ? helpContent(game?.difficulty ?? context.selectedDifficulty)
+            : kind === 'menu'
+              ? menuContent(game, context)
+              : kind === 'clear-leaderboard'
+                ? {
+                    title: 'Clear the leaderboard?',
+                    description: `This removes saved ${DIFFICULTY_SETTINGS[context.leaderboardDifficulty].label} scores only. Other difficulties are kept.`,
+                    body: '<div class="dialog-actions"><button class="button button-secondary" type="button" data-action="dialog-close" data-dialog-focus>Keep scores</button><button class="button button-primary" type="button" data-action="confirm-clear-leaderboard">Clear Leaderboard</button></div>',
+                  }
+                : DIALOGS[kind];
   return `
     <div class="dialog-header">
       <h2 id="game-dialog-title">${content.title}</h2>
-      <button class="button dialog-close" type="button" data-action="dialog-close" aria-label="${kind === 'pause' ? 'Resume game' : kind === 'game-over' ? 'Return to start screen' : 'Close dialog'}">${icon('close')}</button>
+      <button class="button dialog-close" type="button" data-action="dialog-close" ${kind === 'collection' ? 'data-dialog-focus' : ''} aria-label="${kind === 'pause' ? 'Resume game' : kind === 'game-over' ? 'Return to start screen' : 'Close dialog'}">${icon('close')}</button>
     </div>
     <p class="dialog-description" id="game-dialog-description">${content.description}</p>
     ${context.saveNotice !== '' && kind !== 'menu' ? `<p class="save-notice" role="status">${escapeHtml(context.saveNotice)}</p>` : ''}

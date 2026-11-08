@@ -25,10 +25,13 @@ import type { GameViewState } from './game-view';
 import { createSessionClock } from './session-clock';
 import { createIngredientTooltip } from './ingredient-tooltip';
 import { createBrewEffects } from './brew-effects';
+import { createCollectionSession } from './collection-session';
+import { icon } from './icons';
 import '../styles/ingredient-preview.css';
 import '../styles/gameplay-mechanics.css';
 import '../styles/game-controls.css';
 import '../styles/visual-feedback.css';
+import '../styles/collection.css';
 
 const INGREDIENT_DRAG_TYPE = 'application/x-alchemists-cauldron-ingredient';
 
@@ -36,6 +39,18 @@ export function mountGame(container: HTMLElement): () => void {
   const view = document.createElement('div');
   const dialog = document.createElement('dialog');
   const announcement = document.createElement('p');
+  const collection = createCollectionSession();
+  const collectionNotification = document.createElement('section');
+  let collectionMessage = '';
+  collectionNotification.className = 'collection-notification';
+  collectionNotification.hidden = true;
+  collectionNotification.setAttribute('aria-label', 'Collection discovery');
+  collectionNotification.innerHTML = `
+    <p class="collection-notification-message" role="status" aria-atomic="true"></p>
+    <div class="collection-notification-actions">
+      <button class="button button-secondary" type="button" data-action="collection">View collection</button>
+      <button class="button button-quiet collection-notification-dismiss" type="button" data-action="dismiss-collection-notice" aria-label="Dismiss collection notification">${icon('close')}</button>
+    </div>`;
   const gameSaveStore = createGameSaveStore();
   const initialSave = gameSaveStore.load();
   let savedGame: SavedGame | null = initialSave.save;
@@ -185,10 +200,43 @@ export function mountGame(container: HTMLElement): () => void {
     tooltip.hide();
     brewEffects.clear();
     renderGameView(view, state);
+    placeCollectionNotification();
+  }
+
+  function placeCollectionNotification(): void {
+    const result = view.querySelector<HTMLElement>('.brew-feedback');
+    const inResult =
+      collectionMessage !== '' &&
+      window.matchMedia('(max-height: 640px)').matches &&
+      result !== null &&
+      !result.hidden;
+    collectionNotification.classList.toggle('is-in-result', inResult);
+    const message = collectionNotification.querySelector('p');
+    if (message !== null) message.tabIndex = inResult ? 0 : -1;
+    if (inResult) result.append(collectionNotification);
+    else view.querySelector('.game-main')?.before(collectionNotification);
+  }
+
+  function clearCollectionNotification(): void {
+    collectionMessage = '';
+    collectionNotification.hidden = true;
+    const message = collectionNotification.querySelector('p');
+    if (message !== null) message.textContent = '';
+    placeCollectionNotification();
+  }
+
+  function showCollectionNotification(message: string | null): void {
+    clearCollectionNotification();
+    if (message === null) return;
+    collectionMessage = message;
+    const content = collectionNotification.querySelector('p');
+    if (content !== null) content.textContent = message;
+    collectionNotification.hidden = false;
   }
 
   function updateView(): void {
     updateGameView(view, state);
+    placeCollectionNotification();
     tooltip.refresh();
   }
 
@@ -246,7 +294,11 @@ export function mountGame(container: HTMLElement): () => void {
       leaderboardDifficulty,
       canContinue: state.canContinue,
       saveNotice: state.saveNotice,
+      collection: collection.getSnapshot().progress,
+      collectionNotice: collection.getSnapshot().notice,
+      collectionMessage,
     });
+    if (kind === 'collection') dialog.scrollTop = 0;
     dialog.querySelector<HTMLElement>('[data-dialog-focus]')?.focus();
   }
 
@@ -278,6 +330,7 @@ export function mountGame(container: HTMLElement): () => void {
   function startGame(): void {
     clock.stop();
     dismissDialogs();
+    clearCollectionNotification();
     finishHandled = false;
     warnedAboutTime = false;
     needsName = false;
@@ -304,6 +357,7 @@ export function mountGame(container: HTMLElement): () => void {
 
   function continueGame(): void {
     if (state.game?.status === 'playing') return;
+    clearCollectionNotification();
     const loaded = gameSaveStore.load();
     savedGame = loaded.save;
     if (savedGame === null) {
@@ -361,6 +415,7 @@ export function mountGame(container: HTMLElement): () => void {
     if (state.game === null || state.game.status !== 'playing' || state.paused) return;
     clock.pause();
     if (state.game.status !== 'playing') return;
+    clearCollectionNotification();
     clearIngredientPreview();
     state = { ...state, paused: true };
     persistGame();
@@ -388,6 +443,9 @@ export function mountGame(container: HTMLElement): () => void {
     const previous = dialogs.at(-1);
     if (previous !== undefined) {
       renderDialog(previous);
+      if (current === 'collection') {
+        dialog.querySelector<HTMLElement>('[data-action="collection"]')?.focus();
+      }
       return;
     }
     dismissDialogs();
@@ -397,6 +455,7 @@ export function mountGame(container: HTMLElement): () => void {
   function showStart(): void {
     clock.stop();
     dismissDialogs();
+    clearCollectionNotification();
     if (state.game !== null) clearSavedGame();
     clearIngredientPreview(true);
     state = { ...state, game: null, paused: false, lastBrew: null };
@@ -439,6 +498,7 @@ export function mountGame(container: HTMLElement): () => void {
       }
       return;
     }
+    clearCollectionNotification();
 
     brewEffects.clear();
     state = { ...state, game: result.state, lastBrew: null };
@@ -472,6 +532,7 @@ export function mountGame(container: HTMLElement): () => void {
     if (state.game === null || state.paused || dialog.open) return;
     const result = pourOutGame(state.game);
     if (!result.accepted) return;
+    clearCollectionNotification();
 
     tooltip.hide();
     clearIngredientPreview();
@@ -499,6 +560,8 @@ export function mountGame(container: HTMLElement): () => void {
     if (state.game === null || state.paused || dialog.open) return;
     const result = brewGame(state.game);
     if (!result.accepted) return;
+
+    showCollectionNotification(collection.recordBrew(result.feedback));
 
     tooltip.hide();
     clearIngredientPreview();
@@ -619,6 +682,17 @@ export function mountGame(container: HTMLElement): () => void {
       case 'help':
       case 'menu':
         openDialog(control.dataset.action);
+        break;
+      case 'collection': {
+        const fromNotification = collectionNotification.contains(control);
+        openDialog('collection');
+        if (fromNotification) returnAction = 'menu';
+        collectionNotification.hidden = true;
+        break;
+      }
+      case 'dismiss-collection-notice':
+        clearCollectionNotification();
+        focusAction('menu');
         break;
       case 'leaderboard':
         refreshLeaderboard(state.game?.difficulty ?? state.selectedDifficulty);
@@ -919,6 +993,7 @@ export function mountGame(container: HTMLElement): () => void {
   document.addEventListener('visibilitychange', handleVisibility);
   window.addEventListener('pagehide', handlePageHide);
   window.addEventListener('blur', resetDrag);
+  window.addEventListener('resize', placeCollectionNotification);
 
   return () => {
     clock.synchronize();
@@ -946,6 +1021,7 @@ export function mountGame(container: HTMLElement): () => void {
     document.removeEventListener('visibilitychange', handleVisibility);
     window.removeEventListener('pagehide', handlePageHide);
     window.removeEventListener('blur', resetDrag);
+    window.removeEventListener('resize', placeCollectionNotification);
     dismissDialogs();
   };
 }

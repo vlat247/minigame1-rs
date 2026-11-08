@@ -1,0 +1,297 @@
+.game-dialog[data-kind='collection'] {
+  width: min(640px, calc(100% - 32px));
+  overscroll-behavior: contain;
+}
+
+.collection-content {
+  margin-top: 20px;
+  font-size: var(--text-secondary);
+  line-height: 1.45;
+}
+
+.collection-total {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.collection-total strong {
+  color: var(--primary);
+  font-size: var(--text-heading);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.collection-empty,
+.collection-notice,
+.collection-target-note {
+  margin-top: 12px;
+  color: var(--muted);
+}
+
+.collection-notice {
+  padding-left: 12px;
+  border-left: 2px solid var(--border);
+}
+
+.collection-game-over-message {
+  margin-top: 16px;
+  color: var(--success);
+  font-size: var(--text-secondary);
+}
+
+.collection-achievements {
+  margin-top: 24px;
+}
+
+.collection-content h3 {
+  font-size: var(--text-subheading);
+  font-weight: 500;
+  color: var(--ink-accent);
+}
+
+.collection-achievement-list {
+  margin-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.collection-achievement {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.collection-achievement-heading,
+.collection-recipe-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.collection-achievement-heading strong {
+  font-weight: 500;
+}
+
+.collection-achievement-state,
+.collection-recipe-state {
+  flex-shrink: 0;
+  color: var(--muted);
+  font-size: var(--text-caption);
+}
+
+.collection-achievement[data-unlocked='true'] .collection-achievement-state,
+.collection-recipe[data-discovered='true'] .collection-recipe-state {
+  color: var(--success);
+}
+
+.collection-achievement p {
+  margin-top: 4px;
+  color: var(--muted);
+}
+
+.collection-target-note {
+  margin-top: 24px;
+}
+
+.collection-group {
+  margin-top: 24px;
+}
+
+.collection-group h3 {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.collection-group h3 span {
+  color: var(--muted);
+  font-size: var(--text-secondary);
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+
+.collection-recipe {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.collection-recipe-heading h4 {
+  min-width: 0;
+  margin: 0;
+  font-size: var(--text-body);
+  font-weight: 400;
+  overflow-wrap: anywhere;
+}
+
+.collection-recipe[data-discovered='false'] h4 {
+  color: var(--muted);
+  font-size: var(--text-secondary);
+}
+
+.collection-ranges {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 8px 0 0;
+}
+
+.collection-ranges > div {
+  min-width: 0;
+}
+
+.collection-ranges dt {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--text-caption);
+}
+
+.collection-ranges .icon {
+  width: 14px;
+  height: 14px;
+}
+
+.collection-range-temperature dt {
+  color: var(--temperature);
+}
+
+.collection-range-density dt {
+  color: var(--density);
+}
+
+.collection-range-magic dt {
+  color: var(--magic);
+}
+
+.collection-ranges dd {
+  margin: 4px 0 0;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.collection-notification {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  flex: 0 0 auto;
+  gap: 12px;
+  width: 100%;
+  margin: 0;
+  padding: 6px 10px;
+  border: 1px solid var(--primary);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.collection-notification-message {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.collection-notification-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.collection-notification .button {
+  min-height: 44px;
+  padding: 6px 8px;
+}
+
+.collection-notification-dismiss {
+  width: 44px;
+  padding: 6px;
+  flex-shrink: 0;
+}
+
+@media (max-width: 600px) {
+  .collection-ranges {
+    gap: 8px;
+  }
+
+  .collection-ranges dt {
+    flex-wrap: wrap;
+  }
+
+  .collection-notification {
+    gap: 6px;
+    padding: 4px 6px;
+    font-size: var(--text-caption);
+  }
+
+  .collection-notification-actions {
+    flex-shrink: 1;
+  }
+
+  .collection-notification-actions > .button:not(.collection-notification-dismiss) {
+    max-width: 92px;
+    font-size: var(--text-caption);
+  }
+}
+
+@media (max-height: 640px) {
+  .brew-feedback:has(> .collection-notification.is-in-result:not([hidden])) {
+    position: relative;
+  }
+
+  .brew-feedback:has(> .collection-notification.is-in-result:not([hidden]))
+    > :not(.collection-notification) {
+    visibility: hidden;
+  }
+
+  .collection-notification.is-in-result {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+    width: auto;
+    min-height: 0;
+    padding: 6px;
+    overflow: hidden;
+    font-size: var(--text-caption);
+  }
+
+  .collection-notification.is-in-result .collection-notification-message {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .collection-notification.is-in-result .collection-notification-message:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+
+  .collection-notification.is-in-result .collection-notification-actions {
+    flex: 0 0 auto;
+    justify-content: flex-end;
+    width: 100%;
+  }
+
+  .collection-notification.is-in-result
+    .collection-notification-actions
+    > .button:not(.collection-notification-dismiss) {
+    flex: 1;
+    min-width: 0;
+    max-width: none;
+    font-size: var(--text-caption);
+    line-height: 1.1;
+  }
+
+  .collection-notification.is-in-result .collection-notification-dismiss {
+    flex: 0 0 44px;
+    min-width: 44px;
+  }
+}

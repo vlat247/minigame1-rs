@@ -4,7 +4,7 @@ A browser game for the [RS School qualifying-stage assignment](https://github.co
 
 ## Current status
 
-The current branch, **`feat/release-finalcheck`**, prepares the completed game for release from `story-3`. All three gameplay levels are implemented. Release checks now verify production assets as well as lint, formatting, types, and 169 tests. CI runs those checks, and a GitHub Pages workflow publishes checked builds from `story-3` or `main` after Pages is enabled. Production browser evidence is recorded in [QA.md](QA.md). Follow [RELEASE.md](RELEASE.md) for activation and final story submission; the public deployment and RS App submission are still pending.
+The current branch, **`feat/recipe-collection`**, adds Recipe Collection to the completed three-level game: discover 20 recipes, earn three achievements, and save progress across runs and reloads. Release checks verify production assets alongside lint, formatting, types, and **213 automated tests**. CI runs those checks, and a GitHub Pages workflow publishes checked builds from `story-3` or `main` after Pages is enabled. Browser evidence is recorded in [QA.md](QA.md); publishing and final story submission steps are in [RELEASE.md](RELEASE.md).
 
 The application uses TypeScript and browser APIs, with Vite for development and production builds. Gameplay must use no frameworks, game engines or runtime libraries. ESLint, Prettier and Husky support development checks.
 
@@ -15,14 +15,14 @@ Use **Node.js 22.13+ on the 22.x line**, or **Node.js 24+**. **Node.js 24** is r
 ```sh
 git clone https://github.com/vlat247/minigame1-rs.git
 cd minigame1-rs
-git switch feat/release-finalcheck
+git switch feat/recipe-collection
 npm ci
 npm run dev
 ```
 
 Open the local URL printed by Vite. `npm ci` installs the versions recorded in `package-lock.json` and its `prepare` step installs the Git hooks. If using nvm, run `nvm use` first.
 
-The commands above check out the release branch. Check out the relevant story or task branch when reviewing other work.
+These commands check out the creative extension branch so Recipe Collection is available in the local demo.
 
 ## Choose a difficulty
 
@@ -76,7 +76,7 @@ The unfinished run is saved to `localStorage` after gameplay changes and pause c
 
 Completed-result storage is separate from the unfinished-game save. Existing Medium scores keep the original `alchemists-cauldron:leaderboard:v1` key; Easy and Hard use their own keys. The unfinished game uses `alchemists-cauldron:game-save:v1`.
 
-Level 3 drag and drop, ingredient tooltips, keyboard shortcuts, reactions, Pour Out, and visual feedback are implemented. Public deployment and submission evidence remain pending.
+Level 3 drag and drop, ingredient tooltips, keyboard shortcuts, reactions, Pour Out, and visual feedback are implemented.
 
 Medium's **150-second cap** follows the [README difficulty table](https://github.com/rolling-scopes-school/qualifying-stage/tree/main/tasks/game-alchemists-cauldron#difficulty-table), [US 1.3](https://github.com/rolling-scopes-school/qualifying-stage/blob/main/tasks/game-alchemists-cauldron/user_story_1.3.md), and [US 1.4](https://github.com/rolling-scopes-school/qualifying-stage/blob/main/tasks/game-alchemists-cauldron/user_story_1.4.md).
 
@@ -134,6 +134,24 @@ The `commit-msg` hook checks lowercase Conventional Commit syntax, including opt
 
 Vite builds with relative asset paths, so `dist/` can be served from a repository subdirectory such as GitHub Pages. The Pages workflow deploys successful checked builds on pushes to `story-3` or `main`; task branches cannot deploy. The repository's Pages source must first be enabled as **GitHub Actions**. Activation, local subdirectory preview, deployment verification, and final PR evidence are documented in [RELEASE.md](RELEASE.md).
 
+## Recipe Collection — creative extension
+
+Open **Recipe collection** from **Menu**, **Pause**, or **Game Over**. The screen shows `X / 20` discoveries, counts for each difficulty, and locked recipe entries. Successfully brewing a recipe reveals its name and three target ranges. Repeated recipes count once; failed brews, previews, and Pour Out do not discover anything.
+
+Exactly three achievements are calculated from the collection:
+
+| Achievement     | Requirement                      |
+| --------------- | -------------------------------- |
+| First Potion    | Successfully brew one recipe.    |
+| Recipe Explorer | Discover five different recipes. |
+| Hard Alchemist  | Successfully brew a Hard recipe. |
+
+New discoveries and achievements produce a dismissible notice. On short screens, the notice temporarily uses the brew-result area; dismiss it to see the full brew result. New gameplay actions also clear the notice. Collection opened from Pause keeps the clock frozen; opening it from an active Menu keeps the clock running.
+
+The separate `alchemists-cauldron:collection:v1` storage key contains only a version and discovered recipe IDs. Achievements are derived rather than saved separately. New games, exits, and Game Over preserve the collection. Progress belongs to this browser and device; existing scores cannot reconstruct past recipe discoveries. Loading validates saved data. Storage failures keep new discoveries in memory and show a notice; unsupported versions remain untouched. Saving merges existing known discoveries so a stale session does not replace newer progress.
+
+Screenshots: [desktop collection](docs/screenshots/collection-desktop.jpg), [mobile collection](docs/screenshots/collection-mobile.jpg). The [interview guide](docs/interview-prep.md) explains the code flow and includes a repeatable presentation demo.
+
 ## Source architecture
 
 ```text
@@ -154,11 +172,13 @@ src/
     brewing.ts             Recipe selection, tolerance checks and brew transitions
     session.ts             Elapsed time, countdown progression and session endings
     leaderboard.ts         Player names, score qualification and Top-10 ranking
+    collections.ts         Unique discoveries and three derived achievement rules
   state/
     game.ts                Readonly run state and fresh difficulty-specific games
   storage/
     leaderboard.ts         Guarded per-difficulty result storage and validation
     save.ts                Versioned unfinished-game storage and schema validation
+    collection.ts          Validated collection persistence and discovery merging
   ui/
     game-controller.ts     Input, dialogs, difficulty selection and save lifecycle
     game-view.ts           Workbench, timer bar, score, lives and brew results
@@ -171,12 +191,15 @@ src/
     ingredient-sprites.ts  Ingredient IDs mapped to individual pixel-art SVGs
     ingredient-tooltip.ts  Delegated tooltip interaction and lifecycle
     brew-effects.ts        Event-driven lifecycle for CSS brew effects
+    collection-session.ts  Successful-brew discoveries, persistence and unlock messages
+    collection-view.ts     Collection counts, locked recipes and achievement markup
   styles/                  Stylesheets and responsive layout
     gameplay-mechanics.css Pour Out control and reaction preview feedback
     game-controls.css      Drag and drop feedback and control presentation
     ingredient-tooltip.css Base-value tooltip styling
     brew-effects.css       Success, explosion and brief screen-shake animations
     visual-feedback.css    Floating ingredients and target-range glow
+    collection.css         Collection dialog and responsive discovery feedback
   assets/ingredients/      Eight original 32 × 32 pixel-art SVG sprites
   assets/fonts/            Local Pixelify Sans variable font and its OFL license
 tests/
@@ -191,9 +214,13 @@ tests/
   game-save.test.mjs
   game-shortcuts.test.mjs
   tooltip-position.test.mjs
+  collection.test.mjs
+  collection-storage.test.mjs
+  collection-session.test.mjs
+  collection-view.test.mjs
 ```
 
-Difficulty settings and ingredient, recipe, and reaction catalogues live in `data/`; mixing, reaction evaluation, brewing, session progression, and ranking rules live in `logic/`. `logic/gameplay.ts` resolves accepted additions and Pour Out through pure transitions. Brewing, saves, and previews share the reaction calculation rules. `state/game.ts` creates a run using the selected difficulty. The controller reconciles elapsed time before gameplay actions, routes those actions through pure transitions, and handles automatic saves and paused continuation. The clock adapter handles browser timing and cleanup, while the views render the resulting state and dialogs. Both storage modules guard browser access and validate untrusted data. `storage/save.ts` owns the unfinished-game schema; `storage/leaderboard.ts` keeps the difficulty boards independent and preserves the original Medium results key.
+Difficulty settings and ingredient, recipe, and reaction catalogues live in `data/`; mixing, reaction evaluation, brewing, session progression, and ranking rules live in `logic/`. `logic/gameplay.ts` resolves accepted additions and Pour Out through pure transitions. Brewing, saves, and previews share the reaction calculation rules. `state/game.ts` creates a run using the selected difficulty. The controller reconciles elapsed time before gameplay actions, routes those actions through pure transitions, and handles automatic saves and paused continuation. The clock adapter handles browser timing and cleanup, while the views render the resulting state and dialogs. Storage modules guard browser access and validate untrusted data. `storage/save.ts` owns the unfinished-game schema; `storage/leaderboard.ts` keeps the difficulty boards independent and preserves the original Medium results key. The collection session records the checked recipe from successful brew feedback before Game Over handling, then supplies progress and notices to the Collection dialog.
 
 ## Milestones
 
@@ -204,16 +231,16 @@ Difficulty settings and ingredient, recipe, and reaction catalogues live in `dat
 | Level 2 | Easy/Medium/Hard selection, automatic saves, Continue Game and separate leaderboards           |
 | Level 3 | Drag and drop, tooltips, reactions, Pour Out, visual feedback and keyboard shortcuts           |
 
-The branch implements Level 1 gameplay, Level 2 difficulty selection and persistence, and Level 3 reactions, Pour Out, controls, and visual feedback. Medium retains the Level 1 rules: 6 shelf ingredients, capacity 4, 150 seconds, 3 lives, tolerance ±8, +200 score and +10 seconds per successful brew. Local production QA is recorded in [QA.md](QA.md). Release automation is ready; public deployment and final story submission remain pending as listed in [RELEASE.md](RELEASE.md).
+The branch implements Level 1 gameplay, Level 2 difficulty selection and persistence, and Level 3 reactions, Pour Out, controls, and visual feedback. Medium retains the Level 1 rules: 6 shelf ingredients, capacity 4, 150 seconds, 3 lives, tolerance ±8, +200 score and +10 seconds per successful brew. Local production QA is recorded in [QA.md](QA.md). The base-game release and story submission workflow is documented in [RELEASE.md](RELEASE.md).
 
 The finished game must work in the latest Google Chrome across widths from **375 px to 1920 px**. Keep game elements as separate components; this implementation uses CSS and SVG, including the CSS/SVG ingredient icons required by US 1.1. Use the assignment's ingredient and recipe tables as the authoritative data.
 
 ## Branches and pull requests
 
-Follow the [assignment repository workflow](https://github.com/rolling-scopes-school/qualifying-stage/tree/main/tasks/game-alchemists-cauldron#repository-workflow):
+For the base-game stories, follow the [assignment repository workflow](https://github.com/rolling-scopes-school/qualifying-stage/tree/main/tasks/game-alchemists-cauldron#repository-workflow):
 
 1. Create `story-1` from `main` (or `master` in a repository using that default).
-2. Create a separate task branch from the current story branch. The current task branch is `feat/release-finalcheck`, based on `story-3` after the visual feedback merge. Target this task PR at `story-3`.
+2. Create a separate task branch from the current story branch and target its PR at that story branch.
 3. Keep commits small and focused. Review task changes through a PR targeting the current story branch before integrating them.
 4. When a story is finished, open its final PR to the preceding branch. For Story 1, this is `story-1` → `main`.
 5. **Keep the final story PR unmerged** and submit its link in RS App through **Cross-Check: Submit**.
@@ -221,6 +248,10 @@ Follow the [assignment repository workflow](https://github.com/rolling-scopes-sc
 Commit messages follow the [RS School Git convention](https://rs.school/docs/git-convention): a lowercase type, optional scope, and a short imperative description, for example `chore: configure project tooling`, `feat: add ingredient shelf` or `docs: explain local setup`.
 
 The [project PR template](.github/pull_request_template.md) follows the [official RS School requirements](https://rs.school/docs/mentoring/pull-request-review-process#pull-request-requirements-pr): task link, screenshot, deployment link, completion/deadline dates and a scored self-check. Fill these with actual evidence when preparing the final story PR.
+
+## Interview preparation
+
+The [beginner preparation guide](docs/interview-prep.md) covers the 23–30 November 2026 interview window, a daily study schedule, the completed Recipe Collection extension, and technical questions tied to this codebase.
 
 ## Assignment references
 

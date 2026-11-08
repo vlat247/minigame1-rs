@@ -1,14 +1,38 @@
 # Game and release QA
 
-Current release branch: `feat/release-finalcheck`, based on `story-3`. The visual feedback checks below were completed on `chore/visual-feedback-and-qa` before its merge.
+Base release branch: `feat/release-finalcheck`, based on `story-3`. The Recipe Collection extension is on `feat/recipe-collection`; its current browser checks are below. The older visual feedback checks were completed on `chore/visual-feedback-and-qa` before its merge.
 
 ## Automated validation
 
 `npm run release:check` passed on **23 October 2026**: ESLint, Prettier, all **169 tests**, strict TypeScript, the Vite production build, and the production asset check. The original 151 tests cover difficulty rules, ingredients, reactions, brewing, timing, saves, leaderboards, shortcuts, and tooltip positioning; 18 release tests cover valid artifacts and broken asset references. The current build contains 9 files and 9 checked local resource references. No runtime dependencies were added.
 
+On **6 November 2026**, `npm run release:check` passed for Recipe Collection: ESLint, Prettier, all **213 tests**, strict TypeScript, the production build, and the asset checker. The 44 collection tests cover pure discovery and achievement rules, storage validation and merging, session integration, and rendered collection states. Regression cases include temporary read failures, stale sessions, successful final-stock brews, and truthful notices when pending discoveries still cannot be saved.
+
+## Recipe Collection browser checks — 6 November 2026
+
+Tested the local Vite game in the Codex in-app browser at `http://127.0.0.1:5173/`. Repeatable runs and the four-to-five threshold used clearly labelled local test fixtures, including a prepared four-recipe collection. The temporary fixture page was removed before building the release. Screenshots show test-browser progress, not an account or cloud save.
+
+- A fresh collection displays `0 / 20`, all 20 locked entries grouped by difficulty, and exactly three locked achievements.
+- A successful Easy Moon Mist brew discovers Moon Mist and unlocks First Potion. The checked recipe is collected while the next recipe can differ.
+- A prepared four-recipe collection followed by a successful Bright Dew brew becomes `5 / 20` and unlocks Recipe Explorer without replaying First Potion.
+- A first successful Hard Phoenix Pulse brew unlocks First Potion and Hard Alchemist together.
+- Repeating Root Bloom stays at `1 / 20` without another discovery notification. A failed Moon Mist brew stays at `0 / 20` with no unlock.
+- A successful final-stock Root Bloom brew reaches Game Over and still records the discovery and achievement. Game Over displays the discovery text, allows opening Collection, and restores focus when returning. Reload preserves that discovery.
+- Pause → Collection → Escape returns to Pause with the exact displayed time unchanged and focus on Recipe collection. In contrast, active Menu → Collection keeps the timer running as documented.
+- Reload restores collected recipes and achievement states. Starting a new game retains the collection.
+- Corrupt data shows an explanatory notice. An unsupported saved version remains preserved; new discoveries are visible for the current visit and disappear after reload, matching the notice.
+- Collection keyboard navigation traps focus between Close and Back. Phone and tablet collection dialogs scroll internally without document overflow.
+- At `375 × 500`, compact discovery feedback uses the brew-result area; shelf and gauges remain separate and Brew, Pour Out, Menu, and Pause stay within the viewport. Short landscape `600 × 375` was inspected with a Hard discovery. Collection layouts were also inspected at `375 × 812`, `768 × 1024`, and `1280 × 800`.
+
+Browser console checks reported no errors during these checks. Blocked-storage failures, recovered reads, and stale-session merging are exercised by automated storage/session tests; an operating-system browser-storage restriction was not toggled manually.
+
+The final compiled build was also opened at `http://127.0.0.1:4173/minigame1-rs/`. The production Collection screen loaded all 20 entries, exactly three achievements, and the bundled Pixelify Sans styling with no recorded browser console errors. That local origin starts with its own empty collection, independently of development-server test progress.
+
+Screenshots: [desktop collection](docs/screenshots/collection-desktop.jpg), [mobile collection](docs/screenshots/collection-mobile.jpg).
+
 ## Production build checks — 23 October 2026
 
-Tested the built game in the available Codex in-app browser at `http://127.0.0.1:4173/minigame1-rs/`, using Vite's production preview with the repository subdirectory. Standalone Google Chrome was not available in the browser inventory; its public-build check remains pending.
+Tested the built game in the available Codex in-app browser at `http://127.0.0.1:4173/minigame1-rs/`, using Vite's production preview with the repository subdirectory. Standalone Google Chrome and the public build were not checked in this session.
 
 - The compiled page, local Pixelify Sans styling, favicon reference, and all visible shelf sprites load under the repository path.
 - A Medium Void Ember brew using `16` succeeds and awards 200 points. Pause → reload → Continue restores that score and remaining time paused, without a stale effect.
@@ -20,7 +44,7 @@ Production screenshots: [desktop](docs/screenshots/release-desktop.png), [mobile
 
 ## Browser checks
 
-Tested locally in the Codex in-app browser on **22 October 2026**. These are local checks; the deployed game still needs its final check in the latest standalone Google Chrome.
+Tested locally in the Codex in-app browser on **22 October 2026**. These checks cover the local build.
 
 | Viewport    | Check                                                                | Result                                                                        |
 | ----------- | -------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
@@ -60,10 +84,10 @@ Start a fresh run, read its recipe, then use the listed number keys followed by 
 
 For exact target glow, Easy Snow Dust with `234` matches all three displayed ranges. Some other fixtures succeed through difficulty tolerance without matching every displayed target zone.
 
-## Remaining delivery checks
+## Base-game delivery checklist
 
 - Publish the production build and check the public URL in the latest Google Chrome, including a device with reduced motion enabled.
 - Add the deployment URL, current screenshots, dates, and scored self-check to the final story PR.
-- Merge the release task PR into `story-3`; keep the final `story-3` → `story-2` submission PR unmerged, following the assignment workflow.
+- Keep the final `story-3` → `story-2` submission PR unmerged, following the assignment workflow.
 
 See [RELEASE.md](RELEASE.md) for Pages activation, workflow behavior, the implementation inventory, and final submission evidence.
