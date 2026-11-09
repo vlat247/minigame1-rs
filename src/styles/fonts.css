@@ -1,0 +1,7 @@
+@font-face {
+  font-family: 'Pixelify Sans';
+  src: url('/src/assets/fonts/PixelifySans.ttf') format('truetype');
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+}

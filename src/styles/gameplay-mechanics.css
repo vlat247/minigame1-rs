@@ -1,0 +1,78 @@
+.pour-out-action {
+  flex: 0 0 auto;
+  min-height: 48px;
+  padding-inline: 10px;
+  font-size: var(--text-body);
+  white-space: nowrap;
+}
+
+.brew-station .ingredient-feedback.is-mechanics-feedback,
+.mechanics-preview-warning {
+  position: absolute;
+  z-index: 2;
+  right: 0;
+  bottom: 42px;
+  left: 0;
+  width: auto;
+  height: auto;
+  padding: 6px;
+  margin: 0;
+  overflow: visible;
+  clip-path: none;
+  border: 1px solid var(--primary);
+  background: var(--surface-overlay);
+  color: var(--ink);
+  font-size: var(--text-caption);
+  line-height: 1.2;
+  text-align: center;
+  white-space: normal;
+  pointer-events: none;
+}
+
+.brew-station .ingredient-feedback.is-mechanics-feedback.is-error,
+.mechanics-preview-warning {
+  border-color: var(--danger);
+  background: var(--surface-warning);
+  color: var(--danger-ink);
+}
+
+[data-previewing='true'] .ingredient-feedback.is-mechanics-feedback {
+  visibility: hidden;
+}
+
+.help-reactions {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: var(--text-secondary);
+}
+
+.help-reactions strong {
+  color: var(--ink);
+}
+
+@media (max-width: 900px) and (min-height: 501px) {
+  .main-action-group:has(.pour-out-action) .main-action {
+    padding-inline: 6px;
+    font-size: var(--text-body);
+  }
+
+  .pour-out-action {
+    min-height: 44px;
+    padding-inline: 6px;
+    font-size: var(--text-secondary);
+  }
+
+  .brew-station .ingredient-feedback.is-mechanics-feedback,
+  .mechanics-preview-warning {
+    bottom: 34px;
+    padding: 4px;
+  }
+}
+
+@media (max-height: 500px) and (min-width: 600px) {
+  .pour-out-action {
+    min-height: 44px;
+  }
+}

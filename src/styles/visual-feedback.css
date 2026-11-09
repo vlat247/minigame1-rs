@@ -1,0 +1,42 @@
+.floating-ingredient {
+  image-rendering: pixelated;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: ingredient-float 2.6s steps(4, end) var(--float-delay, 0s) infinite alternate;
+}
+
+@keyframes ingredient-float {
+  from {
+    transform: translateY(1px) rotate(-5deg);
+  }
+  to {
+    transform: translateY(-2px) rotate(5deg);
+  }
+}
+
+[data-paused='true'] .floating-ingredient {
+  animation-play-state: paused;
+}
+
+.parameter {
+  transition: border-color 180ms ease;
+}
+
+.target-zone {
+  transition:
+    left 240ms ease,
+    width 240ms ease,
+    box-shadow 180ms ease,
+    border-color 180ms ease;
+}
+
+.parameter.is-in-range .target-zone {
+  border-color: var(--success);
+  box-shadow: 0 0 8px var(--success);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .floating-ingredient {
+    animation: none;
+  }
+}

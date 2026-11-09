@@ -1,0 +1,36 @@
+.ingredient[draggable='true'] {
+  cursor: grab;
+}
+
+.ingredient.is-dragging {
+  opacity: 0.65;
+  cursor: grabbing;
+}
+
+.brew-station.is-drop-target {
+  outline: 2px dashed var(--primary);
+  outline-offset: -4px;
+  background: var(--accent-soft);
+}
+
+.brew-station.is-drop-target::after {
+  position: absolute;
+  right: 8px;
+  bottom: 42px;
+  left: 8px;
+  padding: 6px;
+  border: 1px solid var(--primary);
+  background: var(--surface-overlay);
+  color: var(--ink);
+  font-size: var(--text-secondary);
+  text-align: center;
+  content: 'Drop to add one portion';
+  pointer-events: none;
+}
+
+@media (max-width: 900px) and (min-height: 501px) {
+  .brew-station.is-drop-target::after {
+    bottom: 34px;
+    font-size: var(--text-caption);
+  }
+}
